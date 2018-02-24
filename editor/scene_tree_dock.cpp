@@ -40,7 +40,6 @@
 #include "editor/plugins/animation_player_editor_plugin.h"
 #include "editor/plugins/canvas_item_editor_plugin.h"
 #include "editor/plugins/script_editor_plugin.h"
-#include "editor/plugins/spatial_editor_plugin.h"
 #include "editor/script_editor_debugger.h"
 #include "scene/main/viewport.h"
 #include "scene/resources/packed_scene.h"
@@ -289,8 +288,6 @@ void SceneTreeDock::_tool_selected(int p_tool, bool p_confirm_override) {
 
 				if (ClassDB::is_parent_class(current_edited_scene_root->get_class_name(), "Node2D"))
 					preferred = "Node2D";
-				else if (ClassDB::is_parent_class(current_edited_scene_root->get_class_name(), "Spatial"))
-					preferred = "Spatial";
 			}
 			create_dialog->set_preferred_search_result_type(preferred);
 			create_dialog->popup_create(true);
@@ -756,9 +753,6 @@ void SceneTreeDock::_notification(int p_what) {
 				scene_tree->connect("node_changed", canvas_item_plugin->get_canvas_item_editor()->get_viewport_control(), "update");
 			}
 
-			SpatialEditorPlugin *spatial_editor_plugin = Object::cast_to<SpatialEditorPlugin>(editor_data->get_editor("3D"));
-			spatial_editor_plugin->get_spatial_editor()->connect("item_lock_status_changed", scene_tree, "_update_tree");
-
 			button_add->set_icon(get_icon("Add", "EditorIcons"));
 			button_instance->set_icon(get_icon("Instance", "EditorIcons"));
 			button_create_script->set_icon(get_icon("ScriptCreate", "EditorIcons"));
@@ -1152,8 +1146,6 @@ void SceneTreeDock::_do_reparent(Node *p_new_parent, int p_position_in_parent, V
 		if (p_keep_global_xform) {
 			if (Object::cast_to<Node2D>(node))
 				editor_data->get_undo_redo().add_do_method(node, "set_global_transform", Object::cast_to<Node2D>(node)->get_global_transform());
-			if (Object::cast_to<Spatial>(node))
-				editor_data->get_undo_redo().add_do_method(node, "set_global_transform", Object::cast_to<Spatial>(node)->get_global_transform());
 			if (Object::cast_to<Control>(node))
 				editor_data->get_undo_redo().add_do_method(node, "set_global_position", Object::cast_to<Control>(node)->get_global_position());
 		}
@@ -1194,8 +1186,6 @@ void SceneTreeDock::_do_reparent(Node *p_new_parent, int p_position_in_parent, V
 		if (p_keep_global_xform) {
 			if (Object::cast_to<Node2D>(node))
 				editor_data->get_undo_redo().add_undo_method(node, "set_transform", Object::cast_to<Node2D>(node)->get_transform());
-			if (Object::cast_to<Spatial>(node))
-				editor_data->get_undo_redo().add_undo_method(node, "set_transform", Object::cast_to<Spatial>(node)->get_transform());
 			if (Object::cast_to<Control>(node))
 				editor_data->get_undo_redo().add_undo_method(node, "set_position", Object::cast_to<Control>(node)->get_position());
 		}
@@ -1835,9 +1825,6 @@ void SceneTreeDock::_focus_node() {
 	if (node->is_class("CanvasItem")) {
 		CanvasItemEditorPlugin *editor = Object::cast_to<CanvasItemEditorPlugin>(editor_data->get_editor("2D"));
 		editor->get_canvas_item_editor()->focus_selection();
-	} else {
-		SpatialEditorPlugin *editor = Object::cast_to<SpatialEditorPlugin>(editor_data->get_editor("3D"));
-		editor->get_spatial_editor()->get_editor_viewport(0)->focus_selection();
 	}
 }
 

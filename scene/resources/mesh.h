@@ -33,7 +33,6 @@
 
 #include "resource.h"
 #include "scene/resources/material.h"
-#include "scene/resources/shape.h"
 #include "servers/visual_server.h"
 #include "triangle_mesh.h"
 /**
@@ -134,8 +133,8 @@ public:
 	PoolVector<Face3> get_faces() const;
 	Ref<TriangleMesh> generate_triangle_mesh() const;
 
-	Ref<Shape> create_trimesh_shape() const;
-	Ref<Shape> create_convex_shape() const;
+	// Ref<Shape> create_trimesh_shape() const;
+	// Ref<Shape> create_convex_shape() const;
 
 	Ref<Mesh> create_outline(float p_margin) const;
 

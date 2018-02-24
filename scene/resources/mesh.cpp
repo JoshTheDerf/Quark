@@ -31,8 +31,6 @@
 #include "mesh.h"
 
 #include "pair.h"
-#include "scene/resources/concave_polygon_shape.h"
-#include "scene/resources/convex_polygon_shape.h"
 #include "surface_tool.h"
 
 #include <stdlib.h>
@@ -174,42 +172,6 @@ PoolVector<Face3> Mesh::get_faces() const {
 
 	}
 */
-}
-
-Ref<Shape> Mesh::create_convex_shape() const {
-
-	PoolVector<Vector3> vertices;
-
-	for (int i = 0; i < get_surface_count(); i++) {
-
-		Array a = surface_get_arrays(i);
-		PoolVector<Vector3> v = a[ARRAY_VERTEX];
-		vertices.append_array(v);
-	}
-
-	Ref<ConvexPolygonShape> shape = memnew(ConvexPolygonShape);
-	shape->set_points(vertices);
-	return shape;
-}
-
-Ref<Shape> Mesh::create_trimesh_shape() const {
-
-	PoolVector<Face3> faces = get_faces();
-	if (faces.size() == 0)
-		return Ref<Shape>();
-
-	PoolVector<Vector3> face_points;
-	face_points.resize(faces.size() * 3);
-
-	for (int i = 0; i < face_points.size(); i++) {
-
-		Face3 f = faces.get(i / 3);
-		face_points.set(i, f.vertex[i % 3]);
-	}
-
-	Ref<ConcavePolygonShape> shape = memnew(ConcavePolygonShape);
-	shape->set_faces(face_points);
-	return shape;
 }
 
 Ref<Mesh> Mesh::create_outline(float p_margin) const {
@@ -1260,8 +1222,6 @@ void ArrayMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("surface_get_name", "surf_idx"), &ArrayMesh::surface_get_name);
 	ClassDB::bind_method(D_METHOD("surface_get_arrays", "surf_idx"), &ArrayMesh::surface_get_arrays);
 	ClassDB::bind_method(D_METHOD("surface_get_blend_shape_arrays", "surf_idx"), &ArrayMesh::surface_get_blend_shape_arrays);
-	ClassDB::bind_method(D_METHOD("create_trimesh_shape"), &ArrayMesh::create_trimesh_shape);
-	ClassDB::bind_method(D_METHOD("create_convex_shape"), &ArrayMesh::create_convex_shape);
 	ClassDB::bind_method(D_METHOD("create_outline", "margin"), &ArrayMesh::create_outline);
 	ClassDB::bind_method(D_METHOD("center_geometry"), &ArrayMesh::center_geometry);
 	ClassDB::set_method_flags(get_class_static(), _scs_create("center_geometry"), METHOD_FLAGS_DEFAULT | METHOD_FLAG_EDITOR);

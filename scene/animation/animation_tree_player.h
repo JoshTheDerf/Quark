@@ -32,8 +32,6 @@
 #define ANIMATION_TREE_PLAYER_H
 
 #include "animation_player.h"
-#include "scene/3d/skeleton.h"
-#include "scene/3d/spatial.h"
 #include "scene/resources/animation.h"
 
 class AnimationTreePlayer : public Node {
@@ -80,16 +78,8 @@ private:
 
 		uint32_t id;
 		StringName subpath_concatenated;
-		int bone_idx;
 
 		inline bool operator<(const TrackKey &p_right) const {
-
-			if (id == p_right.id) {
-				if (bone_idx == p_right.bone_idx) {
-					return subpath_concatenated < p_right.subpath_concatenated;
-				} else
-					return bone_idx < p_right.bone_idx;
-			} else
 				return id < p_right.id;
 		}
 	};
@@ -97,9 +87,6 @@ private:
 	struct Track {
 		uint32_t id;
 		Object *object;
-		Spatial *spatial;
-		Skeleton *skeleton;
-		int bone_idx;
 		Vector<StringName> subpath;
 
 		Vector3 loc;

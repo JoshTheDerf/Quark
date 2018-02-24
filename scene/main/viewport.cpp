@@ -34,11 +34,6 @@
 #include "os/os.h"
 #include "project_settings.h"
 #include "scene/2d/collision_object_2d.h"
-#include "scene/3d/camera.h"
-#include "scene/3d/collision_object.h"
-#include "scene/3d/listener.h"
-#include "scene/3d/scenario_fx.h"
-#include "scene/3d/spatial.h"
 #include "scene/gui/control.h"
 #include "scene/gui/label.h"
 #include "scene/gui/panel.h"
@@ -222,31 +217,6 @@ void Viewport::update_worlds() {
 	find_world()->_update(get_tree()->get_frame());
 }
 
-void Viewport::_test_new_mouseover(ObjectID new_collider) {
-#ifndef _3D_DISABLED
-	if (new_collider != physics_object_over) {
-
-		if (physics_object_over) {
-
-			CollisionObject *co = Object::cast_to<CollisionObject>(ObjectDB::get_instance(physics_object_over));
-			if (co) {
-				co->_mouse_exit();
-			}
-		}
-
-		if (new_collider) {
-
-			CollisionObject *co = Object::cast_to<CollisionObject>(ObjectDB::get_instance(new_collider));
-			if (co) {
-				co->_mouse_enter();
-			}
-		}
-
-		physics_object_over = new_collider;
-	}
-#endif
-}
-
 void Viewport::_notification(int p_what) {
 
 	switch (p_what) {
@@ -280,34 +250,6 @@ void Viewport::_notification(int p_what) {
 			VS::get_singleton()->viewport_set_active(viewport, true);
 		} break;
 		case NOTIFICATION_READY: {
-#ifndef _3D_DISABLED
-			if (listeners.size() && !listener) {
-				Listener *first = NULL;
-				for (Set<Listener *>::Element *E = listeners.front(); E; E = E->next()) {
-
-					if (first == NULL || first->is_greater_than(E->get())) {
-						first = E->get();
-					}
-				}
-
-				if (first)
-					first->make_current();
-			}
-
-			if (cameras.size() && !camera) {
-				//there are cameras but no current camera, pick first in tree and make it current
-				Camera *first = NULL;
-				for (Set<Camera *>::Element *E = cameras.front(); E; E = E->next()) {
-
-					if (first == NULL || first->is_greater_than(E->get())) {
-						first = E->get();
-					}
-				}
-
-				if (first)
-					first->make_current();
-			}
-#endif
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
 
@@ -321,13 +263,6 @@ void Viewport::_notification(int p_what) {
 			if (contact_2d_debug.is_valid()) {
 				VisualServer::get_singleton()->free(contact_2d_debug);
 				contact_2d_debug = RID();
-			}
-
-			if (contact_3d_debug_multimesh.is_valid()) {
-				VisualServer::get_singleton()->free(contact_3d_debug_multimesh);
-				VisualServer::get_singleton()->free(contact_3d_debug_instance);
-				contact_3d_debug_instance = RID();
-				contact_3d_debug_multimesh = RID();
 			}
 
 			remove_from_group("_viewports");
@@ -362,7 +297,6 @@ void Viewport::_notification(int p_what) {
 			if (physics_object_picking && (to_screen_rect == Rect2() || Input::get_singleton()->get_mouse_mode() != Input::MOUSE_MODE_CAPTURED)) {
 
 				Vector2 last_pos(1e20, 1e20);
-				CollisionObject *last_object = NULL;
 				ObjectID last_id = 0;
 				Physics2DDirectSpaceState *ss2d = Physics2DServer::get_singleton()->space_get_direct_state(find_world_2d()->get_space());
 
@@ -609,28 +543,6 @@ Transform2D Viewport::get_global_canvas_transform() const {
 	return global_canvas_transform;
 }
 
-void Viewport::_listener_transform_changed_notify() {
-
-#ifndef _3D_DISABLED
-//if (listener)
-//		SpatialSoundServer::get_singleton()->listener_set_transform(internal_listener, listener->get_listener_transform());
-#endif
-}
-
-void Viewport::_listener_set(Listener *p_listener) {
-
-#ifndef _3D_DISABLED
-
-	if (listener == p_listener)
-		return;
-
-	listener = p_listener;
-
-	_update_listener();
-	_listener_transform_changed_notify();
-#endif
-}
-
 bool Viewport::_listener_add(Listener *p_listener) {
 
 	listeners.insert(p_listener);
@@ -644,99 +556,6 @@ void Viewport::_listener_remove(Listener *p_listener) {
 		listener = NULL;
 	}
 }
-
-#ifndef _3D_DISABLED
-void Viewport::_listener_make_next_current(Listener *p_exclude) {
-
-	if (listeners.size() > 0) {
-		for (Set<Listener *>::Element *E = listeners.front(); E; E = E->next()) {
-
-			if (p_exclude == E->get())
-				continue;
-			if (!E->get()->is_inside_tree())
-				continue;
-			if (listener != NULL)
-				return;
-
-			E->get()->make_current();
-		}
-	} else {
-		// Attempt to reset listener to the camera position
-		if (camera != NULL) {
-			_update_listener();
-			_camera_transform_changed_notify();
-		}
-	}
-}
-#endif
-
-void Viewport::_camera_transform_changed_notify() {
-
-#ifndef _3D_DISABLED
-// If there is an active listener in the scene, it takes priority over the camera
-//	if (camera && !listener)
-//		SpatialSoundServer::get_singleton()->listener_set_transform(internal_listener, camera->get_camera_transform());
-#endif
-}
-
-void Viewport::_camera_set(Camera *p_camera) {
-
-#ifndef _3D_DISABLED
-
-	if (camera == p_camera)
-		return;
-
-	if (camera && find_world().is_valid()) {
-		camera->notification(Camera::NOTIFICATION_LOST_CURRENT);
-	}
-	camera = p_camera;
-	if (camera)
-		VisualServer::get_singleton()->viewport_attach_camera(viewport, camera->get_camera());
-	else
-		VisualServer::get_singleton()->viewport_attach_camera(viewport, RID());
-
-	if (camera && find_world().is_valid()) {
-		camera->notification(Camera::NOTIFICATION_BECAME_CURRENT);
-	}
-
-	_update_listener();
-	_camera_transform_changed_notify();
-#endif
-}
-
-bool Viewport::_camera_add(Camera *p_camera) {
-
-	cameras.insert(p_camera);
-	return cameras.size() == 1;
-}
-
-void Viewport::_camera_remove(Camera *p_camera) {
-
-	cameras.erase(p_camera);
-	if (camera == p_camera) {
-		if (camera && find_world().is_valid()) {
-			camera->notification(Camera::NOTIFICATION_LOST_CURRENT);
-		}
-		camera = NULL;
-	}
-}
-
-#ifndef _3D_DISABLED
-void Viewport::_camera_make_next_current(Camera *p_exclude) {
-
-	for (Set<Camera *>::Element *E = cameras.front(); E; E = E->next()) {
-
-		if (p_exclude == E->get())
-			continue;
-		if (!E->get()->is_inside_tree())
-			continue;
-		if (camera != NULL)
-			return;
-
-		E->get()->make_current();
-	}
-}
-#endif
 
 void Viewport::set_transparent_background(bool p_enable) {
 
@@ -796,16 +615,11 @@ void Viewport::_propagate_enter_world(Node *p_node) {
 		if (!p_node->is_inside_tree()) //may not have entered scene yet
 			return;
 
-		if (Object::cast_to<Spatial>(p_node) || Object::cast_to<WorldEnvironment>(p_node)) {
+		Viewport *v = Object::cast_to<Viewport>(p_node);
+		if (v) {
 
-			p_node->notification(Spatial::NOTIFICATION_ENTER_WORLD);
-		} else {
-			Viewport *v = Object::cast_to<Viewport>(p_node);
-			if (v) {
-
-				if (v->world.is_valid())
-					return;
-			}
+			if (v->world.is_valid())
+				return;
 		}
 	}
 
@@ -833,16 +647,11 @@ void Viewport::_propagate_exit_world(Node *p_node) {
 		if (!p_node->is_inside_tree()) //may have exited scene already
 			return;
 
-		if (Object::cast_to<Spatial>(p_node) || Object::cast_to<WorldEnvironment>(p_node)) {
+		Viewport *v = Object::cast_to<Viewport>(p_node);
+		if (v) {
 
-			p_node->notification(Spatial::NOTIFICATION_EXIT_WORLD);
-		} else {
-			Viewport *v = Object::cast_to<Viewport>(p_node);
-			if (v) {
-
-				if (v->world.is_valid())
-					return;
-			}
+			if (v->world.is_valid())
+				return;
 		}
 	}
 
@@ -860,20 +669,10 @@ void Viewport::set_world(const Ref<World> &p_world) {
 	if (is_inside_tree())
 		_propagate_exit_world(this);
 
-#ifndef _3D_DISABLED
-	if (find_world().is_valid() && camera)
-		camera->notification(Camera::NOTIFICATION_LOST_CURRENT);
-#endif
-
 	world = p_world;
 
 	if (is_inside_tree())
 		_propagate_enter_world(this);
-
-#ifndef _3D_DISABLED
-	if (find_world().is_valid() && camera)
-		camera->notification(Camera::NOTIFICATION_BECAME_CURRENT);
-#endif
 
 	//propagate exit
 
@@ -909,11 +708,6 @@ Ref<World> Viewport::find_world() const {
 Listener *Viewport::get_listener() const {
 
 	return listener;
-}
-
-Camera *Viewport::get_camera() const {
-
-	return camera;
 }
 
 Transform2D Viewport::get_final_transform() const {
@@ -2239,11 +2033,6 @@ void Viewport::set_use_own_world(bool p_world) {
 	if (is_inside_tree())
 		_propagate_exit_world(this);
 
-#ifndef _3D_DISABLED
-	if (find_world().is_valid() && camera)
-		camera->notification(Camera::NOTIFICATION_LOST_CURRENT);
-#endif
-
 	if (!p_world)
 		own_world = Ref<World>();
 	else
@@ -2251,11 +2040,6 @@ void Viewport::set_use_own_world(bool p_world) {
 
 	if (is_inside_tree())
 		_propagate_enter_world(this);
-
-#ifndef _3D_DISABLED
-	if (find_world().is_valid() && camera)
-		camera->notification(Camera::NOTIFICATION_BECAME_CURRENT);
-#endif
 
 	//propagate exit
 
@@ -2489,8 +2273,6 @@ void Viewport::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_use_own_world", "enable"), &Viewport::set_use_own_world);
 	ClassDB::bind_method(D_METHOD("is_using_own_world"), &Viewport::is_using_own_world);
 
-	ClassDB::bind_method(D_METHOD("get_camera"), &Viewport::get_camera);
-
 	ClassDB::bind_method(D_METHOD("set_as_audio_listener", "enable"), &Viewport::set_as_audio_listener);
 	ClassDB::bind_method(D_METHOD("is_audio_listener"), &Viewport::is_audio_listener);
 
@@ -2531,7 +2313,7 @@ void Viewport::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "msaa", PROPERTY_HINT_ENUM, "Disabled,2x,4x,8x,16x"), "set_msaa", "get_msaa");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "hdr"), "set_hdr", "get_hdr");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "disable_3d"), "set_disable_3d", "is_3d_disabled");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "usage", PROPERTY_HINT_ENUM, "2D,2D No-Sampling,3D,3D No-Effects"), "set_usage", "get_usage");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "usage", PROPERTY_HINT_ENUM, "2D,2D No-Sampling"), "set_usage", "get_usage");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "debug_draw", PROPERTY_HINT_ENUM, "Disabled,Unshaded,Overdraw,Wireframe"), "set_debug_draw", "get_debug_draw");
 	ADD_GROUP("Render Target", "render_target_");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "render_target_v_flip"), "set_vflip", "get_vflip");
@@ -2539,7 +2321,6 @@ void Viewport::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "render_target_update_mode", PROPERTY_HINT_ENUM, "Disabled,Once,When Visible,Always"), "set_update_mode", "get_update_mode");
 	ADD_GROUP("Audio Listener", "audio_listener_");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "audio_listener_enable_2d"), "set_as_audio_listener_2d", "is_audio_listener_2d");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "audio_listener_enable_3d"), "set_as_audio_listener", "is_audio_listener");
 	ADD_GROUP("Physics", "physics_");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "physics_object_picking"), "set_physics_object_picking", "get_physics_object_picking");
 	ADD_GROUP("GUI", "gui_");
@@ -2591,8 +2372,6 @@ void Viewport::_bind_methods() {
 
 	BIND_ENUM_CONSTANT(USAGE_2D);
 	BIND_ENUM_CONSTANT(USAGE_2D_NO_SAMPLING);
-	BIND_ENUM_CONSTANT(USAGE_3D);
-	BIND_ENUM_CONSTANT(USAGE_3D_NO_EFFECTS);
 
 	BIND_ENUM_CONSTANT(CLEAR_MODE_ALWAYS);
 	BIND_ENUM_CONSTANT(CLEAR_MODE_NEVER);
@@ -2668,7 +2447,7 @@ Viewport::Viewport() {
 	msaa = MSAA_DISABLED;
 	hdr = true;
 
-	usage = USAGE_3D;
+	usage = USAGE_2D;
 	debug_draw = DEBUG_DRAW_DISABLED;
 	clear_mode = CLEAR_MODE_ALWAYS;
 

@@ -48,6 +48,8 @@
 #include "core/version.h"
 #include "main/input_default.h"
 #include "scene/resources/packed_scene.h"
+#include "scene/main/viewport.h"
+#include "scene/main/node.h"
 #include "servers/physics_2d_server.h"
 
 #include "editor/animation_editor.h"
@@ -56,41 +58,26 @@
 #include "editor/editor_help.h"
 #include "editor/editor_settings.h"
 #include "editor/editor_themes.h"
-#include "editor/import/editor_import_collada.h"
-#include "editor/import/editor_scene_importer_gltf.h"
 #include "editor/import/resource_importer_bitmask.h"
 #include "editor/import/resource_importer_csv_translation.h"
-#include "editor/import/resource_importer_obj.h"
-#include "editor/import/resource_importer_scene.h"
 #include "editor/import/resource_importer_texture.h"
 #include "editor/import/resource_importer_wav.h"
 #include "editor/plugins/animation_player_editor_plugin.h"
 #include "editor/plugins/animation_tree_editor_plugin.h"
 #include "editor/plugins/asset_library_editor_plugin.h"
-#include "editor/plugins/baked_lightmap_editor_plugin.h"
-#include "editor/plugins/camera_editor_plugin.h"
 #include "editor/plugins/canvas_item_editor_plugin.h"
 #include "editor/plugins/collision_polygon_2d_editor_plugin.h"
-#include "editor/plugins/collision_polygon_editor_plugin.h"
 #include "editor/plugins/collision_shape_2d_editor_plugin.h"
-#include "editor/plugins/cube_grid_theme_editor_plugin.h"
 #include "editor/plugins/curve_editor_plugin.h"
 #include "editor/plugins/editor_preview_plugins.h"
-#include "editor/plugins/gi_probe_editor_plugin.h"
 #include "editor/plugins/gradient_editor_plugin.h"
 #include "editor/plugins/item_list_editor_plugin.h"
 #include "editor/plugins/light_occluder_2d_editor_plugin.h"
 #include "editor/plugins/line_2d_editor_plugin.h"
 #include "editor/plugins/material_editor_plugin.h"
-#include "editor/plugins/mesh_editor_plugin.h"
-#include "editor/plugins/mesh_instance_editor_plugin.h"
-#include "editor/plugins/multimesh_editor_plugin.h"
-#include "editor/plugins/navigation_mesh_editor_plugin.h"
 #include "editor/plugins/navigation_polygon_editor_plugin.h"
 #include "editor/plugins/particles_2d_editor_plugin.h"
-#include "editor/plugins/particles_editor_plugin.h"
 #include "editor/plugins/path_2d_editor_plugin.h"
-#include "editor/plugins/path_editor_plugin.h"
 #include "editor/plugins/polygon_2d_editor_plugin.h"
 #include "editor/plugins/resource_preloader_editor_plugin.h"
 #include "editor/plugins/script_editor_plugin.h"
@@ -98,7 +85,6 @@
 #include "editor/plugins/shader_editor_plugin.h"
 #include "editor/plugins/shader_graph_editor_plugin.h"
 #include "editor/plugins/skeleton_2d_editor_plugin.h"
-#include "editor/plugins/spatial_editor_plugin.h"
 #include "editor/plugins/sprite_editor_plugin.h"
 #include "editor/plugins/sprite_frames_editor_plugin.h"
 #include "editor/plugins/style_box_editor_plugin.h"
@@ -906,8 +892,6 @@ void EditorNode::_find_node_types(Node *p_node, int &count_2d, int &count_3d) {
 
 	if (p_node->is_class("CanvasItem"))
 		count_2d++;
-	else if (p_node->is_class("Spatial"))
-		count_3d++;
 
 	for (int i = 0; i < p_node->get_child_count(); i++)
 		_find_node_types(p_node->get_child(i), count_2d, count_3d);
@@ -927,9 +911,6 @@ void EditorNode::_save_scene_with_preview(String p_file, int p_idx) {
 	if (c3d < c2d) {
 		viewport = scene_root->get_viewport_rid();
 		is2d = true;
-	} else {
-		viewport = SpatialEditor::get_singleton()->get_editor_viewport(0)->get_viewport_node()->get_viewport_rid();
-		is2d = false;
 	}
 	save.step(TTR("Creating Thumbnail"), 1);
 	//current view?
@@ -937,8 +918,6 @@ void EditorNode::_save_scene_with_preview(String p_file, int p_idx) {
 	Ref<Image> img;
 	if (is2d) {
 		img = scene_root->get_texture()->get_data();
-	} else {
-		img = SpatialEditor::get_singleton()->get_editor_viewport(0)->get_viewport_node()->get_texture()->get_data();
 	}
 
 	if (img.is_valid()) {
@@ -1168,37 +1147,6 @@ void EditorNode::_dialog_action(String p_file) {
 			}
 		} break;
 
-		case FILE_EXPORT_MESH_LIBRARY: {
-
-			Ref<MeshLibrary> ml;
-			if (file_export_lib_merge->is_pressed() && FileAccess::exists(p_file)) {
-				ml = ResourceLoader::load(p_file, "MeshLibrary");
-
-				if (ml.is_null()) {
-					current_option = -1;
-					accept->get_ok()->set_text(TTR("I see.."));
-					accept->set_text(TTR("Can't load MeshLibrary for merging!"));
-					accept->popup_centered_minsize();
-					return;
-				}
-			}
-
-			if (ml.is_null()) {
-				ml = Ref<MeshLibrary>(memnew(MeshLibrary));
-			}
-
-			MeshLibraryEditor::update_library_file(editor_data.get_edited_scene_root(), ml, true);
-
-			Error err = ResourceSaver::save(p_file, ml);
-			if (err) {
-
-				accept->get_ok()->set_text(TTR("I see.."));
-				accept->set_text(TTR("Error saving MeshLibrary!"));
-				accept->popup_centered_minsize();
-				return;
-			}
-
-		} break;
 		case FILE_EXPORT_TILESET: {
 
 			Ref<TileSet> ml;
@@ -1987,29 +1935,6 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 			project_export->popup_export();
 		} break;
 
-		case FILE_EXPORT_MESH_LIBRARY: {
-
-			if (!editor_data.get_edited_scene_root()) {
-
-				current_option = -1;
-				accept->get_ok()->set_text(TTR("I see.."));
-				accept->set_text(TTR("This operation can't be done without a scene."));
-				accept->popup_centered_minsize();
-				break;
-			}
-
-			List<String> extensions;
-			Ref<MeshLibrary> ml(memnew(MeshLibrary));
-			ResourceSaver::get_recognized_extensions(ml, &extensions);
-			file_export_lib->clear_filters();
-			for (List<String>::Element *E = extensions.front(); E; E = E->next()) {
-				file_export_lib->add_filter("*." + E->get());
-			}
-
-			file_export_lib->popup_centered_ratio();
-			file_export_lib->set_title(TTR("Export Mesh Library"));
-
-		} break;
 		case FILE_EXPORT_TILESET: {
 
 			//Make sure that the scene has a root before trying to convert to tileset
@@ -3200,11 +3125,6 @@ void EditorNode::_property_keyed(const String &p_keyed, const Variant &p_value, 
 }
 
 void EditorNode::_transform_keyed(Object *sp, const String &p_sub, const Transform &p_key) {
-
-	Spatial *s = Object::cast_to<Spatial>(sp);
-	if (!s)
-		return;
-	AnimationPlayerEditor::singleton->get_key_editor()->insert_transform_key(s, p_sub, p_key);
 }
 
 void EditorNode::update_keying() {
@@ -3360,7 +3280,6 @@ void EditorNode::register_editor_types() {
 	ClassDB::register_class<EditorSelection>();
 	ClassDB::register_class<EditorFileDialog>();
 	ClassDB::register_virtual_class<EditorSettings>();
-	ClassDB::register_class<EditorSpatialGizmo>();
 	ClassDB::register_virtual_class<EditorResourcePreview>();
 	ClassDB::register_class<EditorResourcePreviewGenerator>();
 	ClassDB::register_virtual_class<EditorFileSystem>();
@@ -3369,11 +3288,6 @@ void EditorNode::register_editor_types() {
 	ClassDB::register_virtual_class<EditorInterface>();
 	ClassDB::register_class<EditorExportPlugin>();
 	ClassDB::register_class<EditorResourceConversionPlugin>();
-	ClassDB::register_class<EditorSceneImporter>();
-
-	// FIXME: Is this stuff obsolete, or should it be ported to new APIs?
-	ClassDB::register_class<EditorScenePostImport>();
-	//ClassDB::register_type<EditorImportExport>();
 }
 
 void EditorNode::unregister_editor_types() {
@@ -4794,32 +4708,6 @@ EditorNode::EditorNode() {
 		import_wav.instance();
 		ResourceFormatImporter::get_singleton()->add_importer(import_wav);
 
-		Ref<ResourceImporterOBJ> import_obj;
-		import_obj.instance();
-		ResourceFormatImporter::get_singleton()->add_importer(import_obj);
-
-		Ref<ResourceImporterScene> import_scene;
-		import_scene.instance();
-		ResourceFormatImporter::get_singleton()->add_importer(import_scene);
-
-		{
-			Ref<EditorSceneImporterCollada> import_collada;
-			import_collada.instance();
-			import_scene->add_importer(import_collada);
-
-			Ref<EditorOBJImporter> import_obj;
-			import_obj.instance();
-			import_scene->add_importer(import_obj);
-
-			Ref<EditorSceneImporterGLTF> import_gltf;
-			import_gltf.instance();
-			import_scene->add_importer(import_gltf);
-
-			Ref<EditorSceneImporterESCN> import_escn;
-			import_escn.instance();
-			import_scene->add_importer(import_escn);
-		}
-
 		Ref<ResourceImporterBitMap> import_bitmap;
 		import_bitmap.instance();
 		ResourceFormatImporter::get_singleton()->add_importer(import_bitmap);
@@ -5161,7 +5049,6 @@ EditorNode::EditorNode() {
 	pm_export->set_name("Export");
 	p->add_child(pm_export);
 	p->add_submenu_item(TTR("Convert To.."), "Export");
-	pm_export->add_shortcut(ED_SHORTCUT("editor/convert_to_MeshLibrary", TTR("MeshLibrary..")), FILE_EXPORT_MESH_LIBRARY);
 	pm_export->add_shortcut(ED_SHORTCUT("editor/convert_to_TileSet", TTR("TileSet..")), FILE_EXPORT_TILESET);
 	pm_export->connect("id_pressed", this, "_menu_option");
 
@@ -5638,7 +5525,6 @@ EditorNode::EditorNode() {
 
 	add_editor_plugin(memnew(AnimationPlayerEditorPlugin(this)));
 	add_editor_plugin(memnew(CanvasItemEditorPlugin(this)));
-	add_editor_plugin(memnew(SpatialEditorPlugin(this)));
 	add_editor_plugin(memnew(ScriptEditorPlugin(this)));
 
 	EditorAudioBuses *audio_bus_editor = EditorAudioBuses::register_editor();
@@ -5659,29 +5545,20 @@ EditorNode::EditorNode() {
 	// FIXME: Disabled for Godot 3.0 as made incompatible, it needs to be ported to the new API.
 	//add_editor_plugin(memnew(ShaderGraphEditorPlugin(this)));
 
-	add_editor_plugin(memnew(CameraEditorPlugin(this)));
 	add_editor_plugin(memnew(ThemeEditorPlugin(this)));
-	add_editor_plugin(memnew(MultiMeshEditorPlugin(this)));
-	add_editor_plugin(memnew(MeshInstanceEditorPlugin(this)));
 	add_editor_plugin(memnew(AnimationTreeEditorPlugin(this)));
-	add_editor_plugin(memnew(MeshLibraryEditorPlugin(this)));
 	add_editor_plugin(memnew(StyleBoxEditorPlugin(this)));
 	add_editor_plugin(memnew(SpriteEditorPlugin(this)));
 	add_editor_plugin(memnew(Skeleton2DEditorPlugin(this)));
-	add_editor_plugin(memnew(ParticlesEditorPlugin(this)));
 	add_editor_plugin(memnew(ResourcePreloaderEditorPlugin(this)));
 	add_editor_plugin(memnew(ItemListEditorPlugin(this)));
-	add_editor_plugin(memnew(CollisionPolygonEditorPlugin(this)));
 	add_editor_plugin(memnew(CollisionPolygon2DEditorPlugin(this)));
 	add_editor_plugin(memnew(TileSetEditorPlugin(this)));
 	add_editor_plugin(memnew(TileMapEditorPlugin(this)));
 	add_editor_plugin(memnew(SpriteFramesEditorPlugin(this)));
 	add_editor_plugin(memnew(TextureRegionEditorPlugin(this)));
 	add_editor_plugin(memnew(Particles2DEditorPlugin(this)));
-	add_editor_plugin(memnew(GIProbeEditorPlugin(this)));
-	add_editor_plugin(memnew(BakedLightmapEditorPlugin(this)));
 	add_editor_plugin(memnew(Path2DEditorPlugin(this)));
-	add_editor_plugin(memnew(PathEditorPlugin(this)));
 	add_editor_plugin(memnew(Line2DEditorPlugin(this)));
 	add_editor_plugin(memnew(Polygon2DEditorPlugin(this)));
 	add_editor_plugin(memnew(LightOccluder2DEditorPlugin(this)));
@@ -5710,21 +5587,12 @@ EditorNode::EditorNode() {
 	resource_preview->add_preview_generator(Ref<EditorScriptPreviewPlugin>(memnew(EditorScriptPreviewPlugin)));
 	// FIXME: Needs to be rewritten for AudioStream in Godot 3.0+
 	//resource_preview->add_preview_generator( Ref<EditorSamplePreviewPlugin>( memnew(EditorSamplePreviewPlugin )));
-	resource_preview->add_preview_generator(Ref<EditorMeshPreviewPlugin>(memnew(EditorMeshPreviewPlugin)));
 	resource_preview->add_preview_generator(Ref<EditorBitmapPreviewPlugin>(memnew(EditorBitmapPreviewPlugin)));
 
 	{
-		Ref<SpatialMaterialConversionPlugin> spatial_mat_convert;
-		spatial_mat_convert.instance();
-		resource_conversion_plugins.push_back(spatial_mat_convert);
-
 		Ref<CanvasItemMaterialConversionPlugin> canvas_item_mat_convert;
 		canvas_item_mat_convert.instance();
 		resource_conversion_plugins.push_back(canvas_item_mat_convert);
-
-		Ref<ParticlesMaterialConversionPlugin> particles_mat_convert;
-		particles_mat_convert.instance();
-		resource_conversion_plugins.push_back(particles_mat_convert);
 	}
 	circle_step_msec = OS::get_singleton()->get_ticks_msec();
 	circle_step_frame = Engine::get_singleton()->get_frames_drawn();
@@ -5890,22 +5758,6 @@ bool EditorPluginList::forward_gui_input(const Ref<InputEvent> &p_event) {
 
 	for (int i = 0; i < plugins_list.size(); i++) {
 		if (plugins_list[i]->forward_canvas_gui_input(p_event)) {
-			discard = true;
-		}
-	}
-
-	return discard;
-}
-
-bool EditorPluginList::forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event, bool serve_when_force_input_enabled) {
-	bool discard = false;
-
-	for (int i = 0; i < plugins_list.size(); i++) {
-		if ((!serve_when_force_input_enabled) && plugins_list[i]->is_input_event_forwarding_always_enabled()) {
-			continue;
-		}
-
-		if (plugins_list[i]->forward_spatial_gui_input(p_camera, p_event)) {
 			discard = true;
 		}
 	}

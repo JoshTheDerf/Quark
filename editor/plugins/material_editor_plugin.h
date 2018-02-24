@@ -104,22 +104,6 @@ public:
 
 #endif
 
-class SpatialMaterialConversionPlugin : public EditorResourceConversionPlugin {
-	GDCLASS(SpatialMaterialConversionPlugin, EditorResourceConversionPlugin)
-public:
-	virtual String converts_to() const;
-	virtual bool handles(const Ref<Resource> &p_resource) const;
-	virtual Ref<Resource> convert(const Ref<Resource> &p_resource);
-};
-
-class ParticlesMaterialConversionPlugin : public EditorResourceConversionPlugin {
-	GDCLASS(ParticlesMaterialConversionPlugin, EditorResourceConversionPlugin)
-public:
-	virtual String converts_to() const;
-	virtual bool handles(const Ref<Resource> &p_resource) const;
-	virtual Ref<Resource> convert(const Ref<Resource> &p_resource);
-};
-
 class CanvasItemMaterialConversionPlugin : public EditorResourceConversionPlugin {
 	GDCLASS(CanvasItemMaterialConversionPlugin, EditorResourceConversionPlugin)
 public:

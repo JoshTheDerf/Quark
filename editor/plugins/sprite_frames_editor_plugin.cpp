@@ -33,7 +33,6 @@
 #include "editor/editor_settings.h"
 #include "io/resource_loader.h"
 #include "project_settings.h"
-#include "scene/3d/sprite_3d.h"
 
 void SpriteFramesEditor::_gui_input(Ref<InputEvent> p_event) {
 }
@@ -297,13 +296,6 @@ static void _find_anim_sprites(Node *p_node, List<Node *> *r_nodes, Ref<SpriteFr
 
 	{
 		AnimatedSprite *as = Object::cast_to<AnimatedSprite>(p_node);
-		if (as && as->get_sprite_frames() == p_sfames) {
-			r_nodes->push_back(p_node);
-		}
-	}
-
-	{
-		AnimatedSprite3D *as = Object::cast_to<AnimatedSprite3D>(p_node);
 		if (as && as->get_sprite_frames() == p_sfames) {
 			r_nodes->push_back(p_node);
 		}

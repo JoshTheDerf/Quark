@@ -40,7 +40,6 @@
 	@author Juan Linietsky <reduzio@gmail.com>
 */
 
-class Camera;
 class Camera2D;
 class Listener;
 class Control;
@@ -120,9 +119,7 @@ public:
 
 	enum Usage {
 		USAGE_2D,
-		USAGE_2D_NO_SAMPLING,
-		USAGE_3D,
-		USAGE_3D_NO_EFFECTS,
+		USAGE_2D_NO_SAMPLING
 	};
 
 	enum RenderInfo {
@@ -178,8 +175,6 @@ private:
 	Rect2 to_screen_rect;
 
 	RID contact_2d_debug;
-	RID contact_3d_debug_multimesh;
-	RID contact_3d_debug_instance;
 
 	bool size_override;
 	bool size_override_stretch;
@@ -201,12 +196,9 @@ private:
 	ObjectID physics_object_capture;
 	ObjectID physics_object_over;
 	Vector2 physics_last_mousepos;
-	void _test_new_mouseover(ObjectID new_collider);
 	Map<ObjectID, uint64_t> physics_2d_mouseover;
 
 	Ref<World2D> world_2d;
-	Ref<World> world;
-	Ref<World> own_world;
 
 	StringName input_group;
 	StringName gui_input_group;
@@ -336,20 +328,12 @@ private:
 	void _listener_remove(Listener *p_listener);
 	void _listener_make_next_current(Listener *p_exclude);
 
-	friend class Camera;
-	void _camera_transform_changed_notify();
-	void _camera_set(Camera *p_camera);
-	bool _camera_add(Camera *p_camera); //true if first
-	void _camera_remove(Camera *p_camera);
-	void _camera_make_next_current(Camera *p_exclude);
-
 protected:
 	void _notification(int p_what);
 	static void _bind_methods();
 
 public:
 	Listener *get_listener() const;
-	Camera *get_camera() const;
 
 	void set_as_audio_listener(bool p_enable);
 	bool is_audio_listener() const;
@@ -363,10 +347,7 @@ public:
 	Rect2 get_visible_rect() const;
 	RID get_viewport_rid() const;
 
-	void set_world(const Ref<World> &p_world);
 	void set_world_2d(const Ref<World2D> &p_world_2d);
-	Ref<World> get_world() const;
-	Ref<World> find_world() const;
 
 	Ref<World2D> get_world_2d() const;
 	Ref<World2D> find_world_2d() const;

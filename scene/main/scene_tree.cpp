@@ -2322,8 +2322,6 @@ SceneTree::SceneTree() {
 
 	root = memnew(Viewport);
 	root->set_name("root");
-	if (!root->get_world().is_valid())
-		root->set_world(Ref<World>(memnew(World)));
 
 	//root->set_world_2d( Ref<World2D>( memnew( World2D )));
 	root->set_as_audio_listener(true);

@@ -29,6 +29,7 @@
 /*************************************************************************/
 
 #include "animation_cache.h"
+#include "scene/main/node.h"
 
 void AnimationCache::_node_exit_tree(Node *p_node) {
 
@@ -88,72 +89,28 @@ void AnimationCache::_update_cache() {
 
 		Ref<Resource> res;
 
-		if (animation->track_get_type(i) == Animation::TYPE_TRANSFORM) {
+		if (np.get_subname_count() > 0) {
 
-			if (np.get_subname_count() > 1) {
-				path_cache.push_back(Path());
-				ERR_EXPLAIN("Transform tracks can't have a subpath: " + np);
-				ERR_CONTINUE(animation->track_get_type(i) == Animation::TYPE_TRANSFORM);
+			RES res;
+			Vector<StringName> leftover_subpath;
+
+			// We don't want to cache the last resource unless it is a method call
+			bool is_method = animation->track_get_type(i) == Animation::TYPE_METHOD;
+			root->get_node_and_resource(np, res, leftover_subpath, is_method);
+
+			if (res.is_valid()) {
+				path.resource = res;
+			} else {
+				path.node = node;
 			}
-
-			Spatial *sp = Object::cast_to<Spatial>(node);
-
-			if (!sp) {
-
-				path_cache.push_back(Path());
-				ERR_EXPLAIN("Transform track not of type Spatial: " + np);
-				ERR_CONTINUE(!sp);
-			}
-
-			if (np.get_subname_count() == 1) {
-				StringName property = np.get_subname(0);
-				String ps = property;
-
-				Skeleton *sk = Object::cast_to<Skeleton>(node);
-				if (!sk) {
-
-					path_cache.push_back(Path());
-					ERR_EXPLAIN("Property defined in Transform track, but not a Skeleton!: " + np);
-					ERR_CONTINUE(!sk);
-				}
-
-				int idx = sk->find_bone(ps);
-				if (idx == -1) {
-					path_cache.push_back(Path());
-					ERR_EXPLAIN("Property defined in Transform track, but not a Skeleton Bone!: " + np);
-					ERR_CONTINUE(idx == -1);
-				}
-
-				path.bone_idx = idx;
-				path.skeleton = sk;
-			}
-
-			path.spatial = sp;
+			path.object = res.is_valid() ? res.ptr() : (Object *)node;
+			path.subpath = leftover_subpath;
 
 		} else {
-			if (np.get_subname_count() > 0) {
 
-				RES res;
-				Vector<StringName> leftover_subpath;
-
-				// We don't want to cache the last resource unless it is a method call
-				bool is_method = animation->track_get_type(i) == Animation::TYPE_METHOD;
-				root->get_node_and_resource(np, res, leftover_subpath, is_method);
-
-				if (res.is_valid()) {
-					path.resource = res;
-				} else {
-					path.node = node;
-				}
-				path.object = res.is_valid() ? res.ptr() : (Object *)node;
-				path.subpath = leftover_subpath;
-
-			} else {
-
-				path.node = node;
-				path.object = node;
-				path.subpath = np.get_subnames();
-			}
+			path.node = node;
+			path.object = node;
+			path.subpath = np.get_subnames();
 		}
 
 		if (animation->track_get_type(i) == Animation::TYPE_VALUE) {
@@ -201,13 +158,6 @@ void AnimationCache::set_track_transform(int p_idx, const Transform &p_transform
 		return;
 
 	ERR_FAIL_COND(!p.node);
-	ERR_FAIL_COND(!p.spatial);
-
-	if (p.skeleton) {
-		p.skeleton->set_bone_pose(p.bone_idx, p_transform);
-	} else {
-		p.spatial->set_transform(p_transform);
-	}
 }
 
 void AnimationCache::set_track_value(int p_idx, const Variant &p_value) {

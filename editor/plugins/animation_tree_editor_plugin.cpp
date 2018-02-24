@@ -1194,38 +1194,6 @@ void AnimationTreeEditor::_edit_filters() {
 
 		TreeItem *parent = root;
 		String descr = E->get();
-		if (base) {
-			NodePath np = E->get();
-
-			if (np.get_subname_count() == 1) {
-				Node *n = base->get_node(np);
-				Skeleton *s = Object::cast_to<Skeleton>(n);
-				if (s) {
-
-					String skelbase = E->get().substr(0, E->get().find(":"));
-
-					int bidx = s->find_bone(np.get_subname(0));
-
-					if (bidx != -1) {
-						int bparent = s->get_bone_parent(bidx);
-						//
-						if (bparent != -1) {
-
-							String bpn = skelbase + ":" + s->get_bone_name(bparent);
-							if (pm.has(bpn)) {
-								parent = pm[bpn];
-								descr = np.get_subname(0);
-							}
-						} else {
-
-							if (pm.has(skelbase)) {
-								parent = pm[skelbase];
-							}
-						}
-					}
-				}
-			}
-		}
 
 		TreeItem *it = filter->create_item(parent);
 		it->set_cell_mode(0, TreeItem::CELL_MODE_CHECK);

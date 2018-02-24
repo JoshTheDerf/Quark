@@ -39,7 +39,6 @@
 
 // For onion skinning
 #include "editor/plugins/canvas_item_editor_plugin.h"
-#include "editor/plugins/spatial_editor_plugin.h"
 #include "scene/main/viewport.h"
 #include "servers/visual_server.h"
 
@@ -1345,38 +1344,16 @@ void AnimationPlayerEditor::_prepare_onion_layers_2() {
 
 	// Hide superfluous elements that would make the overlay unnecessary cluttered
 	Dictionary canvas_edit_state;
-	Dictionary spatial_edit_state;
-	if (SpatialEditor::get_singleton()->is_visible()) {
-		// 3D
-		spatial_edit_state = SpatialEditor::get_singleton()->get_state();
-		Dictionary new_state = spatial_edit_state.duplicate();
-		new_state["show_grid"] = false;
-		new_state["show_origin"] = false;
-		Array orig_vp = spatial_edit_state["viewports"];
-		Array vp;
-		vp.resize(4);
-		for (int i = 0; i < vp.size(); i++) {
-			Dictionary d = ((Dictionary)orig_vp[i]).duplicate();
-			d["use_environment"] = false;
-			d["doppler"] = false;
-			d["gizmos"] = onion.include_gizmos ? d["gizmos"] : Variant(false);
-			d["information"] = false;
-			vp[i] = d;
-		}
-		new_state["viewports"] = vp;
-		// TODO: Save/restore only affected entries
-		SpatialEditor::get_singleton()->set_state(new_state);
-	} else { // CanvasItemEditor
-		// 2D
-		canvas_edit_state = CanvasItemEditor::get_singleton()->get_state();
-		Dictionary new_state = canvas_edit_state.duplicate();
-		new_state["show_grid"] = false;
-		new_state["show_rulers"] = false;
-		new_state["show_guides"] = false;
-		new_state["show_helpers"] = false;
-		// TODO: Save/restore only affected entries
-		CanvasItemEditor::get_singleton()->set_state(new_state);
-	}
+
+	// 2D
+	canvas_edit_state = CanvasItemEditor::get_singleton()->get_state();
+	Dictionary new_state = canvas_edit_state.duplicate();
+	new_state["show_grid"] = false;
+	new_state["show_rulers"] = false;
+	new_state["show_guides"] = false;
+	new_state["show_helpers"] = false;
+	// TODO: Save/restore only affected entries
+	CanvasItemEditor::get_singleton()->set_state(new_state);
 
 	// Tweak the root viewport to ensure it's rendered before our target
 	RID root_vp = get_tree()->get_root()->get_viewport_rid();
@@ -1426,7 +1403,6 @@ void AnimationPlayerEditor::_prepare_onion_layers_2() {
 		if (valid) {
 			player->seek(pos, true);
 			get_tree()->flush_transform_notifications(); // Needed for transforms of Spatials
-			values_backup.update_skeletons(); // Needed for Skeletons
 
 			VS::get_singleton()->viewport_set_active(onion.captures[cidx], true);
 			VS::get_singleton()->viewport_set_parent_viewport(root_vp, onion.captures[cidx]);
@@ -1448,14 +1424,7 @@ void AnimationPlayerEditor::_prepare_onion_layers_2() {
 	player->seek(cpos, false);
 	player->restore_animated_values(values_backup);
 
-	// Restor state of main editors
-	if (SpatialEditor::get_singleton()->is_visible()) {
-		// 3D
-		SpatialEditor::get_singleton()->set_state(spatial_edit_state);
-	} else { // CanvasItemEditor
-		// 2D
-		CanvasItemEditor::get_singleton()->set_state(canvas_edit_state);
-	}
+	CanvasItemEditor::get_singleton()->set_state(canvas_edit_state);
 
 	// Update viewports with skin layers overlaid for the actual engine loop render
 	onion.can_overlay = true;

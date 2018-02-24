@@ -35,7 +35,6 @@
 #include "os/main_loop.h"
 #include "os/thread_safe.h"
 #include "scene/resources/mesh.h"
-#include "scene/resources/world.h"
 #include "scene/resources/world_2d.h"
 #include "self_list.h"
 

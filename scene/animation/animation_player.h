@@ -32,8 +32,6 @@
 #define ANIMATION_PLAYER_H
 
 #include "scene/2d/node_2d.h"
-#include "scene/3d/skeleton.h"
-#include "scene/3d/spatial.h"
 #include "scene/resources/animation.h"
 /**
 	@author Juan Linietsky <reduzio@gmail.com>
@@ -45,15 +43,11 @@ class AnimatedValuesBackup {
 	struct Entry {
 		Object *object;
 		Vector<StringName> subpath; // Unused if bone
-		int bone_idx; // -1 if not a bone
 		Variant value;
 	};
 	Vector<Entry> entries;
 
 	friend class AnimationPlayer;
-
-public:
-	void update_skeletons();
 };
 #endif
 
@@ -87,10 +81,7 @@ private:
 		uint32_t id;
 		RES resource;
 		Node *node;
-		Spatial *spatial;
 		Node2D *node_2d;
-		Skeleton *skeleton;
-		int bone_idx;
 		// accumulated transforms
 
 		Vector3 loc_accum;
@@ -115,11 +106,8 @@ private:
 		Map<StringName, PropertyAnim> property_anim;
 
 		TrackNodeCache() {
-			skeleton = NULL;
-			spatial = NULL;
 			node = NULL;
 			accum_pass = 0;
-			bone_idx = -1;
 			node_2d = NULL;
 		}
 	};
@@ -127,7 +115,6 @@ private:
 	struct TrackNodeCacheKey {
 
 		uint32_t id;
-		int bone_idx;
 
 		inline bool operator<(const TrackNodeCacheKey &p_right) const {
 
@@ -135,8 +122,6 @@ private:
 				return true;
 			else if (id > p_right.id)
 				return false;
-			else
-				return bone_idx < p_right.bone_idx;
 		}
 	};
 

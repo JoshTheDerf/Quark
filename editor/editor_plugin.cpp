@@ -35,121 +35,8 @@
 #include "editor_resource_preview.h"
 #include "main/main.h"
 #include "plugins/canvas_item_editor_plugin.h"
-#include "plugins/spatial_editor_plugin.h"
-#include "scene/3d/camera.h"
 #include "scene/gui/popup_menu.h"
 #include "servers/visual_server.h"
-Array EditorInterface::_make_mesh_previews(const Array &p_meshes, int p_preview_size) {
-
-	Vector<Ref<Mesh> > meshes;
-
-	for (int i = 0; i < p_meshes.size(); i++) {
-		meshes.push_back(p_meshes[i]);
-	}
-
-	Vector<Ref<Texture> > textures = make_mesh_previews(meshes, p_preview_size);
-	Array ret;
-	for (int i = 0; i < textures.size(); i++) {
-		ret.push_back(textures[i]);
-	}
-
-	return ret;
-}
-
-Vector<Ref<Texture> > EditorInterface::make_mesh_previews(const Vector<Ref<Mesh> > &p_meshes, int p_preview_size) {
-
-	int size = p_preview_size;
-
-	RID scenario = VS::get_singleton()->scenario_create();
-
-	RID viewport = VS::get_singleton()->viewport_create();
-	VS::get_singleton()->viewport_set_update_mode(viewport, VS::VIEWPORT_UPDATE_ALWAYS);
-	VS::get_singleton()->viewport_set_vflip(viewport, true);
-	VS::get_singleton()->viewport_set_scenario(viewport, scenario);
-	VS::get_singleton()->viewport_set_size(viewport, size, size);
-	VS::get_singleton()->viewport_set_transparent_background(viewport, true);
-	VS::get_singleton()->viewport_set_active(viewport, true);
-	RID viewport_texture = VS::get_singleton()->viewport_get_texture(viewport);
-
-	RID camera = VS::get_singleton()->camera_create();
-	VS::get_singleton()->viewport_attach_camera(viewport, camera);
-	VS::get_singleton()->camera_set_transform(camera, Transform(Basis(), Vector3(0, 0, 3)));
-	//VS::get_singleton()->camera_set_perspective(camera,45,0.1,10);
-	VS::get_singleton()->camera_set_orthogonal(camera, 1.0, 0.01, 1000.0);
-
-	RID light = VS::get_singleton()->directional_light_create();
-	RID light_instance = VS::get_singleton()->instance_create2(light, scenario);
-	VS::get_singleton()->instance_set_transform(light_instance, Transform().looking_at(Vector3(-1, -1, -1), Vector3(0, 1, 0)));
-
-	RID light2 = VS::get_singleton()->directional_light_create();
-	VS::get_singleton()->light_set_color(light2, Color(0.7, 0.7, 0.7));
-	//VS::get_singleton()->light_set_color(light2, VS::LIGHT_COLOR_SPECULAR, Color(0.0, 0.0, 0.0));
-	RID light_instance2 = VS::get_singleton()->instance_create2(light2, scenario);
-
-	VS::get_singleton()->instance_set_transform(light_instance2, Transform().looking_at(Vector3(0, 1, 0), Vector3(0, 0, 1)));
-
-	//sphere = VS::get_singleton()->mesh_create();
-	RID mesh_instance = VS::get_singleton()->instance_create();
-	VS::get_singleton()->instance_set_scenario(mesh_instance, scenario);
-
-	EditorProgress ep("mlib", TTR("Creating Mesh Previews"), p_meshes.size());
-
-	Vector<Ref<Texture> > textures;
-
-	for (int i = 0; i < p_meshes.size(); i++) {
-
-		Ref<Mesh> mesh = p_meshes[i];
-		if (!mesh.is_valid()) {
-			textures.push_back(Ref<Texture>());
-			continue;
-		}
-		AABB aabb = mesh->get_aabb();
-		print_line("aabb: " + aabb);
-		Vector3 ofs = aabb.position + aabb.size * 0.5;
-		aabb.position -= ofs;
-		Transform xform;
-		xform.basis = Basis().rotated(Vector3(0, 1, 0), -Math_PI * 0.25);
-		xform.basis = Basis().rotated(Vector3(1, 0, 0), Math_PI * 0.25) * xform.basis;
-		AABB rot_aabb = xform.xform(aabb);
-		print_line("rot_aabb: " + rot_aabb);
-		float m = MAX(rot_aabb.size.x, rot_aabb.size.y) * 0.5;
-		if (m == 0) {
-			textures.push_back(Ref<Texture>());
-			continue;
-		}
-		m = 1.0 / m;
-		m *= 0.5;
-		print_line("scale: " + rtos(m));
-		xform.basis.scale(Vector3(m, m, m));
-		xform.origin = -xform.basis.xform(ofs); //-ofs*m;
-		xform.origin.z -= rot_aabb.size.z * 2;
-		RID inst = VS::get_singleton()->instance_create2(mesh->get_rid(), scenario);
-		VS::get_singleton()->instance_set_transform(inst, xform);
-		ep.step(TTR("Thumbnail.."), i);
-		Main::iteration();
-		Main::iteration();
-		Ref<Image> img = VS::get_singleton()->texture_get_data(viewport_texture);
-		ERR_CONTINUE(!img.is_valid() || img->empty());
-		Ref<ImageTexture> it(memnew(ImageTexture));
-		it->create_from_image(img);
-
-		//print_line("loaded image, size: "+rtos(m)+" dist: "+rtos(dist)+" empty?"+itos(img.empty())+" w: "+itos(it->get_width())+" h: "+itos(it->get_height()));
-		VS::get_singleton()->free(inst);
-
-		textures.push_back(it);
-	}
-
-	VS::get_singleton()->free(mesh_instance);
-	VS::get_singleton()->free(viewport);
-	VS::get_singleton()->free(light);
-	VS::get_singleton()->free(light_instance);
-	VS::get_singleton()->free(light2);
-	VS::get_singleton()->free(light_instance2);
-	VS::get_singleton()->free(camera);
-	VS::get_singleton()->free(scenario);
-
-	return textures;
-}
 
 Control *EditorInterface::get_editor_viewport() {
 
@@ -275,7 +162,6 @@ void EditorInterface::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_resource_previewer"), &EditorInterface::get_resource_previewer);
 	ClassDB::bind_method(D_METHOD("get_resource_filesystem"), &EditorInterface::get_resource_file_system);
 	ClassDB::bind_method(D_METHOD("get_editor_viewport"), &EditorInterface::get_editor_viewport);
-	ClassDB::bind_method(D_METHOD("make_mesh_previews", "meshes", "preview_size"), &EditorInterface::_make_mesh_previews);
 	ClassDB::bind_method(D_METHOD("select_file", "p_file"), &EditorInterface::select_file);
 	ClassDB::bind_method(D_METHOD("get_selected_path"), &EditorInterface::get_selected_path);
 
@@ -341,22 +227,6 @@ void EditorPlugin::add_control_to_container(CustomControlContainer p_location, C
 			EditorNode::get_menu_hb()->add_child(p_control);
 		} break;
 
-		case CONTAINER_SPATIAL_EDITOR_MENU: {
-
-			SpatialEditor::get_singleton()->add_control_to_menu_panel(p_control);
-
-		} break;
-		case CONTAINER_SPATIAL_EDITOR_SIDE: {
-
-			SpatialEditor::get_singleton()->get_palette_split()->add_child(p_control);
-			SpatialEditor::get_singleton()->get_palette_split()->move_child(p_control, 0);
-
-		} break;
-		case CONTAINER_SPATIAL_EDITOR_BOTTOM: {
-
-			SpatialEditor::get_singleton()->get_shader_split()->add_child(p_control);
-
-		} break;
 		case CONTAINER_CANVAS_EDITOR_MENU: {
 
 			CanvasItemEditor::get_singleton()->add_control_to_menu_panel(p_control);
@@ -390,21 +260,6 @@ void EditorPlugin::remove_control_from_container(CustomControlContainer p_locati
 			EditorNode::get_menu_hb()->remove_child(p_control);
 		} break;
 
-		case CONTAINER_SPATIAL_EDITOR_MENU: {
-
-			SpatialEditor::get_singleton()->remove_control_from_menu_panel(p_control);
-
-		} break;
-		case CONTAINER_SPATIAL_EDITOR_SIDE: {
-
-			SpatialEditor::get_singleton()->get_palette_split()->remove_child(p_control);
-
-		} break;
-		case CONTAINER_SPATIAL_EDITOR_BOTTOM: {
-
-			SpatialEditor::get_singleton()->get_shader_split()->remove_child(p_control);
-
-		} break;
 		case CONTAINER_CANVAS_EDITOR_MENU: {
 
 			CanvasItemEditor::get_singleton()->remove_control_from_menu_panel(p_control);
@@ -476,15 +331,6 @@ void EditorPlugin::notify_scene_closed(const String &scene_filepath) {
 	emit_signal("scene_closed", scene_filepath);
 }
 
-Ref<SpatialEditorGizmo> EditorPlugin::create_spatial_gizmo(Spatial *p_spatial) {
-	//??
-	if (get_script_instance() && get_script_instance()->has_method("create_spatial_gizmo")) {
-		return get_script_instance()->call("create_spatial_gizmo", p_spatial);
-	}
-
-	return Ref<SpatialEditorGizmo>();
-}
-
 bool EditorPlugin::forward_canvas_gui_input(const Ref<InputEvent> &p_event) {
 
 	if (get_script_instance() && get_script_instance()->has_method("forward_canvas_gui_input")) {
@@ -507,34 +353,13 @@ void EditorPlugin::forward_force_draw_over_viewport(Control *p_overlay) {
 	}
 }
 
-// Updates the overlays of the 2D viewport or, if in 3D mode, of every 3D viewport.
+// Updates the overlays of the 2D viewport.
 int EditorPlugin::update_overlays() const {
-
-	if (SpatialEditor::get_singleton()->is_visible()) {
-		int count = 0;
-		for (int i = 0; i < SpatialEditor::VIEWPORTS_COUNT; i++) {
-			SpatialEditorViewport *vp = SpatialEditor::get_singleton()->get_editor_viewport(i);
-			if (vp->is_visible()) {
-				vp->update_surface();
-				count++;
-			}
-		}
-		return count;
-	} else {
-		// This will update the normal viewport itself as well
-		CanvasItemEditor::get_singleton()->get_viewport_control()->update();
-		return 1;
-	}
+	// This will update the normal viewport itself as well
+	CanvasItemEditor::get_singleton()->get_viewport_control()->update();
+	return 1;
 }
 
-bool EditorPlugin::forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event) {
-
-	if (get_script_instance() && get_script_instance()->has_method("forward_spatial_gui_input")) {
-		return get_script_instance()->call("forward_spatial_gui_input", p_camera, p_event);
-	}
-
-	return false;
-}
 String EditorPlugin::get_name() const {
 
 	if (get_script_instance() && get_script_instance()->has_method("get_plugin_name")) {
@@ -658,14 +483,6 @@ void EditorPlugin::remove_export_plugin(const Ref<EditorExportPlugin> &p_exporte
 	EditorExport::get_singleton()->remove_export_plugin(p_exporter);
 }
 
-void EditorPlugin::add_scene_import_plugin(const Ref<EditorSceneImporter> &p_importer) {
-	ResourceImporterScene::get_singleton()->add_importer(p_importer);
-}
-
-void EditorPlugin::remove_scene_import_plugin(const Ref<EditorSceneImporter> &p_importer) {
-	ResourceImporterScene::get_singleton()->remove_importer(p_importer);
-}
-
 void EditorPlugin::set_window_layout(Ref<ConfigFile> p_layout) {
 
 	if (get_script_instance() && get_script_instance()->has_method("set_window_layout")) {
@@ -725,8 +542,6 @@ void EditorPlugin::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("queue_save_layout"), &EditorPlugin::queue_save_layout);
 	ClassDB::bind_method(D_METHOD("add_import_plugin", "importer"), &EditorPlugin::add_import_plugin);
 	ClassDB::bind_method(D_METHOD("remove_import_plugin", "importer"), &EditorPlugin::remove_import_plugin);
-	ClassDB::bind_method(D_METHOD("add_scene_import_plugin", "scene_importer"), &EditorPlugin::add_scene_import_plugin);
-	ClassDB::bind_method(D_METHOD("remove_scene_import_plugin", "scene_importer"), &EditorPlugin::remove_scene_import_plugin);
 	ClassDB::bind_method(D_METHOD("add_export_plugin", "exporter"), &EditorPlugin::add_export_plugin);
 	ClassDB::bind_method(D_METHOD("remove_export_plugin", "exporter"), &EditorPlugin::remove_export_plugin);
 	ClassDB::bind_method(D_METHOD("set_input_event_forwarding_always_enabled"), &EditorPlugin::set_input_event_forwarding_always_enabled);
@@ -737,11 +552,6 @@ void EditorPlugin::_bind_methods() {
 	ClassDB::add_virtual_method(get_class_static(), MethodInfo(Variant::BOOL, "forward_canvas_gui_input", PropertyInfo(Variant::OBJECT, "event", PROPERTY_HINT_RESOURCE_TYPE, "InputEvent")));
 	ClassDB::add_virtual_method(get_class_static(), MethodInfo("forward_draw_over_viewport", PropertyInfo(Variant::OBJECT, "overlay", PROPERTY_HINT_RESOURCE_TYPE, "Control")));
 	ClassDB::add_virtual_method(get_class_static(), MethodInfo("forward_force_draw_over_viewport", PropertyInfo(Variant::OBJECT, "overlay", PROPERTY_HINT_RESOURCE_TYPE, "Control")));
-	ClassDB::add_virtual_method(get_class_static(), MethodInfo(Variant::BOOL, "forward_spatial_gui_input", PropertyInfo(Variant::OBJECT, "camera", PROPERTY_HINT_RESOURCE_TYPE, "Camera"), PropertyInfo(Variant::OBJECT, "event", PROPERTY_HINT_RESOURCE_TYPE, "InputEvent")));
-	MethodInfo gizmo = MethodInfo(Variant::OBJECT, "create_spatial_gizmo", PropertyInfo(Variant::OBJECT, "for_spatial", PROPERTY_HINT_RESOURCE_TYPE, "Spatial"));
-	gizmo.return_val.hint = PROPERTY_HINT_RESOURCE_TYPE;
-	gizmo.return_val.hint_string = "EditorSpatialGizmo";
-	ClassDB::add_virtual_method(get_class_static(), gizmo);
 	ClassDB::add_virtual_method(get_class_static(), MethodInfo(Variant::STRING, "get_plugin_name"));
 	ClassDB::add_virtual_method(get_class_static(), MethodInfo(Variant::OBJECT, "get_plugin_icon"));
 	ClassDB::add_virtual_method(get_class_static(), MethodInfo(Variant::BOOL, "has_main_screen"));
@@ -762,9 +572,6 @@ void EditorPlugin::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("main_screen_changed", PropertyInfo(Variant::STRING, "screen_name")));
 
 	BIND_ENUM_CONSTANT(CONTAINER_TOOLBAR);
-	BIND_ENUM_CONSTANT(CONTAINER_SPATIAL_EDITOR_MENU);
-	BIND_ENUM_CONSTANT(CONTAINER_SPATIAL_EDITOR_SIDE);
-	BIND_ENUM_CONSTANT(CONTAINER_SPATIAL_EDITOR_BOTTOM);
 	BIND_ENUM_CONSTANT(CONTAINER_CANVAS_EDITOR_MENU);
 	BIND_ENUM_CONSTANT(CONTAINER_CANVAS_EDITOR_SIDE);
 	BIND_ENUM_CONSTANT(CONTAINER_CANVAS_EDITOR_BOTTOM);

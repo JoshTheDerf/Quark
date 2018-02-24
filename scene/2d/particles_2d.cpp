@@ -31,7 +31,7 @@
 #include "particles_2d.h"
 
 #include "engine.h"
-#include "scene/3d/particles.h"
+#include "scene/2d/particles_material.h"
 #include "scene/scene_string_names.h"
 
 void Particles2D::set_emitting(bool p_emitting) {

@@ -32,7 +32,6 @@
 #define EDITOR_PLUGIN_H
 
 #include "editor/import/editor_import_plugin.h"
-#include "editor/import/resource_importer_scene.h"
 #include "io/config_file.h"
 #include "scene/gui/tool_button.h"
 #include "scene/main/node.h"
@@ -44,12 +43,9 @@
 */
 
 class EditorNode;
-class Spatial;
-class Camera;
 class EditorSelection;
 class EditorExport;
 class EditorSettings;
-class SpatialEditorGizmo;
 class EditorImportPlugin;
 class EditorExportPlugin;
 class EditorResourcePreview;
@@ -62,8 +58,6 @@ class EditorInterface : public Node {
 protected:
 	static void _bind_methods();
 	static EditorInterface *singleton;
-
-	Array _make_mesh_previews(const Array &p_meshes, int p_preview_size);
 
 public:
 	static EditorInterface *get_singleton() { return singleton; }
@@ -96,8 +90,6 @@ public:
 	Error save_scene();
 	void save_scene_as(const String &p_scene, bool p_with_preview = true);
 
-	Vector<Ref<Texture> > make_mesh_previews(const Vector<Ref<Mesh> > &p_meshes, int p_preview_size);
-
 	EditorInterface();
 };
 
@@ -124,9 +116,6 @@ protected:
 public:
 	enum CustomControlContainer {
 		CONTAINER_TOOLBAR,
-		CONTAINER_SPATIAL_EDITOR_MENU,
-		CONTAINER_SPATIAL_EDITOR_SIDE,
-		CONTAINER_SPATIAL_EDITOR_BOTTOM,
 		CONTAINER_CANVAS_EDITOR_MENU,
 		CONTAINER_CANVAS_EDITOR_SIDE,
 		CONTAINER_CANVAS_EDITOR_BOTTOM,
@@ -168,11 +157,9 @@ public:
 	void notify_scene_changed(const Node *scn_root);
 	void notify_scene_closed(const String &scene_filepath);
 
-	virtual Ref<SpatialEditorGizmo> create_spatial_gizmo(Spatial *p_spatial);
 	virtual bool forward_canvas_gui_input(const Ref<InputEvent> &p_event);
 	virtual void forward_draw_over_viewport(Control *p_overlay);
 	virtual void forward_force_draw_over_viewport(Control *p_overlay);
-	virtual bool forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event);
 	virtual String get_name() const;
 	virtual const Ref<Texture> get_icon() const;
 	virtual bool has_main_screen() const;
@@ -208,9 +195,6 @@ public:
 
 	void add_export_plugin(const Ref<EditorExportPlugin> &p_exporter);
 	void remove_export_plugin(const Ref<EditorExportPlugin> &p_exporter);
-
-	void add_scene_import_plugin(const Ref<EditorSceneImporter> &p_importer);
-	void remove_scene_import_plugin(const Ref<EditorSceneImporter> &p_importer);
 
 	void add_autoload_singleton(const String &p_name, const String &p_path);
 	void remove_autoload_singleton(const String &p_name);

@@ -3192,49 +3192,6 @@ void AnimationKeyEditor::_query_insert(const InsertData &p_id) {
 	}
 }
 
-void AnimationKeyEditor::insert_transform_key(Spatial *p_node, const String &p_sub, const Transform &p_xform) {
-
-	if (!keying)
-		return;
-	if (!animation.is_valid())
-		return;
-
-	ERR_FAIL_COND(!root);
-	//let's build a node path
-	String path = root->get_path_to(p_node);
-	if (p_sub != "")
-		path += ":" + p_sub;
-
-	NodePath np = path;
-
-	int track_idx = -1;
-
-	for (int i = 0; i < animation->get_track_count(); i++) {
-
-		if (animation->track_get_type(i) != Animation::TYPE_TRANSFORM)
-			continue;
-		if (animation->track_get_path(i) != np)
-			continue;
-
-		track_idx = i;
-		break;
-	}
-
-	InsertData id;
-	Dictionary val;
-
-	id.path = np;
-	id.track_idx = track_idx;
-	id.value = p_xform;
-	id.type = Animation::TYPE_TRANSFORM;
-	id.query = "node '" + p_node->get_name() + "'";
-	id.advance = false;
-
-	//dialog insert
-
-	_query_insert(id);
-}
-
 void AnimationKeyEditor::insert_node_value_key(Node *p_node, const String &p_property, const Variant &p_value, bool p_only_if_exists) {
 
 	ERR_FAIL_COND(!root);

@@ -902,15 +902,6 @@ void AnimationTreePlayer::_process_animation(float p_delta) {
 		t.scale.y += 1.0;
 		t.scale.z += 1.0;
 		xform.basis.scale(t.scale);
-
-		if (t.bone_idx >= 0) {
-			if (t.skeleton)
-				t.skeleton->set_bone_pose(t.bone_idx, xform);
-
-		} else if (t.spatial) {
-
-			t.spatial->set_transform(xform);
-		}
 	}
 }
 
@@ -1492,17 +1483,9 @@ AnimationTreePlayer::Track *AnimationTreePlayer::_find_track(const NodePath &p_p
 	}
 
 	ObjectID id = child->get_instance_id();
-	int bone_idx = -1;
-
-	if (p_path.get_subname_count()) {
-
-		if (Object::cast_to<Skeleton>(child))
-			bone_idx = Object::cast_to<Skeleton>(child)->find_bone(p_path.get_subname(0));
-	}
-
+	
 	TrackKey key;
 	key.id = id;
-	key.bone_idx = bone_idx;
 	key.subpath_concatenated = p_path.get_concatenated_subnames();
 
 	if (!track_map.has(key)) {
@@ -1510,10 +1493,7 @@ AnimationTreePlayer::Track *AnimationTreePlayer::_find_track(const NodePath &p_p
 		Track tr;
 		tr.id = id;
 		tr.object = resource.is_valid() ? (Object *)resource.ptr() : (Object *)child;
-		tr.skeleton = Object::cast_to<Skeleton>(child);
-		tr.spatial = Object::cast_to<Spatial>(child);
-		tr.bone_idx = bone_idx;
-		if (bone_idx == -1) tr.subpath = leftover_path;
+		tr.subpath = leftover_path;
 
 		track_map[key] = tr;
 	}

@@ -32,7 +32,7 @@
 
 #include "canvas_item_editor_plugin.h"
 #include "io/image_loader.h"
-#include "scene/3d/particles.h"
+#include "scene/2d/particles_material.h"
 #include "scene/gui/separator.h"
 
 void Particles2DEditorPlugin::edit(Object *p_object) {

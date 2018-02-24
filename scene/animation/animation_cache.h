@@ -31,7 +31,6 @@
 #ifndef ANIMATION_CACHE_H
 #define ANIMATION_CACHE_H
 
-#include "scene/3d/skeleton.h"
 #include "scene/resources/animation.h"
 
 class AnimationCache : public Object {
@@ -42,20 +41,14 @@ class AnimationCache : public Object {
 
 		RES resource;
 		Object *object;
-		Skeleton *skeleton; // haxor
 		Node *node;
-		Spatial *spatial;
 
-		int bone_idx;
 		Vector<StringName> subpath;
 		bool valid;
 		Path() {
 			object = NULL;
-			skeleton = NULL;
 			node = NULL;
-			bone_idx = -1;
 			valid = false;
-			spatial = NULL;
 		}
 	};
 

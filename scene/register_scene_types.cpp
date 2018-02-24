@@ -52,6 +52,7 @@
 #include "scene/2d/parallax_layer.h"
 #include "scene/2d/particles_2d.h"
 #include "scene/2d/path_2d.h"
+#include "scene/2d/physics_body_2d.h"
 #include "scene/2d/polygon_2d.h"
 #include "scene/2d/position_2d.h"
 #include "scene/2d/ray_cast_2d.h"
@@ -117,14 +118,10 @@
 #include "scene/main/viewport.h"
 #include "scene/resources/audio_stream_sample.h"
 #include "scene/resources/bit_mask.h"
-#include "scene/resources/box_shape.h"
-#include "scene/resources/capsule_shape.h"
 #include "scene/resources/capsule_shape_2d.h"
 #include "scene/resources/circle_shape_2d.h"
 #include "scene/resources/color_ramp.h"
-#include "scene/resources/concave_polygon_shape.h"
 #include "scene/resources/concave_polygon_shape_2d.h"
-#include "scene/resources/convex_polygon_shape.h"
 #include "scene/resources/convex_polygon_shape_2d.h"
 #include "scene/resources/default_theme/default_theme.h"
 #include "scene/resources/dynamic_font.h"
@@ -132,61 +129,21 @@
 #include "scene/resources/material.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/mesh_data_tool.h"
-#include "scene/resources/mesh_library.h"
 #include "scene/resources/packed_scene.h"
-#include "scene/resources/plane_shape.h"
 #include "scene/resources/polygon_path_finder.h"
 #include "scene/resources/primitive_meshes.h"
-#include "scene/resources/ray_shape.h"
 #include "scene/resources/rectangle_shape_2d.h"
 #include "scene/resources/scene_format_text.h"
 #include "scene/resources/segment_shape_2d.h"
 #include "scene/resources/shader_graph.h"
 #include "scene/resources/shape_line_2d.h"
 #include "scene/resources/sky_box.h"
-#include "scene/resources/sphere_shape.h"
 #include "scene/resources/surface_tool.h"
 #include "scene/resources/texture.h"
 #include "scene/resources/tile_set.h"
 #include "scene/resources/video_stream.h"
-#include "scene/resources/world.h"
 #include "scene/resources/world_2d.h"
 #include "scene/scene_string_names.h"
-
-#include "scene/3d/particles.h"
-#include "scene/3d/scenario_fx.h"
-#include "scene/3d/spatial.h"
-
-#ifndef _3D_DISABLED
-#include "scene/3d/area.h"
-#include "scene/3d/audio_stream_player_3d.h"
-#include "scene/3d/baked_lightmap.h"
-#include "scene/3d/bone_attachment.h"
-#include "scene/3d/camera.h"
-#include "scene/3d/collision_polygon.h"
-#include "scene/3d/collision_shape.h"
-#include "scene/3d/gi_probe.h"
-#include "scene/3d/immediate_geometry.h"
-#include "scene/3d/interpolated_camera.h"
-#include "scene/3d/light.h"
-#include "scene/3d/listener.h"
-#include "scene/3d/mesh_instance.h"
-#include "scene/3d/multimesh_instance.h"
-#include "scene/3d/navigation.h"
-#include "scene/3d/navigation_mesh.h"
-#include "scene/3d/path.h"
-#include "scene/3d/portal.h"
-#include "scene/3d/position_3d.h"
-#include "scene/3d/proximity_group.h"
-#include "scene/3d/ray_cast.h"
-#include "scene/3d/reflection_probe.h"
-#include "scene/3d/remote_transform.h"
-#include "scene/3d/room_instance.h"
-#include "scene/3d/skeleton.h"
-#include "scene/3d/sprite_3d.h"
-#include "scene/3d/visibility_notifier.h"
-#include "scene/resources/environment.h"
-#endif
 
 static ResourceFormatLoaderTheme *resource_loader_theme = NULL;
 
@@ -334,66 +291,11 @@ void register_scene_types() {
 
 #endif
 
-	/* REGISTER 3D */
-
-	ClassDB::register_class<Spatial>();
-	ClassDB::register_virtual_class<SpatialGizmo>();
-	ClassDB::register_class<Skeleton>();
 	ClassDB::register_class<AnimationPlayer>();
 	ClassDB::register_class<Tween>();
 
 	OS::get_singleton()->yield(); //may take time to init
 
-#ifndef _3D_DISABLED
-	ClassDB::register_class<BoneAttachment>();
-	ClassDB::register_virtual_class<VisualInstance>();
-	ClassDB::register_virtual_class<GeometryInstance>();
-	ClassDB::register_class<Camera>();
-	ClassDB::register_class<Listener>();
-	ClassDB::register_class<InterpolatedCamera>();
-	ClassDB::register_class<MeshInstance>();
-	ClassDB::register_class<ImmediateGeometry>();
-	ClassDB::register_virtual_class<SpriteBase3D>();
-	ClassDB::register_class<Sprite3D>();
-	ClassDB::register_class<AnimatedSprite3D>();
-	ClassDB::register_virtual_class<Light>();
-	ClassDB::register_class<DirectionalLight>();
-	ClassDB::register_class<OmniLight>();
-	ClassDB::register_class<SpotLight>();
-	ClassDB::register_class<ReflectionProbe>();
-	ClassDB::register_class<GIProbe>();
-	ClassDB::register_class<GIProbeData>();
-	ClassDB::register_class<BakedLightmap>();
-	ClassDB::register_class<BakedLightmapData>();
-	ClassDB::register_class<AnimationTreePlayer>();
-	ClassDB::register_class<Particles>();
-	ClassDB::register_class<Position3D>();
-	ClassDB::register_class<NavigationMeshInstance>();
-	ClassDB::register_class<NavigationMesh>();
-	ClassDB::register_class<Navigation>();
-
-	OS::get_singleton()->yield(); //may take time to init
-
-	ClassDB::register_virtual_class<CollisionObject>();
-	ClassDB::register_class<Area>();
-	ClassDB::register_class<ProximityGroup>();
-	ClassDB::register_class<CollisionShape>();
-	ClassDB::register_class<CollisionPolygon>();
-	ClassDB::register_class<RayCast>();
-	ClassDB::register_class<MultiMeshInstance>();
-
-	ClassDB::register_class<Curve3D>();
-	ClassDB::register_class<Path>();
-	ClassDB::register_class<PathFollow>();
-	ClassDB::register_class<VisibilityNotifier>();
-	ClassDB::register_class<VisibilityEnabler>();
-	ClassDB::register_class<WorldEnvironment>();
-	ClassDB::register_class<RemoteTransform>();
-
-	OS::get_singleton()->yield(); //may take time to init
-
-#endif
-	ClassDB::register_class<MeshLibrary>();
 	AcceptDialog::set_swap_ok_cancel(GLOBAL_DEF("gui/common/swap_ok_cancel", bool(OS::get_singleton()->get_swap_ok_cancel())));
 
 	ClassDB::register_class<Shader>();
@@ -451,48 +353,6 @@ void register_scene_types() {
 
 	ClassDB::register_virtual_class<Shader>();
 
-#ifndef _3D_DISABLED
-	ClassDB::register_virtual_class<Mesh>();
-	ClassDB::register_class<ArrayMesh>();
-	ClassDB::register_virtual_class<PrimitiveMesh>();
-	ClassDB::register_class<CapsuleMesh>();
-	ClassDB::register_class<CubeMesh>();
-	ClassDB::register_class<CylinderMesh>();
-	ClassDB::register_class<PlaneMesh>();
-	ClassDB::register_class<PrismMesh>();
-	ClassDB::register_class<QuadMesh>();
-	ClassDB::register_class<SphereMesh>();
-	ClassDB::register_virtual_class<Material>();
-	ClassDB::register_class<SpatialMaterial>();
-	SceneTree::add_idle_callback(SpatialMaterial::flush_changes);
-	SpatialMaterial::init_shaders();
-
-	ClassDB::register_class<ParticlesMaterial>();
-	SceneTree::add_idle_callback(ParticlesMaterial::flush_changes);
-	ParticlesMaterial::init_shaders();
-
-	ClassDB::register_class<MultiMesh>();
-	ClassDB::register_class<MeshLibrary>();
-
-	OS::get_singleton()->yield(); //may take time to init
-
-	ClassDB::register_virtual_class<Shape>();
-	ClassDB::register_class<RayShape>();
-	ClassDB::register_class<SphereShape>();
-	ClassDB::register_class<BoxShape>();
-	ClassDB::register_class<CapsuleShape>();
-	ClassDB::register_class<PlaneShape>();
-	ClassDB::register_class<ConvexPolygonShape>();
-	ClassDB::register_class<ConcavePolygonShape>();
-
-	ClassDB::register_class<SurfaceTool>();
-	ClassDB::register_class<MeshDataTool>();
-
-	OS::get_singleton()->yield(); //may take time to init
-
-	ClassDB::register_class<SpatialVelocityTracker>();
-#endif
-	ClassDB::register_class<World>();
 	ClassDB::register_class<Environment>();
 	ClassDB::register_class<World2D>();
 	ClassDB::register_virtual_class<Texture>();
@@ -532,9 +392,6 @@ void register_scene_types() {
 
 	ClassDB::register_class<AudioStreamPlayer>();
 	ClassDB::register_class<AudioStreamPlayer2D>();
-#ifndef _3D_DISABLED
-	ClassDB::register_class<AudioStreamPlayer3D>();
-#endif
 	ClassDB::register_virtual_class<VideoStream>();
 	ClassDB::register_class<AudioStreamSample>();
 
@@ -564,13 +421,6 @@ void register_scene_types() {
 
 	ClassDB::register_class<SceneTree>();
 	ClassDB::register_virtual_class<SceneTreeTimer>(); //sorry, you can't create it
-
-#ifndef DISABLE_DEPRECATED
-	ClassDB::add_compatibility_class("ImageSkyBox", "PanoramaSky");
-	ClassDB::add_compatibility_class("FixedSpatialMaterial", "SpatialMaterial");
-	ClassDB::add_compatibility_class("Mesh", "ArrayMesh");
-
-#endif
 
 	OS::get_singleton()->yield(); //may take time to init
 
@@ -637,8 +487,6 @@ void unregister_scene_types() {
 		memdelete(resource_loader_bmfont);
 	}
 
-	SpatialMaterial::finish_shaders();
-	ParticlesMaterial::finish_shaders();
 	CanvasItemMaterial::finish_shaders();
 	SceneStringNames::free();
 }

@@ -53,7 +53,6 @@
 #include "scene/gui/tree.h"
 #include "scene/main/scene_tree.h"
 
-#include "scene/3d/camera.h"
 #include "scene/main/viewport.h"
 
 namespace TestGUI {

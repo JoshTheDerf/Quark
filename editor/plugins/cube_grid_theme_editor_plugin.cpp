@@ -35,7 +35,6 @@
 #include "main/main.h"
 #include "scene/3d/mesh_instance.h"
 #include "scene/3d/navigation_mesh.h"
-#include "scene/3d/physics_body.h"
 #include "scene/main/viewport.h"
 #include "scene/resources/packed_scene.h"
 
@@ -98,41 +97,6 @@ void MeshLibraryEditor::_import_scene(Node *p_scene, Ref<MeshLibrary> p_library,
 		}
 
 		p_library->set_item_mesh(id, mesh);
-
-		Vector<MeshLibrary::ShapeData> collisions;
-
-		for (int j = 0; j < mi->get_child_count(); j++) {
-
-			Node *child2 = mi->get_child(j);
-			if (!Object::cast_to<StaticBody>(child2))
-				continue;
-
-			StaticBody *sb = Object::cast_to<StaticBody>(child2);
-			List<uint32_t> shapes;
-			sb->get_shape_owners(&shapes);
-
-			for (List<uint32_t>::Element *E = shapes.front(); E; E = E->next()) {
-				if (sb->is_shape_owner_disabled(E->get()))
-					continue;
-
-				//Transform shape_transform = sb->shape_owner_get_transform(E->get());
-
-				//shape_transform.set_origin(shape_transform.get_origin() - phys_offset);
-
-				for (int k = 0; k < sb->shape_owner_get_shape_count(E->get()); k++) {
-
-					Ref<Shape> collision = sb->shape_owner_get_shape(E->get(), k);
-					if (!collision.is_valid())
-						continue;
-					MeshLibrary::ShapeData shape_data;
-					shape_data.shape = collision;
-					shape_data.local_transform = sb->shape_owner_get_transform(E->get());
-					collisions.push_back(shape_data);
-				}
-			}
-		}
-
-		p_library->set_item_shapes(id, collisions);
 
 		Ref<NavigationMesh> navmesh;
 		for (int j = 0; j < mi->get_child_count(); j++) {

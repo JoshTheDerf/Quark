@@ -29,7 +29,6 @@
 /*************************************************************************/
 
 #include "http_client.h"
-#include "io/stream_peer_ssl.h"
 
 const char *HTTPClient::_methods[METHOD_MAX] = {
 	"GET",
@@ -297,14 +296,9 @@ Error HTTPClient::poll() {
 				} break;
 				case StreamPeerTCP::STATUS_CONNECTED: {
 					if (ssl) {
-						Ref<StreamPeerSSL> ssl = StreamPeerSSL::create();
-						Error err = ssl->connect_to_stream(tcp_connection, ssl_verify_host, ssl_verify_host ? conn_host : String());
-						if (err != OK) {
-							close();
-							status = STATUS_SSL_HANDSHAKE_ERROR;
-							return ERR_CANT_CONNECT;
-						}
-						connection = ssl;
+						close();
+						status = STATUS_SSL_HANDSHAKE_ERROR;
+						return ERR_CANT_CONNECT;
 					}
 					status = STATUS_CONNECTED;
 					return OK;

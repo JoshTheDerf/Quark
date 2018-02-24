@@ -48,7 +48,6 @@
 #include "io/pck_packer.h"
 #include "io/resource_format_binary.h"
 #include "io/resource_import.h"
-#include "io/stream_peer_ssl.h"
 #include "io/tcp_server.h"
 #include "io/translation_loader_po.h"
 #include "math/a_star.h"
@@ -140,7 +139,6 @@ void register_core_types() {
 	ClassDB::register_custom_instance_class<StreamPeerTCP>();
 	ClassDB::register_custom_instance_class<TCP_Server>();
 	ClassDB::register_custom_instance_class<PacketPeerUDP>();
-	ClassDB::register_custom_instance_class<StreamPeerSSL>();
 	ClassDB::register_virtual_class<IP>();
 	ClassDB::register_virtual_class<PacketPeer>();
 	ClassDB::register_class<PacketPeerStream>();

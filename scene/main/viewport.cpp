@@ -275,16 +275,6 @@ void Viewport::_notification(int p_what) {
 				Physics2DServer::get_singleton()->space_set_debug_contacts(find_world_2d()->get_space(), get_tree()->get_collision_debug_contact_count());
 				contact_2d_debug = VisualServer::get_singleton()->canvas_item_create();
 				VisualServer::get_singleton()->canvas_item_set_parent(contact_2d_debug, find_world_2d()->get_canvas());
-				//3D
-				PhysicsServer::get_singleton()->space_set_debug_contacts(find_world()->get_space(), get_tree()->get_collision_debug_contact_count());
-				contact_3d_debug_multimesh = VisualServer::get_singleton()->multimesh_create();
-				VisualServer::get_singleton()->multimesh_allocate(contact_3d_debug_multimesh, get_tree()->get_collision_debug_contact_count(), VS::MULTIMESH_TRANSFORM_3D, VS::MULTIMESH_COLOR_8BIT);
-				VisualServer::get_singleton()->multimesh_set_visible_instances(contact_3d_debug_multimesh, 0);
-				VisualServer::get_singleton()->multimesh_set_mesh(contact_3d_debug_multimesh, get_tree()->get_debug_contact_mesh()->get_rid());
-				contact_3d_debug_instance = VisualServer::get_singleton()->instance_create();
-				VisualServer::get_singleton()->instance_set_base(contact_3d_debug_instance, contact_3d_debug_multimesh);
-				VisualServer::get_singleton()->instance_set_scenario(contact_3d_debug_instance, find_world()->get_scenario());
-				//VisualServer::get_singleton()->instance_geometry_set_flag(contact_3d_debug_instance, VS::INSTANCE_FLAG_VISIBLE_IN_ALL_ROOMS, true);
 			}
 
 			VS::get_singleton()->viewport_set_active(viewport, true);
@@ -369,20 +359,11 @@ void Viewport::_notification(int p_what) {
 				}
 			}
 
-			if (get_tree()->is_debugging_collisions_hint() && contact_3d_debug_multimesh.is_valid()) {
-
-				Vector<Vector3> points = PhysicsServer::get_singleton()->space_get_contacts(find_world()->get_space());
-				int point_count = PhysicsServer::get_singleton()->space_get_contact_count(find_world()->get_space());
-
-				VS::get_singleton()->multimesh_set_visible_instances(contact_3d_debug_multimesh, point_count);
-			}
-
 			if (physics_object_picking && (to_screen_rect == Rect2() || Input::get_singleton()->get_mouse_mode() != Input::MOUSE_MODE_CAPTURED)) {
 
 				Vector2 last_pos(1e20, 1e20);
 				CollisionObject *last_object = NULL;
 				ObjectID last_id = 0;
-				PhysicsDirectSpaceState::RayResult result;
 				Physics2DDirectSpaceState *ss2d = Physics2DServer::get_singleton()->space_get_direct_state(find_world_2d()->get_space());
 
 				bool motion_tested = false;
@@ -469,96 +450,6 @@ void Viewport::_notification(int p_what) {
 							to_erase.pop_front();
 						}
 					}
-
-#ifndef _3D_DISABLED
-					bool captured = false;
-
-					if (physics_object_capture != 0) {
-
-						CollisionObject *co = Object::cast_to<CollisionObject>(ObjectDB::get_instance(physics_object_capture));
-						if (co) {
-							co->_input_event(camera, ev, Vector3(), Vector3(), 0);
-							captured = true;
-							if (mb.is_valid() && mb->get_button_index() == 1 && !mb->is_pressed()) {
-								physics_object_capture = 0;
-							}
-
-						} else {
-							physics_object_capture = 0;
-						}
-					}
-
-					if (captured) {
-						//none
-					} else if (pos == last_pos) {
-
-						if (last_id) {
-							if (ObjectDB::get_instance(last_id) && last_object) {
-								//good, exists
-								last_object->_input_event(camera, ev, result.position, result.normal, result.shape);
-								if (last_object->get_capture_input_on_drag() && mb.is_valid() && mb->get_button_index() == 1 && mb->is_pressed()) {
-									physics_object_capture = last_id;
-								}
-							}
-						}
-					} else {
-
-						if (camera) {
-
-							Vector3 from = camera->project_ray_origin(pos);
-							Vector3 dir = camera->project_ray_normal(pos);
-
-							PhysicsDirectSpaceState *space = PhysicsServer::get_singleton()->space_get_direct_state(find_world()->get_space());
-							if (space) {
-
-								bool col = space->intersect_ray(from, from + dir * 10000, result, Set<RID>(), 0xFFFFFFFF, true);
-								ObjectID new_collider = 0;
-								if (col) {
-
-									CollisionObject *co = Object::cast_to<CollisionObject>(result.collider);
-									if (co) {
-
-										co->_input_event(camera, ev, result.position, result.normal, result.shape);
-										last_object = co;
-										last_id = result.collider_id;
-										new_collider = last_id;
-										if (co->get_capture_input_on_drag() && mb.is_valid() && mb->get_button_index() == 1 && mb->is_pressed()) {
-											physics_object_capture = last_id;
-										}
-									}
-								}
-
-								if (mm.is_valid()) {
-									_test_new_mouseover(new_collider);
-								}
-							}
-
-							last_pos = pos;
-						}
-					}
-				}
-
-				if (!motion_tested && camera && physics_last_mousepos != Vector2(1e20, 1e20)) {
-
-					//test anyway for mouseenter/exit because objects might move
-					Vector3 from = camera->project_ray_origin(physics_last_mousepos);
-					Vector3 dir = camera->project_ray_normal(physics_last_mousepos);
-
-					PhysicsDirectSpaceState *space = PhysicsServer::get_singleton()->space_get_direct_state(find_world()->get_space());
-					if (space) {
-
-						bool col = space->intersect_ray(from, from + dir * 10000, result, Set<RID>(), 0xFFFFFFFF, true);
-						ObjectID new_collider = 0;
-						if (col) {
-							CollisionObject *co = Object::cast_to<CollisionObject>(result.collider);
-							if (co) {
-								new_collider = result.collider_id;
-							}
-						}
-
-						_test_new_mouseover(new_collider);
-					}
-#endif
 				}
 			}
 
@@ -583,16 +474,6 @@ void Viewport::_notification(int p_what) {
 RID Viewport::get_viewport_rid() const {
 
 	return viewport;
-}
-
-void Viewport::set_use_arvr(bool p_use_arvr) {
-	arvr = p_use_arvr;
-
-	VS::get_singleton()->viewport_set_use_arvr(viewport, arvr);
-}
-
-bool Viewport::use_arvr() {
-	return arvr;
 }
 
 void Viewport::set_size(const Size2 &p_size) {
@@ -2541,9 +2422,6 @@ bool Viewport::is_snap_controls_to_pixels_enabled() const {
 
 void Viewport::_bind_methods() {
 
-	ClassDB::bind_method(D_METHOD("set_use_arvr", "use"), &Viewport::set_use_arvr);
-	ClassDB::bind_method(D_METHOD("use_arvr"), &Viewport::use_arvr);
-
 	ClassDB::bind_method(D_METHOD("set_size", "size"), &Viewport::set_size);
 	ClassDB::bind_method(D_METHOD("get_size"), &Viewport::get_size);
 	ClassDB::bind_method(D_METHOD("set_world_2d", "world_2d"), &Viewport::set_world_2d);
@@ -2644,8 +2522,6 @@ void Viewport::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_shadow_atlas_quadrant_subdiv", "quadrant", "subdiv"), &Viewport::set_shadow_atlas_quadrant_subdiv);
 	ClassDB::bind_method(D_METHOD("get_shadow_atlas_quadrant_subdiv", "quadrant"), &Viewport::get_shadow_atlas_quadrant_subdiv);
 
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "arvr"), "set_use_arvr", "use_arvr");
-
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "size"), "set_size", "get_size");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "own_world"), "set_use_own_world", "is_using_own_world");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "world", PROPERTY_HINT_RESOURCE_TYPE, "World"), "set_world", "get_world");
@@ -2744,7 +2620,6 @@ Viewport::Viewport() {
 	parent = NULL;
 	listener = NULL;
 	camera = NULL;
-	arvr = false;
 	size_override = false;
 	size_override_stretch = false;
 	size_override_size = Size2(1, 1);

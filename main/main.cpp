@@ -48,10 +48,8 @@
 #include "input_map.h"
 #include "io/resource_loader.h"
 #include "scene/main/scene_tree.h"
-#include "servers/arvr_server.h"
 #include "servers/audio_server.h"
 #include "servers/physics_2d_server.h"
-#include "servers/physics_server.h"
 
 #include "io/resource_loader.h"
 #include "script_language.h"
@@ -74,7 +72,6 @@
 
 #include "core/io/file_access_pack.h"
 #include "core/io/file_access_zip.h"
-#include "core/io/stream_peer_ssl.h"
 #include "core/io/stream_peer_tcp.h"
 #include "main/input_default.h"
 #include "performance.h"
@@ -88,8 +85,6 @@ static InputMap *input_map = NULL;
 static bool _start_success = false;
 static ScriptDebugger *script_debugger = NULL;
 AudioServer *audio_server = NULL;
-ARVRServer *arvr_server = NULL;
-PhysicsServer *physics_server = NULL;
 Physics2DServer *physics_2d_server = NULL;
 
 static MessageQueue *message_queue = NULL;
@@ -138,15 +133,6 @@ bool Main::is_project_manager() {
 
 void initialize_physics() {
 
-	/// 3D Physics Server
-	physics_server = PhysicsServerManager::new_server(ProjectSettings::get_singleton()->get(PhysicsServerManager::setting_property_name));
-	if (!physics_server) {
-		// Physics server not found, Use the default physics
-		physics_server = PhysicsServerManager::new_default_server();
-	}
-	ERR_FAIL_COND(!physics_server);
-	physics_server->init();
-
 	/// 2D Physics server
 	physics_2d_server = Physics2DServerManager::new_server(ProjectSettings::get_singleton()->get(Physics2DServerManager::setting_property_name));
 	if (!physics_2d_server) {
@@ -158,9 +144,6 @@ void initialize_physics() {
 }
 
 void finalize_physics() {
-	physics_server->finish();
-	memdelete(physics_server);
-
 	physics_2d_server->finish();
 	memdelete(physics_2d_server);
 }
@@ -756,7 +739,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	if (editor) {
 		packed_data->set_disabled(true);
 		globals->set_disable_feature_overrides(true);
-		StreamPeerSSL::initialize_certs = false; //will be initialized by editor
 	}
 
 #endif
@@ -1042,9 +1024,6 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 
 	audio_server = memnew(AudioServer);
 	audio_server->init();
-
-	// also init our arvr_server from here
-	arvr_server = memnew(ARVRServer);
 
 	register_core_singletons();
 
@@ -1750,9 +1729,6 @@ bool Main::iteration() {
 
 		uint64_t physics_begin = OS::get_singleton()->get_ticks_usec();
 
-		PhysicsServer::get_singleton()->sync();
-		PhysicsServer::get_singleton()->flush_queries();
-
 		Physics2DServer::get_singleton()->sync();
 		Physics2DServer::get_singleton()->flush_queries();
 
@@ -1762,8 +1738,6 @@ bool Main::iteration() {
 		}
 
 		message_queue->flush();
-
-		PhysicsServer::get_singleton()->step(frame_slice * time_scale);
 
 		Physics2DServer::get_singleton()->end_sync();
 		Physics2DServer::get_singleton()->step(frame_slice * time_scale);
@@ -1904,11 +1878,6 @@ void Main::cleanup() {
 #ifdef TOOLS_ENABLED
 	EditorNode::unregister_editor_types();
 #endif
-
-	if (arvr_server) {
-		// cleanup now before we pull the rug from underneath...
-		memdelete(arvr_server);
-	}
 
 	unregister_driver_types();
 	unregister_module_types();

@@ -35,7 +35,6 @@
 #include "core/io/config_file.h"
 #include "core/io/resource_loader.h"
 #include "core/io/resource_saver.h"
-#include "core/io/stream_peer_ssl.h"
 #include "core/io/zip_io.h"
 #include "core/message_queue.h"
 #include "core/os/file_access.h"
@@ -55,7 +54,6 @@
 #include "editor/editor_audio_buses.h"
 #include "editor/editor_file_system.h"
 #include "editor/editor_help.h"
-#include "editor/editor_initialize_ssl.h"
 #include "editor/editor_settings.h"
 #include "editor/editor_themes.h"
 #include "editor/import/editor_import_collada.h"
@@ -4727,7 +4725,6 @@ EditorNode::EditorNode() {
 	SceneState::set_disable_placeholders(true);
 	ResourceLoader::clear_translation_remaps(); //no remaps using during editor
 	ResourceLoader::clear_path_remaps();
-	editor_initialize_certificates(); //for asset sharing
 
 	InputDefault *id = Object::cast_to<InputDefault>(Input::get_singleton());
 
@@ -5648,11 +5645,7 @@ EditorNode::EditorNode() {
 
 	ScriptTextEditor::register_editor(); //register one for text scripts
 
-	if (StreamPeerSSL::is_available()) {
-		add_editor_plugin(memnew(AssetLibraryEditorPlugin(this)));
-	} else {
-		WARN_PRINT("Asset Library not available, as it requires SSL to work.");
-	}
+	WARN_PRINT("Asset Library not available, as it requires SSL to work.");
 
 	//add interface before adding plugins
 
@@ -5699,7 +5692,6 @@ EditorNode::EditorNode() {
 	add_editor_plugin(memnew(TextureEditorPlugin(this)));
 	add_editor_plugin(memnew(AudioBusesEditorPlugin(audio_bus_editor)));
 	add_editor_plugin(memnew(AudioBusesEditorPlugin(audio_bus_editor)));
-	add_editor_plugin(memnew(NavigationMeshEditorPlugin(this)));
 
 	// FIXME: Disabled as (according to reduz) users were complaining that it gets in the way
 	// Waiting for PropertyEditor rewrite (planned for 3.1) to be refactored.
@@ -5751,7 +5743,6 @@ EditorNode::EditorNode() {
 	_edit_current();
 	current = NULL;
 
-	PhysicsServer::get_singleton()->set_active(false); // no physics by default if editor
 	Physics2DServer::get_singleton()->set_active(false); // no physics by default if editor
 	ScriptServer::set_scripting_enabled(false); // no scripting by default if editor
 

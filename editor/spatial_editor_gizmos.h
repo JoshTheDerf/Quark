@@ -43,13 +43,11 @@
 #include "scene/3d/mesh_instance.h"
 #include "scene/3d/navigation_mesh.h"
 #include "scene/3d/particles.h"
-#include "scene/3d/physics_joint.h"
 #include "scene/3d/portal.h"
 #include "scene/3d/position_3d.h"
 #include "scene/3d/ray_cast.h"
 #include "scene/3d/reflection_probe.h"
 #include "scene/3d/room_instance.h"
-#include "scene/3d/vehicle_body.h"
 #include "scene/3d/visibility_notifier.h"
 
 class Camera;
@@ -344,17 +342,6 @@ public:
 	RayCastSpatialGizmo(RayCast *p_raycast = NULL);
 };
 
-class VehicleWheelSpatialGizmo : public EditorSpatialGizmo {
-
-	GDCLASS(VehicleWheelSpatialGizmo, EditorSpatialGizmo);
-
-	VehicleWheel *car_wheel;
-
-public:
-	void redraw();
-	VehicleWheelSpatialGizmo(VehicleWheel *p_car_wheel = NULL);
-};
-
 class NavigationMeshSpatialGizmo : public EditorSpatialGizmo {
 
 	GDCLASS(NavigationMeshSpatialGizmo, EditorSpatialGizmo);
@@ -372,111 +359,6 @@ class NavigationMeshSpatialGizmo : public EditorSpatialGizmo {
 public:
 	void redraw();
 	NavigationMeshSpatialGizmo(NavigationMeshInstance *p_navmesh = NULL);
-};
-
-class JointGizmosDrawer {
-public:
-	static Basis look_body(const Transform &p_joint_transform, const Transform &p_body_transform);
-	static Basis look_body_toward(Vector3::Axis p_axis, const Transform &joint_transform, const Transform &body_transform);
-	static Basis look_body_toward_x(const Transform &p_joint_transform, const Transform &p_body_transform);
-	static Basis look_body_toward_y(const Transform &p_joint_transform, const Transform &p_body_transform);
-	/// Special function just used for physics joints, it that returns a basis constrained toward Joint Z axis
-	/// with axis X and Y that are looking toward the body and oriented toward up
-	static Basis look_body_toward_z(const Transform &p_joint_transform, const Transform &p_body_transform);
-
-	// Draw circle around p_axis
-	static void draw_circle(Vector3::Axis p_axis, real_t p_radius, const Transform &p_offset, const Basis &p_base, real_t p_limit_lower, real_t p_limit_upper, Vector<Vector3> &r_points, bool p_inverse = false);
-	static void draw_cone(const Transform &p_offset, const Basis &p_base, real_t p_swing, real_t p_twist, Vector<Vector3> &r_points);
-};
-
-class PinJointSpatialGizmo : public EditorSpatialGizmo {
-
-	GDCLASS(PinJointSpatialGizmo, EditorSpatialGizmo);
-
-	PinJoint *p3d;
-
-public:
-	static void CreateGizmo(const Transform &p_offset, Vector<Vector3> &r_cursor_points);
-
-	void redraw();
-	PinJointSpatialGizmo(PinJoint *p_p3d = NULL);
-};
-
-class HingeJointSpatialGizmo : public EditorSpatialGizmo {
-
-	GDCLASS(HingeJointSpatialGizmo, EditorSpatialGizmo);
-
-	HingeJoint *p3d;
-
-public:
-	static void CreateGizmo(const Transform &p_offset, const Transform &p_trs_joint, const Transform &p_trs_body_a, const Transform &p_trs_body_b, real_t p_limit_lower, real_t p_limit_upper, bool p_use_limit, Vector<Vector3> &r_common_points, Vector<Vector3> *r_body_a_points, Vector<Vector3> *r_body_b_points);
-
-	void redraw();
-	HingeJointSpatialGizmo(HingeJoint *p_p3d = NULL);
-};
-
-class SliderJointSpatialGizmo : public EditorSpatialGizmo {
-
-	GDCLASS(SliderJointSpatialGizmo, EditorSpatialGizmo);
-
-	SliderJoint *p3d;
-
-public:
-	static void CreateGizmo(const Transform &p_offset, const Transform &p_trs_joint, const Transform &p_trs_body_a, const Transform &p_trs_body_b, real_t p_angular_limit_lower, real_t p_angular_limit_upper, real_t p_linear_limit_lower, real_t p_linear_limit_upper, Vector<Vector3> &r_points, Vector<Vector3> *r_body_a_points, Vector<Vector3> *r_body_b_points);
-
-	void redraw();
-	SliderJointSpatialGizmo(SliderJoint *p_p3d = NULL);
-};
-
-class ConeTwistJointSpatialGizmo : public EditorSpatialGizmo {
-
-	GDCLASS(ConeTwistJointSpatialGizmo, EditorSpatialGizmo);
-
-	ConeTwistJoint *p3d;
-
-public:
-	static void CreateGizmo(const Transform &p_offset, const Transform &p_trs_joint, const Transform &p_trs_body_a, const Transform &p_trs_body_b, real_t p_swing, real_t p_twist, Vector<Vector3> &r_points, Vector<Vector3> *r_body_a_points, Vector<Vector3> *r_body_b_points);
-
-	void redraw();
-	ConeTwistJointSpatialGizmo(ConeTwistJoint *p_p3d = NULL);
-};
-
-class Generic6DOFJointSpatialGizmo : public EditorSpatialGizmo {
-
-	GDCLASS(Generic6DOFJointSpatialGizmo, EditorSpatialGizmo);
-
-	Generic6DOFJoint *p3d;
-
-public:
-	static void CreateGizmo(
-			const Transform &p_offset,
-			const Transform &p_trs_joint,
-			const Transform &p_trs_body_a,
-			const Transform &p_trs_body_b,
-			real_t p_angular_limit_lower_x,
-			real_t p_angular_limit_upper_x,
-			real_t p_linear_limit_lower_x,
-			real_t p_linear_limit_upper_x,
-			bool p_enable_angular_limit_x,
-			bool p_enable_linear_limit_x,
-			real_t p_angular_limit_lower_y,
-			real_t p_angular_limit_upper_y,
-			real_t p_linear_limit_lower_y,
-			real_t p_linear_limit_upper_y,
-			bool p_enable_angular_limit_y,
-			bool p_enable_linear_limit_y,
-			real_t p_angular_limit_lower_z,
-			real_t p_angular_limit_upper_z,
-			real_t p_linear_limit_lower_z,
-			real_t p_linear_limit_upper_z,
-			bool p_enable_angular_limit_z,
-			bool p_enable_linear_limit_z,
-			Vector<Vector3> &r_points,
-			Vector<Vector3> *r_body_a_points,
-			Vector<Vector3> *r_body_b_points);
-
-	void redraw();
-	Generic6DOFJointSpatialGizmo(Generic6DOFJoint *p_p3d = NULL);
 };
 
 class SpatialEditorGizmos {

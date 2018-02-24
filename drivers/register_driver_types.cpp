@@ -35,7 +35,7 @@
 #include "png/resource_saver_png.h"
 
 #ifdef TOOLS_ENABLED
-#include "convex_decomp/b2d_decompose.h"
+// #include "convex_decomp/b2d_decompose.h"
 #endif
 
 #ifdef TOOLS_ENABLED
@@ -65,7 +65,7 @@ void unregister_core_driver_types() {
 void register_driver_types() {
 
 #ifdef TOOLS_ENABLED
-	Geometry::_decompose_func = b2d_decompose;
+	//Geometry::_decompose_func = b2d_decompose;
 #endif
 }
 

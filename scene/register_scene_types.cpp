@@ -52,7 +52,6 @@
 #include "scene/2d/parallax_layer.h"
 #include "scene/2d/particles_2d.h"
 #include "scene/2d/path_2d.h"
-#include "scene/2d/physics_body_2d.h"
 #include "scene/2d/polygon_2d.h"
 #include "scene/2d/position_2d.h"
 #include "scene/2d/ray_cast_2d.h"
@@ -160,7 +159,6 @@
 
 #ifndef _3D_DISABLED
 #include "scene/3d/area.h"
-#include "scene/3d/arvr_nodes.h"
 #include "scene/3d/audio_stream_player_3d.h"
 #include "scene/3d/baked_lightmap.h"
 #include "scene/3d/bone_attachment.h"
@@ -177,8 +175,6 @@
 #include "scene/3d/navigation.h"
 #include "scene/3d/navigation_mesh.h"
 #include "scene/3d/path.h"
-#include "scene/3d/physics_body.h"
-#include "scene/3d/physics_joint.h"
 #include "scene/3d/portal.h"
 #include "scene/3d/position_3d.h"
 #include "scene/3d/proximity_group.h"
@@ -188,7 +184,6 @@
 #include "scene/3d/room_instance.h"
 #include "scene/3d/skeleton.h"
 #include "scene/3d/sprite_3d.h"
-#include "scene/3d/vehicle_body.h"
 #include "scene/3d/visibility_notifier.h"
 #include "scene/resources/environment.h"
 #endif
@@ -355,10 +350,6 @@ void register_scene_types() {
 	ClassDB::register_virtual_class<GeometryInstance>();
 	ClassDB::register_class<Camera>();
 	ClassDB::register_class<Listener>();
-	ClassDB::register_class<ARVRCamera>();
-	ClassDB::register_class<ARVRController>();
-	ClassDB::register_class<ARVRAnchor>();
-	ClassDB::register_class<ARVROrigin>();
 	ClassDB::register_class<InterpolatedCamera>();
 	ClassDB::register_class<MeshInstance>();
 	ClassDB::register_class<ImmediateGeometry>();
@@ -384,14 +375,6 @@ void register_scene_types() {
 	OS::get_singleton()->yield(); //may take time to init
 
 	ClassDB::register_virtual_class<CollisionObject>();
-	ClassDB::register_virtual_class<PhysicsBody>();
-	ClassDB::register_class<StaticBody>();
-	ClassDB::register_class<RigidBody>();
-	ClassDB::register_class<KinematicCollision>();
-	ClassDB::register_class<KinematicBody>();
-
-	ClassDB::register_class<VehicleBody>();
-	ClassDB::register_class<VehicleWheel>();
 	ClassDB::register_class<Area>();
 	ClassDB::register_class<ProximityGroup>();
 	ClassDB::register_class<CollisionShape>();
@@ -406,13 +389,6 @@ void register_scene_types() {
 	ClassDB::register_class<VisibilityEnabler>();
 	ClassDB::register_class<WorldEnvironment>();
 	ClassDB::register_class<RemoteTransform>();
-
-	ClassDB::register_virtual_class<Joint>();
-	ClassDB::register_class<PinJoint>();
-	ClassDB::register_class<HingeJoint>();
-	ClassDB::register_class<SliderJoint>();
-	ClassDB::register_class<ConeTwistJoint>();
-	ClassDB::register_class<Generic6DOFJoint>();
 
 	OS::get_singleton()->yield(); //may take time to init
 
@@ -601,8 +577,6 @@ void register_scene_types() {
 	for (int i = 0; i < 20; i++) {
 		GLOBAL_DEF("layer_names/2d_render/layer_" + itos(i + 1), "");
 		GLOBAL_DEF("layer_names/2d_physics/layer_" + itos(i + 1), "");
-		GLOBAL_DEF("layer_names/3d_render/layer_" + itos(i + 1), "");
-		GLOBAL_DEF("layer_names/3d_physics/layer_" + itos(i + 1), "");
 	}
 
 	bool default_theme_hidpi = GLOBAL_DEF("gui/theme/use_hidpi", false);

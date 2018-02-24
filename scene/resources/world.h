@@ -33,7 +33,6 @@
 
 #include "resource.h"
 #include "scene/resources/environment.h"
-#include "servers/physics_server.h"
 #include "servers/visual_server.h"
 
 class SpatialIndexer;
@@ -78,8 +77,6 @@ public:
 	Ref<Environment> get_fallback_environment() const;
 
 	void get_camera_list(List<Camera *> *r_cameras);
-
-	PhysicsDirectSpaceState *get_direct_space_state();
 
 	World();
 	~World();

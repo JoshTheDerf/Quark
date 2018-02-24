@@ -30,13 +30,11 @@
 
 #include "project_manager.h"
 
-#include "editor_initialize_ssl.h"
 #include "editor_scale.h"
 #include "editor_settings.h"
 #include "editor_themes.h"
 #include "io/config_file.h"
 #include "io/resource_saver.h"
-#include "io/stream_peer_ssl.h"
 #include "io/zip_io.h"
 #include "os/dir_access.h"
 #include "os/file_access.h"
@@ -1669,14 +1667,7 @@ ProjectManager::ProjectManager() {
 
 	tree_vb->add_spacer();
 
-	if (StreamPeerSSL::is_available()) {
-		asset_library = memnew(EditorAssetLibrary(true));
-		asset_library->set_name(TTR("Templates"));
-		tabs->add_child(asset_library);
-		asset_library->connect("install_asset", this, "_install_project");
-	} else {
-		WARN_PRINT("Asset Library not available, as it requires SSL to work.");
-	}
+	WARN_PRINT("Asset Library not available, as it requires SSL to work.");
 
 	HBoxContainer *settings_hb = memnew(HBoxContainer);
 	settings_hb->set_alignment(BoxContainer::ALIGN_END);
@@ -1844,9 +1835,6 @@ void ProjectListFilter::_bind_methods() {
 }
 
 ProjectListFilter::ProjectListFilter() {
-
-	editor_initialize_certificates(); //for asset sharing
-
 	_current_filter = FILTER_NAME;
 
 	filter_option = memnew(OptionButton);

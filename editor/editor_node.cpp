@@ -1368,14 +1368,6 @@ void EditorNode::_menu_expandall() {
 }
 
 void EditorNode::_save_default_environment() {
-
-	Ref<Environment> fallback = get_tree()->get_root()->get_world()->get_fallback_environment();
-
-	if (fallback.is_valid() && fallback->get_path().is_resource_file()) {
-		Map<RES, bool> processed;
-		_find_and_save_edited_subresources(fallback.ptr(), processed, 0);
-		save_resource_in_path(fallback, fallback->get_path());
-	}
 }
 
 void EditorNode::_hide_top_editors() {

@@ -155,9 +155,6 @@ private:
 	Listener *listener;
 	Set<Listener *> listeners;
 
-	Camera *camera;
-	Set<Camera *> cameras;
-
 	RID viewport;
 	RID current_canvas;
 
@@ -394,9 +391,6 @@ public:
 
 	Vector2 get_camera_coords(const Vector2 &p_viewport_coords) const;
 	Vector2 get_camera_rect_size() const;
-
-	void set_use_own_world(bool p_world);
-	bool is_using_own_world() const;
 
 	void input(const Ref<InputEvent> &p_event);
 	void unhandled_input(const Ref<InputEvent> &p_event);

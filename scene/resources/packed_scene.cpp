@@ -34,7 +34,6 @@
 #include "io/resource_loader.h"
 #include "project_settings.h"
 #include "scene/2d/node_2d.h"
-#include "scene/3d/spatial.h"
 #include "scene/gui/control.h"
 #include "scene/main/instance_placeholder.h"
 
@@ -161,9 +160,7 @@ Node *SceneState::instance(GenEditState p_edit_state) const {
 				}
 				WARN_PRINT(String("Warning node of type " + snames[n.type].operator String() + " does not exist.").ascii().get_data());
 				if (n.parent >= 0 && n.parent < nc && ret_nodes[n.parent]) {
-					if (Object::cast_to<Spatial>(ret_nodes[n.parent])) {
-						obj = memnew(Spatial);
-					} else if (Object::cast_to<Control>(ret_nodes[n.parent])) {
+					if (Object::cast_to<Control>(ret_nodes[n.parent])) {
 						obj = memnew(Control);
 					} else if (Object::cast_to<Node2D>(ret_nodes[n.parent])) {
 						obj = memnew(Node2D);

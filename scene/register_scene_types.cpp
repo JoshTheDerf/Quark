@@ -353,7 +353,6 @@ void register_scene_types() {
 
 	ClassDB::register_virtual_class<Shader>();
 
-	ClassDB::register_class<Environment>();
 	ClassDB::register_class<World2D>();
 	ClassDB::register_virtual_class<Texture>();
 	ClassDB::register_virtual_class<Sky>();

@@ -213,8 +213,6 @@ void Viewport::update_worlds() {
 	Rect2 xformed_rect = (global_canvas_transform * canvas_transform).affine_inverse().xform(abstracted_rect);
 	find_world_2d()->_update_viewport(this, xformed_rect);
 	find_world_2d()->_update();
-
-	find_world()->_update(get_tree()->get_frame());
 }
 
 void Viewport::_notification(int p_what) {
@@ -231,7 +229,6 @@ void Viewport::_notification(int p_what) {
 			}
 
 			current_canvas = find_world_2d()->get_canvas();
-			VisualServer::get_singleton()->viewport_set_scenario(viewport, find_world()->get_scenario());
 			VisualServer::get_singleton()->viewport_attach_canvas(viewport, current_canvas);
 
 			_update_listener();
@@ -614,13 +611,6 @@ void Viewport::_propagate_enter_world(Node *p_node) {
 
 		if (!p_node->is_inside_tree()) //may not have entered scene yet
 			return;
-
-		Viewport *v = Object::cast_to<Viewport>(p_node);
-		if (v) {
-
-			if (v->world.is_valid())
-				return;
-		}
 	}
 
 	for (int i = 0; i < p_node->get_child_count(); i++) {
@@ -646,13 +636,6 @@ void Viewport::_propagate_exit_world(Node *p_node) {
 
 		if (!p_node->is_inside_tree()) //may have exited scene already
 			return;
-
-		Viewport *v = Object::cast_to<Viewport>(p_node);
-		if (v) {
-
-			if (v->world.is_valid())
-				return;
-		}
 	}
 
 	for (int i = 0; i < p_node->get_child_count(); i++) {
@@ -661,48 +644,9 @@ void Viewport::_propagate_exit_world(Node *p_node) {
 	}
 }
 
-void Viewport::set_world(const Ref<World> &p_world) {
-
-	if (world == p_world)
-		return;
-
-	if (is_inside_tree())
-		_propagate_exit_world(this);
-
-	world = p_world;
-
-	if (is_inside_tree())
-		_propagate_enter_world(this);
-
-	//propagate exit
-
-	if (is_inside_tree()) {
-		VisualServer::get_singleton()->viewport_set_scenario(viewport, find_world()->get_scenario());
-	}
-
-	_update_listener();
-}
-
-Ref<World> Viewport::get_world() const {
-
-	return world;
-}
-
 Ref<World2D> Viewport::get_world_2d() const {
 
 	return world_2d;
-}
-
-Ref<World> Viewport::find_world() const {
-
-	if (own_world.is_valid())
-		return own_world;
-	else if (world.is_valid())
-		return world;
-	else if (parent)
-		return parent->find_world();
-	else
-		return Ref<World>();
 }
 
 Listener *Viewport::get_listener() const {
@@ -2025,36 +1969,6 @@ void Viewport::unhandled_input(const Ref<InputEvent> &p_event) {
 	}
 }
 
-void Viewport::set_use_own_world(bool p_world) {
-
-	if (p_world == own_world.is_valid())
-		return;
-
-	if (is_inside_tree())
-		_propagate_exit_world(this);
-
-	if (!p_world)
-		own_world = Ref<World>();
-	else
-		own_world = Ref<World>(memnew(World));
-
-	if (is_inside_tree())
-		_propagate_enter_world(this);
-
-	//propagate exit
-
-	if (is_inside_tree()) {
-		VisualServer::get_singleton()->viewport_set_scenario(viewport, find_world()->get_scenario());
-	}
-
-	_update_listener();
-}
-
-bool Viewport::is_using_own_world() const {
-
-	return own_world.is_valid();
-}
-
 void Viewport::set_attach_to_screen_rect(const Rect2 &p_rect) {
 
 	VS::get_singleton()->viewport_attach_to_screen(viewport, p_rect);
@@ -2211,9 +2125,6 @@ void Viewport::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_world_2d", "world_2d"), &Viewport::set_world_2d);
 	ClassDB::bind_method(D_METHOD("get_world_2d"), &Viewport::get_world_2d);
 	ClassDB::bind_method(D_METHOD("find_world_2d"), &Viewport::find_world_2d);
-	ClassDB::bind_method(D_METHOD("set_world", "world"), &Viewport::set_world);
-	ClassDB::bind_method(D_METHOD("get_world"), &Viewport::get_world);
-	ClassDB::bind_method(D_METHOD("find_world"), &Viewport::find_world);
 
 	ClassDB::bind_method(D_METHOD("set_canvas_transform", "xform"), &Viewport::set_canvas_transform);
 	ClassDB::bind_method(D_METHOD("get_canvas_transform"), &Viewport::get_canvas_transform);
@@ -2270,9 +2181,6 @@ void Viewport::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("update_worlds"), &Viewport::update_worlds);
 
-	ClassDB::bind_method(D_METHOD("set_use_own_world", "enable"), &Viewport::set_use_own_world);
-	ClassDB::bind_method(D_METHOD("is_using_own_world"), &Viewport::is_using_own_world);
-
 	ClassDB::bind_method(D_METHOD("set_as_audio_listener", "enable"), &Viewport::set_as_audio_listener);
 	ClassDB::bind_method(D_METHOD("is_audio_listener"), &Viewport::is_audio_listener);
 
@@ -2305,8 +2213,6 @@ void Viewport::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_shadow_atlas_quadrant_subdiv", "quadrant"), &Viewport::get_shadow_atlas_quadrant_subdiv);
 
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "size"), "set_size", "get_size");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "own_world"), "set_use_own_world", "is_using_own_world");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "world", PROPERTY_HINT_RESOURCE_TYPE, "World"), "set_world", "get_world");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "world_2d", PROPERTY_HINT_RESOURCE_TYPE, "World2D", 0), "set_world_2d", "get_world_2d");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "transparent_bg"), "set_transparent_background", "has_transparent_background");
 	ADD_GROUP("Rendering", "");
@@ -2398,7 +2304,6 @@ Viewport::Viewport() {
 	transparent_bg = false;
 	parent = NULL;
 	listener = NULL;
-	camera = NULL;
 	size_override = false;
 	size_override_stretch = false;
 	size_override_size = Size2(1, 1);

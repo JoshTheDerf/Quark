@@ -33,14 +33,12 @@
 #include "os/input.h"
 #include "os/os.h"
 #include "project_settings.h"
-#include "scene/2d/collision_object_2d.h"
 #include "scene/gui/control.h"
 #include "scene/gui/label.h"
 #include "scene/gui/panel.h"
 #include "scene/main/timer.h"
 #include "scene/resources/mesh.h"
 #include "scene/scene_string_names.h"
-#include "servers/physics_2d_server.h"
 
 void ViewportTexture::setup_local_to_scene() {
 
@@ -237,12 +235,6 @@ void Viewport::_notification(int p_what) {
 			find_world_2d()->_register_viewport(this, Rect2());
 
 			add_to_group("_viewports");
-			if (get_tree()->is_debugging_collisions_hint()) {
-				//2D
-				Physics2DServer::get_singleton()->space_set_debug_contacts(find_world_2d()->get_space(), get_tree()->get_collision_debug_contact_count());
-				contact_2d_debug = VisualServer::get_singleton()->canvas_item_create();
-				VisualServer::get_singleton()->canvas_item_set_parent(contact_2d_debug, find_world_2d()->get_canvas());
-			}
 
 			VS::get_singleton()->viewport_set_active(viewport, true);
 		} break;
@@ -275,115 +267,6 @@ void Viewport::_notification(int p_what) {
 					_gui_show_tooltip();
 				}
 			}
-
-			if (get_tree()->is_debugging_collisions_hint() && contact_2d_debug.is_valid()) {
-
-				VisualServer::get_singleton()->canvas_item_clear(contact_2d_debug);
-				VisualServer::get_singleton()->canvas_item_set_draw_index(contact_2d_debug, 0xFFFFF); //very high index
-
-				Vector<Vector2> points = Physics2DServer::get_singleton()->space_get_contacts(find_world_2d()->get_space());
-				int point_count = Physics2DServer::get_singleton()->space_get_contact_count(find_world_2d()->get_space());
-				Color ccol = get_tree()->get_debug_collision_contact_color();
-
-				for (int i = 0; i < point_count; i++) {
-
-					VisualServer::get_singleton()->canvas_item_add_rect(contact_2d_debug, Rect2(points[i] - Vector2(2, 2), Vector2(5, 5)), ccol);
-				}
-			}
-
-			if (physics_object_picking && (to_screen_rect == Rect2() || Input::get_singleton()->get_mouse_mode() != Input::MOUSE_MODE_CAPTURED)) {
-
-				Vector2 last_pos(1e20, 1e20);
-				ObjectID last_id = 0;
-				Physics2DDirectSpaceState *ss2d = Physics2DServer::get_singleton()->space_get_direct_state(find_world_2d()->get_space());
-
-				bool motion_tested = false;
-
-				while (physics_picking_events.size()) {
-
-					Ref<InputEvent> ev = physics_picking_events.front()->get();
-					physics_picking_events.pop_front();
-
-					Vector2 pos;
-
-					Ref<InputEventMouseMotion> mm = ev;
-
-					if (mm.is_valid()) {
-
-						pos = mm->get_position();
-						motion_tested = true;
-						physics_last_mousepos = pos;
-					}
-
-					Ref<InputEventMouseButton> mb = ev;
-
-					if (mb.is_valid()) {
-						pos = mb->get_position();
-					}
-
-					Ref<InputEventScreenDrag> sd = ev;
-
-					if (sd.is_valid()) {
-						pos = sd->get_position();
-					}
-
-					Ref<InputEventScreenTouch> st = ev;
-
-					if (st.is_valid()) {
-						pos = st->get_position();
-					}
-
-					if (ss2d) {
-						//send to 2D
-
-						uint64_t frame = get_tree()->get_frame();
-
-						Vector2 point = get_canvas_transform().affine_inverse().xform(pos);
-						Physics2DDirectSpaceState::ShapeResult res[64];
-						int rc = ss2d->intersect_point(point, res, 64, Set<RID>(), 0xFFFFFFFF, true);
-						for (int i = 0; i < rc; i++) {
-
-							if (res[i].collider_id && res[i].collider) {
-								CollisionObject2D *co = Object::cast_to<CollisionObject2D>(res[i].collider);
-								if (co) {
-
-									Map<ObjectID, uint64_t>::Element *E = physics_2d_mouseover.find(res[i].collider_id);
-									if (!E) {
-										E = physics_2d_mouseover.insert(res[i].collider_id, frame);
-										co->_mouse_enter();
-									} else {
-										E->get() = frame;
-									}
-
-									co->_input_event(this, ev, res[i].shape);
-								}
-							}
-						}
-
-						List<Map<ObjectID, uint64_t>::Element *> to_erase;
-
-						for (Map<ObjectID, uint64_t>::Element *E = physics_2d_mouseover.front(); E; E = E->next()) {
-							if (E->get() != frame) {
-								Object *o = ObjectDB::get_instance(E->key());
-								if (o) {
-
-									CollisionObject2D *co = Object::cast_to<CollisionObject2D>(o);
-									if (co) {
-										co->_mouse_exit();
-									}
-								}
-								to_erase.push_back(E);
-							}
-						}
-
-						while (to_erase.size()) {
-							physics_2d_mouseover.erase(to_erase.front()->get());
-							to_erase.pop_front();
-						}
-					}
-				}
-			}
-
 		} break;
 		case SceneTree::NOTIFICATION_WM_FOCUS_OUT: {
 			if (gui.mouse_focus) {
@@ -1956,17 +1839,6 @@ void Viewport::unhandled_input(const Ref<InputEvent> &p_event) {
 		get_tree()->_call_input_pause(unhandled_key_input_group, "_unhandled_key_input", p_event);
 		//call_group(GROUP_CALL_REVERSE|GROUP_CALL_REALTIME|GROUP_CALL_MULIILEVEL,"unhandled_key_input","_unhandled_key_input",ev);
 	}
-
-	if (physics_object_picking && !get_tree()->input_handled) {
-
-		if (Input::get_singleton()->get_mouse_mode() != Input::MOUSE_MODE_CAPTURED &&
-				(Object::cast_to<InputEventMouseButton>(*p_event) ||
-						Object::cast_to<InputEventMouseMotion>(*p_event) ||
-						Object::cast_to<InputEventScreenDrag>(*p_event) ||
-						Object::cast_to<InputEventScreenTouch>(*p_event))) {
-			physics_picking_events.push_back(p_event);
-		}
-	}
 }
 
 void Viewport::set_attach_to_screen_rect(const Rect2 &p_rect) {
@@ -1980,14 +1852,6 @@ Rect2 Viewport::get_attach_to_screen_rect() const {
 	return to_screen_rect;
 }
 
-void Viewport::set_physics_object_picking(bool p_enable) {
-
-	physics_object_picking = p_enable;
-	set_physics_process(physics_object_picking);
-	if (!physics_object_picking)
-		physics_picking_events.clear();
-}
-
 Vector2 Viewport::get_camera_coords(const Vector2 &p_viewport_coords) const {
 
 	Transform2D xf = get_final_transform();
@@ -1997,11 +1861,6 @@ Vector2 Viewport::get_camera_coords(const Vector2 &p_viewport_coords) const {
 Vector2 Viewport::get_camera_rect_size() const {
 
 	return size;
-}
-
-bool Viewport::get_physics_object_picking() {
-
-	return physics_object_picking;
 }
 
 bool Viewport::gui_has_modal_stack() const {
@@ -2172,9 +2031,6 @@ void Viewport::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_texture"), &Viewport::get_texture);
 
-	ClassDB::bind_method(D_METHOD("set_physics_object_picking", "enable"), &Viewport::set_physics_object_picking);
-	ClassDB::bind_method(D_METHOD("get_physics_object_picking"), &Viewport::get_physics_object_picking);
-
 	ClassDB::bind_method(D_METHOD("get_viewport_rid"), &Viewport::get_viewport_rid);
 	ClassDB::bind_method(D_METHOD("input", "local_event"), &Viewport::input);
 	ClassDB::bind_method(D_METHOD("unhandled_input", "local_event"), &Viewport::unhandled_input);
@@ -2227,8 +2083,6 @@ void Viewport::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "render_target_update_mode", PROPERTY_HINT_ENUM, "Disabled,Once,When Visible,Always"), "set_update_mode", "get_update_mode");
 	ADD_GROUP("Audio Listener", "audio_listener_");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "audio_listener_enable_2d"), "set_as_audio_listener_2d", "is_audio_listener_2d");
-	ADD_GROUP("Physics", "physics_");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "physics_object_picking"), "set_physics_object_picking", "get_physics_object_picking");
 	ADD_GROUP("GUI", "gui_");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "gui_disable_input"), "set_disable_input", "is_input_disabled");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "gui_snap_controls_to_pixels"), "set_snap_controls_to_pixels", "is_snap_controls_to_pixels_enabled");
@@ -2313,11 +2167,6 @@ Viewport::Viewport() {
 
 	//clear=true;
 	update_mode = UPDATE_WHEN_VISIBLE;
-
-	physics_object_picking = false;
-	physics_object_capture = 0;
-	physics_object_over = 0;
-	physics_last_mousepos = Vector2(1e20, 1e20);
 
 	shadow_atlas_size = 0;
 	for (int i = 0; i < 4; i++) {

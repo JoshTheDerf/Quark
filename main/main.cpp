@@ -49,7 +49,6 @@
 #include "io/resource_loader.h"
 #include "scene/main/scene_tree.h"
 #include "servers/audio_server.h"
-#include "servers/physics_2d_server.h"
 
 #include "io/resource_loader.h"
 #include "script_language.h"
@@ -68,7 +67,6 @@
 #endif
 
 #include "io/file_access_network.h"
-#include "servers/physics_2d_server.h"
 
 #include "core/io/file_access_pack.h"
 #include "core/io/file_access_zip.h"
@@ -85,7 +83,6 @@ static InputMap *input_map = NULL;
 static bool _start_success = false;
 static ScriptDebugger *script_debugger = NULL;
 AudioServer *audio_server = NULL;
-Physics2DServer *physics_2d_server = NULL;
 
 static MessageQueue *message_queue = NULL;
 static Performance *performance = NULL;
@@ -129,23 +126,6 @@ static bool project_manager = false;
 
 bool Main::is_project_manager() {
 	return project_manager;
-}
-
-void initialize_physics() {
-
-	/// 2D Physics server
-	physics_2d_server = Physics2DServerManager::new_server(ProjectSettings::get_singleton()->get(Physics2DServerManager::setting_property_name));
-	if (!physics_2d_server) {
-		// Physics server not found, Use the default physics
-		physics_2d_server = Physics2DServerManager::new_default_server();
-	}
-	ERR_FAIL_COND(!physics_2d_server);
-	physics_2d_server->init();
-}
-
-void finalize_physics() {
-	physics_2d_server->finish();
-	memdelete(physics_2d_server);
 }
 
 static String unescape_cmdline(const String &p_str) {
@@ -1154,12 +1134,11 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 		OS::get_singleton()->enable_for_stealing_focus(allow_focus_steal_pid);
 	}
 
-	MAIN_PRINT("Main: Load Modules, Physics, Drivers, Scripts");
+	MAIN_PRINT("Main: Load Modules, Drivers, Scripts");
 
 	register_platform_apis();
 	register_module_types();
 
-	initialize_physics();
 	register_server_singletons();
 
 	register_driver_types();
@@ -1723,36 +1702,6 @@ bool Main::iteration() {
 
 	int iters = 0;
 
-	Engine::get_singleton()->_in_physics = true;
-
-	while (time_accum > frame_slice) {
-
-		uint64_t physics_begin = OS::get_singleton()->get_ticks_usec();
-
-		Physics2DServer::get_singleton()->sync();
-		Physics2DServer::get_singleton()->flush_queries();
-
-		if (OS::get_singleton()->get_main_loop()->iteration(frame_slice * time_scale)) {
-			exit = true;
-			break;
-		}
-
-		message_queue->flush();
-
-		Physics2DServer::get_singleton()->end_sync();
-		Physics2DServer::get_singleton()->step(frame_slice * time_scale);
-
-		time_accum -= frame_slice;
-		message_queue->flush();
-
-		physics_process_ticks = MAX(physics_process_ticks, OS::get_singleton()->get_ticks_usec() - physics_begin); // keep the largest one for reference
-		physics_process_max = MAX(OS::get_singleton()->get_ticks_usec() - physics_begin, physics_process_max);
-		iters++;
-		Engine::get_singleton()->_physics_frames++;
-	}
-
-	Engine::get_singleton()->_in_physics = false;
-
 	uint64_t idle_begin = OS::get_singleton()->get_ticks_usec();
 
 	OS::get_singleton()->get_main_loop()->idle(step * time_scale);
@@ -1891,7 +1840,6 @@ void Main::cleanup() {
 	}
 
 	OS::get_singleton()->finalize();
-	finalize_physics();
 
 	if (packed_data)
 		memdelete(packed_data);

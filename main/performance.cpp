@@ -32,7 +32,6 @@
 #include "message_queue.h"
 #include "os/os.h"
 #include "scene/main/scene_tree.h"
-#include "servers/physics_2d_server.h"
 #include "servers/visual_server.h"
 Performance *Performance::singleton = NULL;
 
@@ -61,9 +60,6 @@ void Performance::_bind_methods() {
 	BIND_ENUM_CONSTANT(RENDER_TEXTURE_MEM_USED);
 	BIND_ENUM_CONSTANT(RENDER_VERTEX_MEM_USED);
 	BIND_ENUM_CONSTANT(RENDER_USAGE_VIDEO_MEM_TOTAL);
-	BIND_ENUM_CONSTANT(PHYSICS_2D_ACTIVE_OBJECTS);
-	BIND_ENUM_CONSTANT(PHYSICS_2D_COLLISION_PAIRS);
-	BIND_ENUM_CONSTANT(PHYSICS_2D_ISLAND_COUNT);
 
 	BIND_ENUM_CONSTANT(MONITOR_MAX);
 }
@@ -94,9 +90,6 @@ String Performance::get_monitor_name(Monitor p_monitor) const {
 		"video/texture_mem",
 		"video/vertex_mem",
 		"video/video_mem_max",
-		"physics_2d/active_objects",
-		"physics_2d/collision_pairs",
-		"physics_2d/islands",
 	};
 
 	return names[p_monitor];
@@ -133,9 +126,6 @@ float Performance::get_monitor(Monitor p_monitor) const {
 		case RENDER_TEXTURE_MEM_USED: return VS::get_singleton()->get_render_info(VS::INFO_TEXTURE_MEM_USED);
 		case RENDER_VERTEX_MEM_USED: return VS::get_singleton()->get_render_info(VS::INFO_VERTEX_MEM_USED);
 		case RENDER_USAGE_VIDEO_MEM_TOTAL: return VS::get_singleton()->get_render_info(VS::INFO_USAGE_VIDEO_MEM_TOTAL);
-		case PHYSICS_2D_ACTIVE_OBJECTS: return Physics2DServer::get_singleton()->get_process_info(Physics2DServer::INFO_ACTIVE_OBJECTS);
-		case PHYSICS_2D_COLLISION_PAIRS: return Physics2DServer::get_singleton()->get_process_info(Physics2DServer::INFO_COLLISION_PAIRS);
-		case PHYSICS_2D_ISLAND_COUNT: return Physics2DServer::get_singleton()->get_process_info(Physics2DServer::INFO_ISLAND_COUNT);
 
 		default: {}
 	}

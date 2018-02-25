@@ -33,7 +33,6 @@
 #include "engine.h"
 #include "particles_2d.h"
 #include "scene/2d/animated_sprite.h"
-#include "scene/2d/physics_body_2d.h"
 #include "scene/animation/animation_player.h"
 #include "scene/main/viewport.h"
 #include "scene/scene_string_names.h"
@@ -183,16 +182,6 @@ void VisibilityEnabler2D::_find_nodes(Node *p_node) {
 	bool add = false;
 	Variant meta;
 
-	if (enabler[ENABLER_FREEZE_BODIES]) {
-
-		RigidBody2D *rb2d = Object::cast_to<RigidBody2D>(p_node);
-		if (rb2d && ((rb2d->get_mode() == RigidBody2D::MODE_CHARACTER || (rb2d->get_mode() == RigidBody2D::MODE_RIGID && !rb2d->is_able_to_sleep())))) {
-
-			add = true;
-			meta = rb2d->get_mode();
-		}
-	}
-
 	if (enabler[ENABLER_PAUSE_ANIMATIONS]) {
 
 		AnimationPlayer *ap = Object::cast_to<AnimationPlayer>(p_node);
@@ -274,14 +263,6 @@ void VisibilityEnabler2D::_change_node_state(Node *p_node, bool p_enabled) {
 	ERR_FAIL_COND(!nodes.has(p_node));
 
 	{
-		RigidBody2D *rb = Object::cast_to<RigidBody2D>(p_node);
-		if (rb) {
-
-			rb->set_sleeping(!p_enabled);
-		}
-	}
-
-	{
 		AnimationPlayer *ap = Object::cast_to<AnimationPlayer>(p_node);
 
 		if (ap) {
@@ -336,14 +317,12 @@ void VisibilityEnabler2D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_node_removed"), &VisibilityEnabler2D::_node_removed);
 
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "pause_animations"), "set_enabler", "is_enabler_enabled", ENABLER_PAUSE_ANIMATIONS);
-	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "freeze_bodies"), "set_enabler", "is_enabler_enabled", ENABLER_FREEZE_BODIES);
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "pause_particles"), "set_enabler", "is_enabler_enabled", ENABLER_PAUSE_PARTICLES);
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "pause_animated_sprites"), "set_enabler", "is_enabler_enabled", ENABLER_PAUSE_ANIMATED_SPRITES);
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "process_parent"), "set_enabler", "is_enabler_enabled", ENABLER_PARENT_PROCESS);
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "physics_process_parent"), "set_enabler", "is_enabler_enabled", ENABLER_PARENT_PHYSICS_PROCESS);
 
 	BIND_ENUM_CONSTANT(ENABLER_PAUSE_ANIMATIONS);
-	BIND_ENUM_CONSTANT(ENABLER_FREEZE_BODIES);
 	BIND_ENUM_CONSTANT(ENABLER_PAUSE_PARTICLES);
 	BIND_ENUM_CONSTANT(ENABLER_PARENT_PROCESS);
 	BIND_ENUM_CONSTANT(ENABLER_PARENT_PHYSICS_PROCESS);

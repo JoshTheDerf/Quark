@@ -154,13 +154,9 @@ opts.Add(BoolVariable('use_lto', 'Use linking time optimization', False))
 
 # Components
 opts.Add(BoolVariable('deprecated', "Enable deprecated features", True))
-opts.Add(BoolVariable('gdscript', "Build GDSCript support", True))
-opts.Add(BoolVariable('minizip', "Build minizip archive support", True))
 opts.Add(BoolVariable('xaudio2', "XAudio2 audio driver", False))
-opts.Add(BoolVariable('xml', "XML format support for resources", True))
 
 # Advanced options
-opts.Add(BoolVariable('disable_3d', "Disable 3D nodes for smaller executable", False))
 opts.Add(BoolVariable('disable_advanced_gui', "Disable advanced 3D gui nodes and behaviors", False))
 opts.Add('extra_suffix', "Custom extra suffix added to the base filename of all generated binary files", '')
 opts.Add('unix_global_settings_path', "UNIX-specific path to system-wide settings. Currently only used for templates", '')
@@ -172,23 +168,9 @@ opts.Add(BoolVariable('dev', "If yes, alias for verbose=yes warnings=all", False
 opts.Add(EnumVariable('macports_clang', "Build using clang from MacPorts", 'no', ('no', '5.0', 'devel')))
 
 # Thirdparty libraries
-opts.Add(BoolVariable('builtin_bullet', "Use the builtin bullet library", True))
-opts.Add(BoolVariable('builtin_enet', "Use the builtin enet library", True))
 opts.Add(BoolVariable('builtin_freetype', "Use the builtin freetype library", True))
-opts.Add(BoolVariable('builtin_libogg', "Use the builtin libogg library", True))
 opts.Add(BoolVariable('builtin_libpng', "Use the builtin libpng library", True))
-opts.Add(BoolVariable('builtin_libtheora', "Use the builtin libtheora library", True))
-opts.Add(BoolVariable('builtin_libvorbis', "Use the builtin libvorbis library", True))
-opts.Add(BoolVariable('builtin_libvpx', "Use the builtin libvpx library", True))
-opts.Add(BoolVariable('builtin_libwebp', "Use the builtin libwebp library", True))
-opts.Add(BoolVariable('builtin_mbedtls', "Use the builtin mbedTLS library", True))
-opts.Add(BoolVariable('builtin_opus', "Use the builtin opus library", True))
 opts.Add(BoolVariable('builtin_pcre2', "Use the builtin pcre2 library)", True))
-opts.Add(BoolVariable('builtin_recast', "Use the builtin recast library", True))
-opts.Add(BoolVariable('builtin_squish', "Use the builtin squish library", True))
-opts.Add(BoolVariable('builtin_thekla_atlas', "Use the builtin thekla_altas library", True))
-opts.Add(BoolVariable('builtin_zlib', "Use the builtin zlib library", True))
-opts.Add(BoolVariable('builtin_zstd', "Use the builtin zstd library", True))
 opts.Add(BoolVariable('no_editor_splash', "Don't use the custom splash screen for the editor", False))
 
 # Compilation environment setup
@@ -428,18 +410,8 @@ if selected_platform in platform_list:
 
     if env['tools']:
         env.Append(CPPFLAGS=['-DTOOLS_ENABLED'])
-    if env['disable_3d']:
-        env.Append(CPPFLAGS=['-D_3D_DISABLED'])
-    if env['gdscript']:
-        env.Append(CPPFLAGS=['-DGDSCRIPT_ENABLED'])
     if env['disable_advanced_gui']:
         env.Append(CPPFLAGS=['-DADVANCED_GUI_DISABLED'])
-
-    if env['minizip']:
-        env.Append(CPPFLAGS=['-DMINIZIP_ENABLED'])
-
-    if env['xml']:
-        env.Append(CPPFLAGS=['-DXML_ENABLED'])
 
     if not env['verbose']:
         methods.no_verbose(sys, env)

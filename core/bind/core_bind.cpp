@@ -1854,7 +1854,6 @@ void _File::_bind_methods() {
 
 	BIND_ENUM_CONSTANT(COMPRESSION_FASTLZ);
 	BIND_ENUM_CONSTANT(COMPRESSION_DEFLATE);
-	BIND_ENUM_CONSTANT(COMPRESSION_ZSTD);
 	BIND_ENUM_CONSTANT(COMPRESSION_GZIP);
 }
 
@@ -2640,10 +2639,6 @@ Dictionary _Engine::get_version_info() const {
 	return Engine::get_singleton()->get_version_info();
 }
 
-bool _Engine::is_in_physics_frame() const {
-	return Engine::get_singleton()->is_in_physics_frame();
-}
-
 bool _Engine::has_singleton(const String &p_name) const {
 
 	return Engine::get_singleton()->has_singleton(p_name);
@@ -2680,8 +2675,6 @@ void _Engine::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_main_loop"), &_Engine::get_main_loop);
 
 	ClassDB::bind_method(D_METHOD("get_version_info"), &_Engine::get_version_info);
-
-	ClassDB::bind_method(D_METHOD("is_in_physics_frame"), &_Engine::is_in_physics_frame);
 
 	ClassDB::bind_method(D_METHOD("has_singleton", "name"), &_Engine::has_singleton);
 	ClassDB::bind_method(D_METHOD("get_singleton", "name"), &_Engine::get_singleton_object);

@@ -43,7 +43,6 @@
 #include "scene/2d/light_2d.h"
 #include "scene/2d/particles_2d.h"
 #include "scene/2d/polygon_2d.h"
-#include "scene/2d/screen_button.h"
 #include "scene/2d/sprite.h"
 #include "scene/gui/grid_container.h"
 #include "scene/gui/nine_patch_rect.h"
@@ -4238,9 +4237,6 @@ void CanvasItemEditorViewport::_create_nodes(Node *parent, Node *child, String &
 		} else if (E->get().name == "texture/texture") { // Polygon2D
 			property = "texture/texture";
 			break;
-		} else if (E->get().name == "normal") { // TouchScreenButton
-			property = "normal";
-			break;
 		}
 	}
 	editor_data->get_undo_redo().add_do_property(child, property, texture);
@@ -4264,7 +4260,7 @@ void CanvasItemEditorViewport::_create_nodes(Node *parent, Node *child, String &
 	}
 	Transform2D trans = canvas->get_canvas_transform();
 	Point2 target_position = (p_point - trans.get_origin()) / trans.get_scale().x - pos;
-	if (default_type == "Polygon2D" || default_type == "TouchScreenButton" || default_type == "TextureRect" || default_type == "NinePatchRect") {
+	if (default_type == "Polygon2D" || default_type == "TextureRect" || default_type == "NinePatchRect") {
 		target_position -= texture_size / 2;
 	}
 	// there's nothing to be used as source position so snapping will work as absolute if enabled
@@ -4358,8 +4354,6 @@ void CanvasItemEditorViewport::_perform_drop_data() {
 					child = memnew(Particles2D);
 				else if (default_type == "Polygon2D")
 					child = memnew(Polygon2D);
-				else if (default_type == "TouchScreenButton")
-					child = memnew(TouchScreenButton);
 				else if (default_type == "TextureRect")
 					child = memnew(TextureRect);
 				else if (default_type == "NinePatchRect")
@@ -4529,7 +4523,6 @@ CanvasItemEditorViewport::CanvasItemEditorViewport(EditorNode *p_node, CanvasIte
 	types.push_back("Light2D");
 	types.push_back("Particles2D");
 	types.push_back("Polygon2D");
-	types.push_back("TouchScreenButton");
 	// Control
 	types.push_back("TextureRect");
 	types.push_back("NinePatchRect");

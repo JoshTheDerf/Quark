@@ -36,7 +36,6 @@
 #include "thirdparty/misc/fastlz.h"
 
 #include <zlib.h>
-#include <zstd.h>
 
 int Compression::compress(uint8_t *p_dst, const uint8_t *p_src, int p_src_size, Mode p_mode) {
 
@@ -78,18 +77,6 @@ int Compression::compress(uint8_t *p_dst, const uint8_t *p_src, int p_src_size, 
 			return aout;
 
 		} break;
-		case MODE_ZSTD: {
-			ZSTD_CCtx *cctx = ZSTD_createCCtx();
-			ZSTD_CCtx_setParameter(cctx, ZSTD_p_compressionLevel, zstd_level);
-			if (zstd_long_distance_matching) {
-				ZSTD_CCtx_setParameter(cctx, ZSTD_p_enableLongDistanceMatching, 1);
-				ZSTD_CCtx_setParameter(cctx, ZSTD_p_windowLog, zstd_window_log_size);
-			}
-			int max_dst_size = get_max_compressed_buffer_size(p_src_size, MODE_ZSTD);
-			int ret = ZSTD_compressCCtx(cctx, p_dst, max_dst_size, p_src, p_src_size, zstd_level);
-			ZSTD_freeCCtx(cctx);
-			return ret;
-		} break;
 	}
 
 	ERR_FAIL_V(-1);
@@ -121,10 +108,6 @@ int Compression::get_max_compressed_buffer_size(int p_src_size, Mode p_mode) {
 			int aout = deflateBound(&strm, p_src_size);
 			deflateEnd(&strm);
 			return aout;
-		} break;
-		case MODE_ZSTD: {
-
-			return ZSTD_compressBound(p_src_size);
 		} break;
 	}
 
@@ -172,13 +155,6 @@ int Compression::decompress(uint8_t *p_dst, int p_dst_max_size, const uint8_t *p
 			ERR_FAIL_COND_V(err != Z_STREAM_END, -1);
 			return total;
 		} break;
-		case MODE_ZSTD: {
-			ZSTD_DCtx *dctx = ZSTD_createDCtx();
-			if (zstd_long_distance_matching) ZSTD_DCtx_setMaxWindowSize(dctx, 1 << zstd_window_log_size);
-			int ret = ZSTD_decompressDCtx(dctx, p_dst, p_dst_max_size, p_src, p_src_size);
-			ZSTD_freeDCtx(dctx);
-			return ret;
-		} break;
 	}
 
 	ERR_FAIL_V(-1);
@@ -186,6 +162,3 @@ int Compression::decompress(uint8_t *p_dst, int p_dst_max_size, const uint8_t *p
 
 int Compression::zlib_level = Z_DEFAULT_COMPRESSION;
 int Compression::gzip_level = Z_DEFAULT_COMPRESSION;
-int Compression::zstd_level = 3;
-bool Compression::zstd_long_distance_matching = false;
-int Compression::zstd_window_log_size = 27;

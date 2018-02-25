@@ -117,11 +117,7 @@ private:
 		uint32_t id;
 
 		inline bool operator<(const TrackNodeCacheKey &p_right) const {
-
-			if (id < p_right.id)
-				return true;
-			else if (id > p_right.id)
-				return false;
+			return id < p_right.id;
 		}
 	};
 

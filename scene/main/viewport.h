@@ -188,13 +188,6 @@ private:
 
 	bool snap_controls_to_pixels;
 
-	bool physics_object_picking;
-	List<Ref<InputEvent> > physics_picking_events;
-	ObjectID physics_object_capture;
-	ObjectID physics_object_over;
-	Vector2 physics_last_mousepos;
-	Map<ObjectID, uint64_t> physics_2d_mouseover;
-
 	Ref<World2D> world_2d;
 
 	StringName input_group;
@@ -406,9 +399,6 @@ public:
 
 	Vector2 get_mouse_position() const;
 	void warp_mouse(const Vector2 &p_pos);
-
-	void set_physics_object_picking(bool p_enable);
-	bool get_physics_object_picking();
 
 	bool gui_has_modal_stack() const;
 

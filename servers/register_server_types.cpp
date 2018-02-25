@@ -48,9 +48,6 @@
 #include "audio/effects/audio_effect_reverb.h"
 #include "audio/effects/audio_effect_stereo_enhance.h"
 #include "audio_server.h"
-#include "physics_2d/physics_2d_server_sw.h"
-#include "physics_2d/physics_2d_server_wrap_mt.h"
-#include "physics_2d_server.h"
 #include "script_debugger_remote.h"
 #include "visual/shader_types.h"
 #include "visual_server.h"
@@ -74,15 +71,10 @@ static void _debugger_get_resource_usage(List<ScriptDebuggerRemote::ResourceUsag
 
 ShaderTypes *shader_types = NULL;
 
-Physics2DServer *_createGodotPhysics2DCallback() {
-	return Physics2DServerWrapMT::init_server<Physics2DServerSW>();
-}
-
 void register_server_types() {
 
 	ClassDB::register_virtual_class<VisualServer>();
 	ClassDB::register_class<AudioServer>();
-	ClassDB::register_virtual_class<Physics2DServer>();
 
 	shader_types = memnew(ShaderTypes);
 
@@ -125,20 +117,8 @@ void register_server_types() {
 		ClassDB::register_class<AudioEffectPhaser>();
 	}
 
-	ClassDB::register_virtual_class<Physics2DDirectBodyState>();
-	ClassDB::register_virtual_class<Physics2DDirectSpaceState>();
-	ClassDB::register_virtual_class<Physics2DShapeQueryResult>();
-	ClassDB::register_class<Physics2DTestMotionResult>();
-	ClassDB::register_class<Physics2DShapeQueryParameters>();
-
 	ScriptDebuggerRemote::resource_usage_func = _debugger_get_resource_usage;
 
-	// Physics 2D
-	GLOBAL_DEF(Physics2DServerManager::setting_property_name, "DEFAULT");
-	ProjectSettings::get_singleton()->set_custom_property_info(Physics2DServerManager::setting_property_name, PropertyInfo(Variant::STRING, Physics2DServerManager::setting_property_name, PROPERTY_HINT_ENUM, "DEFAULT"));
-
-	Physics2DServerManager::register_server("GodotPhysics", &_createGodotPhysics2DCallback);
-	Physics2DServerManager::set_default_server("GodotPhysics");
 }
 
 void unregister_server_types() {
@@ -149,5 +129,4 @@ void unregister_server_types() {
 void register_server_singletons() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("VisualServer", VisualServer::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("AudioServer", AudioServer::get_singleton()));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("Physics2DServer", Physics2DServer::get_singleton()));
 }

@@ -44,7 +44,6 @@
 #include "scene/resources/mesh.h"
 #include "scene/resources/packed_scene.h"
 #include "scene/scene_string_names.h"
-#include "servers/physics_2d_server.h"
 #include "viewport.h"
 
 #include <stdio.h>
@@ -810,7 +809,6 @@ void SceneTree::set_pause(bool p_enabled) {
 	if (p_enabled == pause)
 		return;
 	pause = p_enabled;
-	Physics2DServer::get_singleton()->set_active(!p_enabled);
 	if (get_root())
 		get_root()->propagate_notification(p_enabled ? Node::NOTIFICATION_PAUSED : Node::NOTIFICATION_UNPAUSED);
 }
@@ -2322,8 +2320,6 @@ SceneTree::SceneTree() {
 	if (ScriptDebugger::get_singleton()) {
 		ScriptDebugger::get_singleton()->set_request_scene_tree_message_func(_debugger_request_tree, this);
 	}
-
-	root->set_physics_object_picking(GLOBAL_DEF("physics/common/enable_object_picking", true));
 
 #ifdef TOOLS_ENABLED
 	edited_scene_root = NULL;

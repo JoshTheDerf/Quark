@@ -34,32 +34,22 @@
 #include "core/os/os.h"
 #include "core/project_settings.h"
 #include "scene/2d/animated_sprite.h"
-#include "scene/2d/area_2d.h"
-#include "scene/2d/audio_stream_player_2d.h"
 #include "scene/2d/back_buffer_copy.h"
 #include "scene/2d/camera_2d.h"
 #include "scene/2d/canvas_item.h"
 #include "scene/2d/canvas_modulate.h"
-#include "scene/2d/collision_polygon_2d.h"
-#include "scene/2d/collision_shape_2d.h"
-#include "scene/2d/joints_2d.h"
 #include "scene/2d/light_2d.h"
 #include "scene/2d/light_occluder_2d.h"
 #include "scene/2d/line_2d.h"
 #include "scene/2d/mesh_instance_2d.h"
-#include "scene/2d/navigation2d.h"
 #include "scene/2d/parallax_background.h"
 #include "scene/2d/parallax_layer.h"
 #include "scene/2d/particles_2d.h"
 #include "scene/2d/path_2d.h"
-#include "scene/2d/physics_body_2d.h"
 #include "scene/2d/polygon_2d.h"
 #include "scene/2d/position_2d.h"
-#include "scene/2d/ray_cast_2d.h"
 #include "scene/2d/remote_transform_2d.h"
-#include "scene/2d/screen_button.h"
 #include "scene/2d/sprite.h"
-#include "scene/2d/tile_map.h"
 #include "scene/2d/visibility_notifier_2d.h"
 #include "scene/2d/y_sort.h"
 #include "scene/animation/animation_player.h"
@@ -118,11 +108,7 @@
 #include "scene/main/viewport.h"
 #include "scene/resources/audio_stream_sample.h"
 #include "scene/resources/bit_mask.h"
-#include "scene/resources/capsule_shape_2d.h"
-#include "scene/resources/circle_shape_2d.h"
 #include "scene/resources/color_ramp.h"
-#include "scene/resources/concave_polygon_shape_2d.h"
-#include "scene/resources/convex_polygon_shape_2d.h"
 #include "scene/resources/default_theme/default_theme.h"
 #include "scene/resources/dynamic_font.h"
 #include "scene/resources/dynamic_font_stb.h"
@@ -132,15 +118,11 @@
 #include "scene/resources/packed_scene.h"
 #include "scene/resources/polygon_path_finder.h"
 #include "scene/resources/primitive_meshes.h"
-#include "scene/resources/rectangle_shape_2d.h"
 #include "scene/resources/scene_format_text.h"
-#include "scene/resources/segment_shape_2d.h"
 #include "scene/resources/shader_graph.h"
-#include "scene/resources/shape_line_2d.h"
 #include "scene/resources/sky_box.h"
 #include "scene/resources/surface_tool.h"
 #include "scene/resources/texture.h"
-#include "scene/resources/tile_set.h"
 #include "scene/resources/video_stream.h"
 #include "scene/resources/world_2d.h"
 #include "scene/scene_string_names.h"
@@ -314,16 +296,6 @@ void register_scene_types() {
 	ClassDB::register_class<Position2D>();
 	ClassDB::register_class<Line2D>();
 	ClassDB::register_class<MeshInstance2D>();
-	ClassDB::register_virtual_class<CollisionObject2D>();
-	ClassDB::register_virtual_class<PhysicsBody2D>();
-	ClassDB::register_class<StaticBody2D>();
-	ClassDB::register_class<RigidBody2D>();
-	ClassDB::register_class<KinematicBody2D>();
-	ClassDB::register_class<KinematicCollision2D>();
-	ClassDB::register_class<Area2D>();
-	ClassDB::register_class<CollisionShape2D>();
-	ClassDB::register_class<CollisionPolygon2D>();
-	ClassDB::register_class<RayCast2D>();
 	ClassDB::register_class<VisibilityNotifier2D>();
 	ClassDB::register_class<VisibilityEnabler2D>();
 	ClassDB::register_class<Polygon2D>();
@@ -336,15 +308,8 @@ void register_scene_types() {
 	OS::get_singleton()->yield(); //may take time to init
 
 	ClassDB::register_class<Camera2D>();
-	ClassDB::register_virtual_class<Joint2D>();
-	ClassDB::register_class<PinJoint2D>();
-	ClassDB::register_class<GrooveJoint2D>();
-	ClassDB::register_class<DampedSpringJoint2D>();
-	ClassDB::register_class<TileSet>();
-	ClassDB::register_class<TileMap>();
 	ClassDB::register_class<ParallaxBackground>();
 	ClassDB::register_class<ParallaxLayer>();
-	ClassDB::register_class<TouchScreenButton>();
 	ClassDB::register_class<RemoteTransform2D>();
 
 	OS::get_singleton()->yield(); //may take time to init
@@ -390,28 +355,14 @@ void register_scene_types() {
 	OS::get_singleton()->yield(); //may take time to init
 
 	ClassDB::register_class<AudioStreamPlayer>();
-	ClassDB::register_class<AudioStreamPlayer2D>();
 	ClassDB::register_virtual_class<VideoStream>();
 	ClassDB::register_class<AudioStreamSample>();
 
 	OS::get_singleton()->yield(); //may take time to init
 
-	ClassDB::register_virtual_class<Shape2D>();
-	ClassDB::register_class<LineShape2D>();
-	ClassDB::register_class<SegmentShape2D>();
-	ClassDB::register_class<RayShape2D>();
-	ClassDB::register_class<CircleShape2D>();
-	ClassDB::register_class<RectangleShape2D>();
-	ClassDB::register_class<CapsuleShape2D>();
-	ClassDB::register_class<ConvexPolygonShape2D>();
-	ClassDB::register_class<ConcavePolygonShape2D>();
 	ClassDB::register_class<Curve2D>();
 	ClassDB::register_class<Path2D>();
 	ClassDB::register_class<PathFollow2D>();
-
-	ClassDB::register_class<Navigation2D>();
-	ClassDB::register_class<NavigationPolygon>();
-	ClassDB::register_class<NavigationPolygonInstance>();
 
 	OS::get_singleton()->yield(); //may take time to init
 

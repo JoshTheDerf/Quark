@@ -397,7 +397,6 @@ public:
 	enum CompressionMode {
 		COMPRESSION_FASTLZ = Compression::MODE_FASTLZ,
 		COMPRESSION_DEFLATE = Compression::MODE_DEFLATE,
-		COMPRESSION_ZSTD = Compression::MODE_ZSTD,
 		COMPRESSION_GZIP = Compression::MODE_GZIP
 	};
 
@@ -672,8 +671,6 @@ public:
 	MainLoop *get_main_loop() const;
 
 	Dictionary get_version_info() const;
-
-	bool is_in_physics_frame() const;
 
 	bool has_singleton(const String &p_name) const;
 	Object *get_singleton_object(const String &p_name) const;

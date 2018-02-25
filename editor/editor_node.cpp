@@ -50,7 +50,6 @@
 #include "scene/resources/packed_scene.h"
 #include "scene/main/viewport.h"
 #include "scene/main/node.h"
-#include "servers/physics_2d_server.h"
 
 #include "editor/animation_editor.h"
 #include "editor/editor_audio_buses.h"
@@ -66,8 +65,6 @@
 #include "editor/plugins/animation_tree_editor_plugin.h"
 #include "editor/plugins/asset_library_editor_plugin.h"
 #include "editor/plugins/canvas_item_editor_plugin.h"
-#include "editor/plugins/collision_polygon_2d_editor_plugin.h"
-#include "editor/plugins/collision_shape_2d_editor_plugin.h"
 #include "editor/plugins/curve_editor_plugin.h"
 #include "editor/plugins/editor_preview_plugins.h"
 #include "editor/plugins/gradient_editor_plugin.h"
@@ -75,7 +72,6 @@
 #include "editor/plugins/light_occluder_2d_editor_plugin.h"
 #include "editor/plugins/line_2d_editor_plugin.h"
 #include "editor/plugins/material_editor_plugin.h"
-#include "editor/plugins/navigation_polygon_editor_plugin.h"
 #include "editor/plugins/particles_2d_editor_plugin.h"
 #include "editor/plugins/path_2d_editor_plugin.h"
 #include "editor/plugins/polygon_2d_editor_plugin.h"
@@ -91,8 +87,6 @@
 #include "editor/plugins/texture_editor_plugin.h"
 #include "editor/plugins/texture_region_editor_plugin.h"
 #include "editor/plugins/theme_editor_plugin.h"
-#include "editor/plugins/tile_map_editor_plugin.h"
-#include "editor/plugins/tile_set_editor_plugin.h"
 #include "editor/pvrtc_compress.h"
 #include "editor/register_exporters.h"
 #include "editor/script_editor_debugger.h"
@@ -1147,40 +1141,6 @@ void EditorNode::_dialog_action(String p_file) {
 			}
 		} break;
 
-		case FILE_EXPORT_TILESET: {
-
-			Ref<TileSet> ml;
-			if (FileAccess::exists(p_file)) {
-				ml = ResourceLoader::load(p_file, "TileSet");
-
-				if (ml.is_null()) {
-					if (file_export_lib_merge->is_pressed()) {
-						current_option = -1;
-						accept->get_ok()->set_text(TTR("I see.."));
-						accept->set_text(TTR("Can't load TileSet for merging!"));
-						accept->popup_centered_minsize();
-						return;
-					}
-				} else if (!file_export_lib_merge->is_pressed()) {
-					ml->clear();
-				}
-
-			} else {
-				ml = Ref<TileSet>(memnew(TileSet));
-			}
-
-			TileSetEditor::update_library_file(editor_data.get_edited_scene_root(), ml, true);
-
-			Error err = ResourceSaver::save(p_file, ml);
-			if (err) {
-
-				accept->get_ok()->set_text(TTR("I see.."));
-				accept->set_text(TTR("Error saving TileSet!"));
-				accept->popup_centered_minsize();
-				return;
-			}
-		} break;
-
 		case RESOURCE_SAVE:
 		case RESOURCE_SAVE_AS: {
 
@@ -1927,30 +1887,6 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 			project_export->popup_export();
 		} break;
 
-		case FILE_EXPORT_TILESET: {
-
-			//Make sure that the scene has a root before trying to convert to tileset
-			if (!editor_data.get_edited_scene_root()) {
-				current_option = -1;
-				accept->get_ok()->set_text(TTR("I see.."));
-				accept->set_text(TTR("This operation can't be done without a root node."));
-				accept->popup_centered_minsize();
-				break;
-			}
-
-			List<String> extensions;
-			Ref<TileSet> ml(memnew(TileSet));
-			ResourceSaver::get_recognized_extensions(ml, &extensions);
-			file_export_lib->clear_filters();
-			for (List<String>::Element *E = extensions.front(); E; E = E->next()) {
-				file_export_lib->add_filter("*." + E->get());
-			}
-
-			file_export_lib->popup_centered_ratio();
-			file_export_lib->set_title(TTR("Export Tile Set"));
-
-		} break;
-
 		case SETTINGS_EXPORT_PREFERENCES: {
 
 			//project_export_settings->popup_centered_ratio();
@@ -2331,24 +2267,6 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 			EditorSettings::get_singleton()->set_project_metadata("debug_options", "run_deploy_remote_debug", !ischecked);
 
 		} break;
-		case RUN_DEBUG_COLLISONS: {
-
-			bool ischecked = debug_menu->get_popup()->is_item_checked(debug_menu->get_popup()->get_item_index(RUN_DEBUG_COLLISONS));
-			debug_menu->get_popup()->set_item_checked(debug_menu->get_popup()->get_item_index(RUN_DEBUG_COLLISONS), !ischecked);
-			run_native->set_debug_collisions(!ischecked);
-			editor_run.set_debug_collisions(!ischecked);
-			EditorSettings::get_singleton()->set_project_metadata("debug_options", "run_debug_collisons", !ischecked);
-
-		} break;
-		case RUN_DEBUG_NAVIGATION: {
-
-			bool ischecked = debug_menu->get_popup()->is_item_checked(debug_menu->get_popup()->get_item_index(RUN_DEBUG_NAVIGATION));
-			debug_menu->get_popup()->set_item_checked(debug_menu->get_popup()->get_item_index(RUN_DEBUG_NAVIGATION), !ischecked);
-			run_native->set_debug_navigation(!ischecked);
-			editor_run.set_debug_navigation(!ischecked);
-			EditorSettings::get_singleton()->set_project_metadata("debug_options", "run_debug_navigation", !ischecked);
-
-		} break;
 		case RUN_RELOAD_SCRIPTS: {
 
 			bool ischecked = debug_menu->get_popup()->is_item_checked(debug_menu->get_popup()->get_item_index(RUN_RELOAD_SCRIPTS));
@@ -2532,15 +2450,11 @@ void EditorNode::_update_debug_options() {
 
 	bool check_deploy_remote = EditorSettings::get_singleton()->get_project_metadata("debug_options", "run_deploy_remote_debug", false);
 	bool check_file_server = EditorSettings::get_singleton()->get_project_metadata("debug_options", "run_file_server", false);
-	bool check_debug_collisons = EditorSettings::get_singleton()->get_project_metadata("debug_options", "run_debug_collisons", false);
-	bool check_debug_navigation = EditorSettings::get_singleton()->get_project_metadata("debug_options", "run_debug_navigation", false);
 	bool check_live_debug = EditorSettings::get_singleton()->get_project_metadata("debug_options", "run_live_debug", false);
 	bool check_reload_scripts = EditorSettings::get_singleton()->get_project_metadata("debug_options", "run_reload_scripts", false);
 
 	if (check_deploy_remote) _menu_option_confirm(RUN_DEPLOY_REMOTE_DEBUG, true);
 	if (check_file_server) _menu_option_confirm(RUN_FILE_SERVER, true);
-	if (check_debug_collisons) _menu_option_confirm(RUN_DEBUG_COLLISONS, true);
-	if (check_debug_navigation) _menu_option_confirm(RUN_DEBUG_NAVIGATION, true);
 	if (check_live_debug) _menu_option_confirm(RUN_LIVE_DEBUG, true);
 	if (check_reload_scripts) _menu_option_confirm(RUN_RELOAD_SCRIPTS, true);
 }
@@ -4728,10 +4642,6 @@ EditorNode::EditorNode() {
 
 	GLOBAL_DEF("editor/main_run_args", "");
 
-	ClassDB::set_class_enabled("CollisionShape", true);
-	ClassDB::set_class_enabled("CollisionShape2D", true);
-	ClassDB::set_class_enabled("CollisionPolygon2D", true);
-
 	theme_base = memnew(Control);
 	add_child(theme_base);
 	theme_base->set_anchors_and_margins_preset(Control::PRESET_WIDE);
@@ -5041,7 +4951,6 @@ EditorNode::EditorNode() {
 	pm_export->set_name("Export");
 	p->add_child(pm_export);
 	p->add_submenu_item(TTR("Convert To.."), "Export");
-	pm_export->add_shortcut(ED_SHORTCUT("editor/convert_to_TileSet", TTR("TileSet..")), FILE_EXPORT_TILESET);
 	pm_export->connect("id_pressed", this, "_menu_option");
 
 	p->add_separator();
@@ -5103,11 +5012,6 @@ EditorNode::EditorNode() {
 	p->set_item_tooltip(p->get_item_count() - 1, TTR("When exporting or deploying, the resulting executable will attempt to connect to the IP of this computer in order to be debugged."));
 	p->add_check_item(TTR("Small Deploy with Network FS"), RUN_FILE_SERVER);
 	p->set_item_tooltip(p->get_item_count() - 1, TTR("When this option is enabled, export or deploy will produce a minimal executable.\nThe filesystem will be provided from the project by the editor over the network.\nOn Android, deploy will use the USB cable for faster performance. This option speeds up testing for games with a large footprint."));
-	p->add_separator();
-	p->add_check_item(TTR("Visible Collision Shapes"), RUN_DEBUG_COLLISONS);
-	p->set_item_tooltip(p->get_item_count() - 1, TTR("Collision shapes and raycast nodes (for 2D and 3D) will be visible on the running game if this option is turned on."));
-	p->add_check_item(TTR("Visible Navigation"), RUN_DEBUG_NAVIGATION);
-	p->set_item_tooltip(p->get_item_count() - 1, TTR("Navigation meshes and polygons will be visible on the running game if this option is turned on."));
 	p->add_separator();
 	p->add_check_item(TTR("Sync Scene Changes"), RUN_LIVE_DEBUG);
 	p->set_item_tooltip(p->get_item_count() - 1, TTR("When this option is turned on, any changes made to the scene in the editor will be replicated in the running game.\nWhen used remotely on a device, this is more efficient with network filesystem."));
@@ -5544,9 +5448,6 @@ EditorNode::EditorNode() {
 	add_editor_plugin(memnew(Skeleton2DEditorPlugin(this)));
 	add_editor_plugin(memnew(ResourcePreloaderEditorPlugin(this)));
 	add_editor_plugin(memnew(ItemListEditorPlugin(this)));
-	add_editor_plugin(memnew(CollisionPolygon2DEditorPlugin(this)));
-	add_editor_plugin(memnew(TileSetEditorPlugin(this)));
-	add_editor_plugin(memnew(TileMapEditorPlugin(this)));
 	add_editor_plugin(memnew(SpriteFramesEditorPlugin(this)));
 	add_editor_plugin(memnew(TextureRegionEditorPlugin(this)));
 	add_editor_plugin(memnew(Particles2DEditorPlugin(this)));
@@ -5554,9 +5455,7 @@ EditorNode::EditorNode() {
 	add_editor_plugin(memnew(Line2DEditorPlugin(this)));
 	add_editor_plugin(memnew(Polygon2DEditorPlugin(this)));
 	add_editor_plugin(memnew(LightOccluder2DEditorPlugin(this)));
-	add_editor_plugin(memnew(NavigationPolygonEditorPlugin(this)));
 	add_editor_plugin(memnew(GradientEditorPlugin(this)));
-	add_editor_plugin(memnew(CollisionShape2DEditorPlugin(this)));
 	add_editor_plugin(memnew(CurveEditorPlugin(this)));
 	add_editor_plugin(memnew(TextureEditorPlugin(this)));
 	add_editor_plugin(memnew(AudioBusesEditorPlugin(audio_bus_editor)));
@@ -5603,7 +5502,6 @@ EditorNode::EditorNode() {
 	_edit_current();
 	current = NULL;
 
-	Physics2DServer::get_singleton()->set_active(false); // no physics by default if editor
 	ScriptServer::set_scripting_enabled(false); // no scripting by default if editor
 
 	reference_resource_mem = true;
@@ -5659,8 +5557,6 @@ EditorNode::EditorNode() {
 			icon_type_cache[E->get()] = theme_base->get_theme()->get_icon(E->get(), ei);
 		}
 	}
-
-	Node::set_human_readable_collision_renaming(true);
 
 	pick_main_scene = memnew(ConfirmationDialog);
 	gui_base->add_child(pick_main_scene);

@@ -39,7 +39,6 @@
 #include "test_math.h"
 #include "test_oa_hash_map.h"
 #include "test_ordered_hash_map.h"
-#include "test_physics_2d.h"
 #include "test_render.h"
 #include "test_shader_lang.h"
 #include "test_string.h"
@@ -74,11 +73,6 @@ MainLoop *test_main(String p_test, const List<String> &p_args) {
 		return TestMath::test();
 	}
 
-	if (p_test == "physics_2d") {
-
-		return TestPhysics2D::test();
-	}
-
 	if (p_test == "render") {
 
 		return TestRender::test();
@@ -89,12 +83,10 @@ MainLoop *test_main(String p_test, const List<String> &p_args) {
 		return TestOAHashMap::test();
 	}
 
-#ifndef _3D_DISABLED
 	if (p_test == "gui") {
 
 		return TestGUI::test();
 	}
-#endif
 
 	if (p_test == "io") {
 

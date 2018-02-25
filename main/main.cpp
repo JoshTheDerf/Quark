@@ -1702,6 +1702,12 @@ bool Main::iteration() {
 
 	int iters = 0;
 
+	// TODO: I have no idea how this works. - Joshua Bemenderfer
+	// But if you remove it, you can't quit the program.
+	if (OS::get_singleton()->get_main_loop()->iteration(frame_slice * time_scale)) {
+		exit = true;
+	}
+
 	uint64_t idle_begin = OS::get_singleton()->get_ticks_usec();
 
 	OS::get_singleton()->get_main_loop()->idle(step * time_scale);

@@ -117,7 +117,6 @@ static bool editor = false;
 static bool show_help = false;
 static bool disable_render_loop = false;
 static int fixed_fps = -1;
-static bool auto_build_solutions = false;
 static bool auto_quit = false;
 
 static OS::ProcessID allow_focus_steal_pid = 0;
@@ -494,9 +493,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		} else if (I->get() == "-p" || I->get() == "--project-manager") { // starts project manager
 
 			project_manager = true;
-		} else if (I->get() == "--build-solutions") { // Build the scripting solution such C#
-
-			auto_build_solutions = true;
 #endif
 		} else if (I->get() == "--no-window") { // disable window creation, Windows only
 
@@ -1786,15 +1782,6 @@ bool Main::iteration() {
 		current_ticks = OS::get_singleton()->get_ticks_usec();
 		target_ticks = MIN(MAX(target_ticks, current_ticks - time_step), current_ticks + time_step);
 	}
-
-#ifdef TOOLS_ENABLED
-	if (auto_build_solutions) {
-		auto_build_solutions = false;
-		if (!EditorNode::get_singleton()->call_build()) {
-			ERR_FAIL_V(true);
-		}
-	}
-#endif
 
 	return exit || auto_quit;
 }

@@ -40,7 +40,6 @@
 #include "geometry.h"
 #include "input_map.h"
 #include "io/config_file.h"
-#include "io/http_client.h"
 #include "io/marshalls.h"
 #include "io/networked_multiplayer_peer.h"
 #include "io/packet_peer.h"
@@ -148,7 +147,6 @@ void register_core_types() {
 	ClassDB::register_class<Translation>();
 	ClassDB::register_class<PHashTranslation>();
 	ClassDB::register_class<UndoRedo>();
-	ClassDB::register_class<HTTPClient>();
 	ClassDB::register_class<TriangleMesh>();
 
 	ClassDB::register_virtual_class<ResourceInteractiveLoader>();

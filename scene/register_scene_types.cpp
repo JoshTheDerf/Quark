@@ -99,7 +99,6 @@
 #include "scene/gui/video_player.h"
 #include "scene/gui/viewport_container.h"
 #include "scene/main/canvas_layer.h"
-#include "scene/main/http_request.h"
 #include "scene/main/instance_placeholder.h"
 #include "scene/main/resource_preloader.h"
 #include "scene/main/scene_tree.h"
@@ -181,7 +180,6 @@ void register_scene_types() {
 
 	ClassDB::register_class<Viewport>();
 	ClassDB::register_class<ViewportTexture>();
-	ClassDB::register_class<HTTPRequest>();
 	ClassDB::register_class<Timer>();
 	ClassDB::register_class<CanvasLayer>();
 	ClassDB::register_class<CanvasModulate>();

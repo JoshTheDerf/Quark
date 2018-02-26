@@ -440,7 +440,6 @@ if env['tools']:
 
     env.add_source_files(env.editor_sources, "*.cpp")
 
-    SConscript('collada/SCsub')
     SConscript('doc/SCsub')
     SConscript('fileserver/SCsub')
     SConscript('icons/SCsub')

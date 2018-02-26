@@ -48,7 +48,6 @@
 #include "editor/editor_scale.h"
 #include "editor/editor_sub_scene.h"
 #include "editor/export_template_manager.h"
-#include "editor/fileserver/editor_file_server.h"
 #include "editor/filesystem_dock.h"
 #include "editor/groups_editor.h"
 #include "editor/import_dock.h"
@@ -389,8 +388,6 @@ private:
 	EditorSelection *editor_selection;
 	ProjectExportDialog *project_export;
 	EditorResourcePreview *resource_preview;
-
-	EditorFileServer *file_server;
 
 	struct BottomPanelItem {
 		String name;

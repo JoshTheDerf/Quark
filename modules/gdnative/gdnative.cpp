@@ -31,7 +31,6 @@
 #include "gdnative.h"
 
 #include "global_constants.h"
-#include "io/file_access_encrypted.h"
 #include "os/file_access.h"
 #include "os/os.h"
 #include "project_settings.h"

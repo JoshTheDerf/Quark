@@ -2224,21 +2224,6 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 			}
 			_discard_changes();
 		} break;
-		case RUN_FILE_SERVER: {
-
-			bool ischecked = debug_menu->get_popup()->is_item_checked(debug_menu->get_popup()->get_item_index(RUN_FILE_SERVER));
-
-			if (ischecked) {
-				file_server->stop();
-				run_native->set_deploy_dumb(false);
-			} else {
-				file_server->start();
-				run_native->set_deploy_dumb(true);
-			}
-
-			debug_menu->get_popup()->set_item_checked(debug_menu->get_popup()->get_item_index(RUN_FILE_SERVER), !ischecked);
-			EditorSettings::get_singleton()->set_project_metadata("debug_options", "run_file_server", !ischecked);
-		} break;
 		case RUN_LIVE_DEBUG: {
 
 			bool ischecked = debug_menu->get_popup()->is_item_checked(debug_menu->get_popup()->get_item_index(RUN_LIVE_DEBUG));
@@ -2421,12 +2406,10 @@ void EditorNode::_discard_changes(const String &p_str) {
 void EditorNode::_update_debug_options() {
 
 	bool check_deploy_remote = EditorSettings::get_singleton()->get_project_metadata("debug_options", "run_deploy_remote_debug", false);
-	bool check_file_server = EditorSettings::get_singleton()->get_project_metadata("debug_options", "run_file_server", false);
 	bool check_live_debug = EditorSettings::get_singleton()->get_project_metadata("debug_options", "run_live_debug", false);
 	bool check_reload_scripts = EditorSettings::get_singleton()->get_project_metadata("debug_options", "run_reload_scripts", false);
 
 	if (check_deploy_remote) _menu_option_confirm(RUN_DEPLOY_REMOTE_DEBUG, true);
-	if (check_file_server) _menu_option_confirm(RUN_FILE_SERVER, true);
 	if (check_live_debug) _menu_option_confirm(RUN_LIVE_DEBUG, true);
 	if (check_reload_scripts) _menu_option_confirm(RUN_RELOAD_SCRIPTS, true);
 }
@@ -4966,8 +4949,6 @@ EditorNode::EditorNode() {
 	p->set_hide_on_item_selection(false);
 	p->add_check_item(TTR("Deploy with Remote Debug"), RUN_DEPLOY_REMOTE_DEBUG);
 	p->set_item_tooltip(p->get_item_count() - 1, TTR("When exporting or deploying, the resulting executable will attempt to connect to the IP of this computer in order to be debugged."));
-	p->add_check_item(TTR("Small Deploy with Network FS"), RUN_FILE_SERVER);
-	p->set_item_tooltip(p->get_item_count() - 1, TTR("When this option is enabled, export or deploy will produce a minimal executable.\nThe filesystem will be provided from the project by the editor over the network.\nOn Android, deploy will use the USB cable for faster performance. This option speeds up testing for games with a large footprint."));
 	p->add_separator();
 	p->add_check_item(TTR("Sync Scene Changes"), RUN_LIVE_DEBUG);
 	p->set_item_tooltip(p->get_item_count() - 1, TTR("When this option is turned on, any changes made to the scene in the editor will be replicated in the running game.\nWhen used remotely on a device, this is more efficient with network filesystem."));
@@ -5373,8 +5354,6 @@ EditorNode::EditorNode() {
 
 	//plugin stuff
 
-	file_server = memnew(EditorFileServer);
-
 	add_editor_plugin(memnew(AnimationPlayerEditorPlugin(this)));
 	add_editor_plugin(memnew(CanvasItemEditorPlugin(this)));
 	add_editor_plugin(memnew(ScriptEditorPlugin(this)));
@@ -5567,7 +5546,6 @@ EditorNode::~EditorNode() {
 	memdelete(editor_plugins_over);
 	memdelete(editor_plugins_force_over);
 	memdelete(editor_plugins_force_input_forwarding);
-	memdelete(file_server);
 	memdelete(progress_hb);
 	EditorSettings::destroy();
 }

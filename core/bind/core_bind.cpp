@@ -33,7 +33,6 @@
 #include "core/project_settings.h"
 #include "geometry.h"
 #include "io/file_access_compressed.h"
-#include "io/file_access_encrypted.h"
 #include "io/json.h"
 #include "io/marshalls.h"
 #include "os/keyboard.h"
@@ -1442,41 +1441,6 @@ _Geometry::_Geometry() {
 
 ///////////////////////// FILE
 
-Error _File::open_encrypted(const String &p_path, int p_mode_flags, const Vector<uint8_t> &p_key) {
-
-	Error err = open(p_path, p_mode_flags);
-	if (err)
-		return err;
-
-	FileAccessEncrypted *fae = memnew(FileAccessEncrypted);
-	err = fae->open_and_parse(f, p_key, (p_mode_flags == WRITE) ? FileAccessEncrypted::MODE_WRITE_AES256 : FileAccessEncrypted::MODE_READ);
-	if (err) {
-		memdelete(fae);
-		close();
-		return err;
-	}
-	f = fae;
-	return OK;
-}
-
-Error _File::open_encrypted_pass(const String &p_path, int p_mode_flags, const String &p_pass) {
-
-	Error err = open(p_path, p_mode_flags);
-	if (err)
-		return err;
-
-	FileAccessEncrypted *fae = memnew(FileAccessEncrypted);
-	err = fae->open_and_parse_password(f, p_pass, (p_mode_flags == WRITE) ? FileAccessEncrypted::MODE_WRITE_AES256 : FileAccessEncrypted::MODE_READ);
-	if (err) {
-		memdelete(fae);
-		close();
-		return err;
-	}
-
-	f = fae;
-	return OK;
-}
-
 Error _File::open_compressed(const String &p_path, int p_mode_flags, int p_compress_mode) {
 
 	FileAccessCompressed *fac = memnew(FileAccessCompressed);
@@ -1797,8 +1761,6 @@ uint64_t _File::get_modified_time(const String &p_file) const {
 
 void _File::_bind_methods() {
 
-	ClassDB::bind_method(D_METHOD("open_encrypted", "path", "mode_flags", "key"), &_File::open_encrypted);
-	ClassDB::bind_method(D_METHOD("open_encrypted_with_pass", "path", "mode_flags", "pass"), &_File::open_encrypted_pass);
 	ClassDB::bind_method(D_METHOD("open_compressed", "path", "mode_flags", "compression_mode"), &_File::open_compressed, DEFVAL(0));
 
 	ClassDB::bind_method(D_METHOD("open", "path", "flags"), &_File::open);

@@ -30,6 +30,7 @@
 
 #include "editor_settings.h"
 
+#include "core/io/ip.h"
 #include "core/io/compression.h"
 #include "core/io/config_file.h"
 #include "core/io/file_access_memory.h"

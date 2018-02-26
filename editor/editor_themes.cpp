@@ -243,7 +243,7 @@ Ref<Theme> create_editor_theme(const Ref<Theme> p_theme) {
 
 	Ref<Theme> theme = Ref<Theme>(memnew(Theme));
 
-	const float default_contrast = 0.25;
+	const float default_contrast = 0.05;
 
 	//Theme settings
 	Color accent_color = EDITOR_DEF("interface/theme/accent_color", Color::html("#699ce8"));
@@ -253,7 +253,7 @@ Ref<Theme> create_editor_theme(const Ref<Theme> p_theme) {
 	int preset = EDITOR_DEF("interface/theme/preset", 0);
 	int icon_font_color_setting = EDITOR_DEF("interface/theme/icon_and_font_color", 0);
 	bool highlight_tabs = EDITOR_DEF("interface/theme/highlight_tabs", false);
-	int border_size = EDITOR_DEF("interface/theme/border_size", 1);
+	int border_size = EDITOR_DEF("interface/theme/border_size", 0);
 
 	bool use_gn_headers = EDITOR_DEF("interface/theme/use_graph_node_headers", false);
 
@@ -264,8 +264,8 @@ Ref<Theme> create_editor_theme(const Ref<Theme> p_theme) {
 	float preset_contrast;
 	switch (preset) {
 		case 0: { // Default
-			preset_accent_color = Color::html("#699ce8");
-			preset_base_color = Color::html("#323b4f");
+			preset_accent_color = Color::html("#8C5F26");
+			preset_base_color = Color::html("#FEFAF4");
 			preset_contrast = default_contrast;
 		} break;
 		case 1: { // Grey

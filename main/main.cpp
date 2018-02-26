@@ -65,8 +65,6 @@
 #include "editor/editor_node.h"
 #endif
 
-#include "io/file_access_network.h"
-
 #include "core/io/file_access_pack.h"
 #include "core/io/file_access_zip.h"
 #include "core/io/stream_peer_tcp.h"
@@ -90,7 +88,6 @@ static PackedData *packed_data = NULL;
 #ifdef MINIZIP_ENABLED
 static ZipArchive *zip_packed_data = NULL;
 #endif
-static FileAccessNetworkClient *file_access_network_client = NULL;
 static TranslationServer *translation_server = NULL;
 
 static OS::VideoMode video_mode;
@@ -290,9 +287,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	bool quiet_stdout = false;
 	int rtm = -1;
 
-	String remotefs;
-	String remotefs_pass;
-
 	Vector<String> breakpoints;
 	bool use_custom_res = true;
 	bool force_res = false;
@@ -419,26 +413,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		} else if (I->get() == "--low-dpi") { // force low DPI (macOS only)
 
 			force_lowdpi = true;
-		} else if (I->get() == "--remote-fs") { // remote filesystem
-
-			if (I->next()) {
-
-				remotefs = I->next()->get();
-				N = I->next()->next();
-			} else {
-				OS::get_singleton()->print("Missing remote filesystem address, aborting.\n");
-				goto error;
-			}
-		} else if (I->get() == "--remote-fs-password") { // remote filesystem password
-
-			if (I->next()) {
-
-				remotefs_pass = I->next()->get();
-				N = I->next()->next();
-			} else {
-				OS::get_singleton()->print("Missing remote filesystem password, aborting.\n");
-				goto error;
-			}
 		} else if (I->get() == "--render-thread") { // render thread mode
 
 			if (I->next()) {
@@ -650,27 +624,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		script_debugger = memnew(ScriptDebuggerLocal);
 	}
 
-	FileAccessNetwork::configure();
-
-	if (remotefs != "") {
-
-		file_access_network_client = memnew(FileAccessNetworkClient);
-		int port;
-		if (remotefs.find(":") != -1) {
-			port = remotefs.get_slicec(':', 1).to_int();
-			remotefs = remotefs.get_slicec(':', 0);
-		} else {
-			port = 6010;
-		}
-
-		Error err = file_access_network_client->connect(remotefs, port, remotefs_pass);
-		if (err) {
-			OS::get_singleton()->printerr("Could not connect to remotefs: %s:%i.\n", remotefs.utf8().get_data(), port);
-			goto error;
-		}
-
-		FileAccess::make_default<FileAccessNetwork>(FileAccess::ACCESS_RESOURCES);
-	}
 	if (script_debugger) {
 		//there is a debugger, parse breakpoints
 
@@ -918,8 +871,6 @@ error:
 		memdelete(script_debugger);
 	if (packed_data)
 		memdelete(packed_data);
-	if (file_access_network_client)
-		memdelete(file_access_network_client);
 
 	// Note 1: *zip_packed_data live into *packed_data
 	// Note 2: PackedData::~PackedData destroy this.
@@ -1775,8 +1726,6 @@ void Main::cleanup() {
 
 	if (packed_data)
 		memdelete(packed_data);
-	if (file_access_network_client)
-		memdelete(file_access_network_client);
 	if (performance)
 		memdelete(performance);
 	if (input_map)

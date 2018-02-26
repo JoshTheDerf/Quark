@@ -32,7 +32,6 @@
 
 #include "bind/core_bind.h"
 #include "core_string_names.h"
-#include "io/file_access_network.h"
 #include "io/file_access_pack.h"
 #include "io/marshalls.h"
 #include "os/dir_access.h"
@@ -263,18 +262,6 @@ bool ProjectSettings::_load_resource_pack(const String &p_pack) {
 }
 
 Error ProjectSettings::setup(const String &p_path, const String &p_main_pack, bool p_upwards) {
-
-	//If looking for files in network, just use network!
-
-	if (FileAccessNetworkClient::get_singleton()) {
-
-		Error err = _load_settings_text_or_binary("res://project.godot", "res://project.binary");
-		if (err == OK) {
-			// Optional, we don't mind if it fails
-			_load_settings_text("res://override.cfg");
-		}
-		return err;
-	}
 
 	String exec_path = OS::get_singleton()->get_executable_path();
 

@@ -400,8 +400,6 @@ public:
 		COMPRESSION_GZIP = Compression::MODE_GZIP
 	};
 
-	Error open_encrypted(const String &p_path, int p_mode_flags, const Vector<uint8_t> &p_key);
-	Error open_encrypted_pass(const String &p_path, int p_mode_flags, const String &p_pass);
 	Error open_compressed(const String &p_path, int p_mode_flags, int p_compress_mode = 0);
 
 	Error open(const String &p_path, int p_mode_flags); ///< open a file

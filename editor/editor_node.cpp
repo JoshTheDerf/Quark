@@ -80,8 +80,6 @@
 #include "editor/plugins/script_text_editor.h"
 #include "editor/plugins/shader_editor_plugin.h"
 #include "editor/plugins/shader_graph_editor_plugin.h"
-#include "editor/plugins/skeleton_2d_editor_plugin.h"
-#include "editor/plugins/sprite_editor_plugin.h"
 #include "editor/plugins/sprite_frames_editor_plugin.h"
 #include "editor/plugins/style_box_editor_plugin.h"
 #include "editor/plugins/texture_editor_plugin.h"
@@ -184,8 +182,6 @@ void EditorNode::_unhandled_input(const Ref<InputEvent> &p_event) {
 
 		if (ED_IS_SHORTCUT("editor/editor_2d", p_event)) {
 			_editor_select(EDITOR_2D);
-		} else if (ED_IS_SHORTCUT("editor/editor_3d", p_event)) {
-			_editor_select(EDITOR_3D);
 		} else if (ED_IS_SHORTCUT("editor/editor_script", p_event)) {
 			_editor_select(EDITOR_SCRIPT);
 		} else if (ED_IS_SHORTCUT("editor/editor_help", p_event)) {
@@ -277,7 +273,6 @@ void EditorNode::_notification(int p_what) {
 		VisualServer::get_singleton()->viewport_set_hide_canvas(get_scene_root()->get_viewport_rid(), true);
 		VisualServer::get_singleton()->viewport_set_disable_environment(get_viewport()->get_viewport_rid(), true);
 
-		_editor_select(EDITOR_3D);
 		_update_debug_options();
 		_load_docks();
 	}
@@ -1113,7 +1108,6 @@ void EditorNode::_dialog_action(String p_file) {
 		} break;
 		case FILE_CLOSE:
 		case FILE_CLOSE_ALL_AND_QUIT:
-		case FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER:
 		case SCENE_TAB_CLOSE:
 		case FILE_SAVE_SCENE:
 		case FILE_SAVE_AS_SCENE: {
@@ -1783,10 +1777,9 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 
 		} break;
 		case FILE_CLOSE_ALL_AND_QUIT:
-		case FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER:
 		case FILE_CLOSE: {
 
-			if (!p_confirmed && (unsaved_cache || p_option == FILE_CLOSE_ALL_AND_QUIT || p_option == FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER)) {
+			if (!p_confirmed && (unsaved_cache || p_option == FILE_CLOSE_ALL_AND_QUIT)) {
 				tab_closing = p_option == FILE_CLOSE ? editor_data.get_edited_scene() : _next_unsaved_scene(false);
 				String scene_filename = editor_data.get_edited_scene_root(tab_closing)->get_filename();
 				save_confirmation->get_ok()->set_text(TTR("Save & Close"));
@@ -2189,8 +2182,7 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 
 			project_settings->popup_project_settings();
 		} break;
-		case FILE_QUIT:
-		case RUN_PROJECT_MANAGER: {
+		case FILE_QUIT: {
 
 			if (!p_confirmed) {
 				bool save_each = EDITOR_DEF("interface/editor/save_each_scene_on_quit", true);
@@ -2199,8 +2191,8 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 					bool confirm = EDITOR_DEF("interface/editor/quit_confirmation", true);
 					if (confirm) {
 
-						confirmation->get_ok()->set_text(p_option == FILE_QUIT ? TTR("Quit") : TTR("Yes"));
-						confirmation->set_text(p_option == FILE_QUIT ? TTR("Exit the editor?") : TTR("Open Project Manager?"));
+						confirmation->get_ok()->set_text(TTR("Quit"));
+						confirmation->set_text(TTR("Exit the editor?"));
 						confirmation->popup_centered_minsize();
 					} else {
 						_discard_changes();
@@ -2210,7 +2202,7 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 
 					if (save_each) {
 
-						_menu_option_confirm(p_option == FILE_QUIT ? FILE_CLOSE_ALL_AND_QUIT : FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER, false);
+						_menu_option_confirm(p_option == FILE_CLOSE_ALL_AND_QUIT, false);
 					} else {
 
 						String unsaved_scenes;
@@ -2402,16 +2394,15 @@ void EditorNode::_discard_changes(const String &p_str) {
 	switch (current_option) {
 
 		case FILE_CLOSE_ALL_AND_QUIT:
-		case FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER:
 		case FILE_CLOSE:
 		case SCENE_TAB_CLOSE: {
 
 			_remove_scene(tab_closing);
 			_update_scene_tabs();
 
-			if (current_option == FILE_CLOSE_ALL_AND_QUIT || current_option == FILE_CLOSE_ALL_AND_RUN_PROJECT_MANAGER) {
+			if (current_option == FILE_CLOSE_ALL_AND_QUIT) {
 				if (_next_unsaved_scene(false) == -1) {
-					current_option = current_option == FILE_CLOSE_ALL_AND_QUIT ? FILE_QUIT : RUN_PROJECT_MANAGER;
+					current_option = current_option == FILE_QUIT;
 					_discard_changes();
 				} else {
 					_menu_option_confirm(current_option, false);
@@ -2426,22 +2417,6 @@ void EditorNode::_discard_changes(const String &p_str) {
 			_menu_option_confirm(RUN_STOP, true);
 			exiting = true;
 			get_tree()->quit();
-		} break;
-		case RUN_PROJECT_MANAGER: {
-
-			_menu_option_confirm(RUN_STOP, true);
-			exiting = true;
-			get_tree()->quit();
-			String exec = OS::get_singleton()->get_executable_path();
-
-			List<String> args;
-			args.push_back("--path");
-			args.push_back(exec.get_base_dir());
-			args.push_back("--project-manager");
-
-			OS::ProcessID pid = 0;
-			Error err = OS::get_singleton()->execute(exec, args, false, &pid);
-			ERR_FAIL_COND(err);
 		} break;
 	}
 }
@@ -2746,16 +2721,7 @@ void EditorNode::_set_main_scene_state(Dictionary p_state, Node *p_for_scene) {
 	}
 
 	if (get_edited_scene()) {
-		if (current < 2) {
-			//use heuristic instead
-			int n2d = 0, n3d = 0;
-			_find_node_types(get_edited_scene(), n2d, n3d);
-			if (n2d > n3d) {
-				_editor_select(EDITOR_2D);
-			} else if (n3d > n2d) {
-				_editor_select(EDITOR_3D);
-			}
-		}
+		_editor_select(EDITOR_2D);
 	}
 
 	if (p_state.has("scene_tree_offset"))
@@ -4986,13 +4952,6 @@ EditorNode::EditorNode() {
 	p->add_child(tool_menu);
 	p->add_submenu_item(TTR("Tools"), "Tools");
 	tool_menu->add_item(TTR("Orphan Resource Explorer"), TOOLS_ORPHAN_RESOURCES);
-	p->add_separator();
-
-#ifdef OSX_ENABLED
-	p->add_item(TTR("Quit to Project List"), RUN_PROJECT_MANAGER, KEY_MASK_SHIFT + KEY_MASK_ALT + KEY_Q);
-#else
-	p->add_item(TTR("Quit to Project List"), RUN_PROJECT_MANAGER, KEY_MASK_SHIFT + KEY_MASK_CTRL + KEY_Q);
-#endif
 
 	PanelContainer *editor_region = memnew(PanelContainer);
 	main_editor_button_vb = memnew(HBoxContainer);
@@ -5444,8 +5403,6 @@ EditorNode::EditorNode() {
 	add_editor_plugin(memnew(ThemeEditorPlugin(this)));
 	add_editor_plugin(memnew(AnimationTreeEditorPlugin(this)));
 	add_editor_plugin(memnew(StyleBoxEditorPlugin(this)));
-	add_editor_plugin(memnew(SpriteEditorPlugin(this)));
-	add_editor_plugin(memnew(Skeleton2DEditorPlugin(this)));
 	add_editor_plugin(memnew(ResourcePreloaderEditorPlugin(this)));
 	add_editor_plugin(memnew(ItemListEditorPlugin(this)));
 	add_editor_plugin(memnew(SpriteFramesEditorPlugin(this)));
@@ -5601,7 +5558,6 @@ EditorNode::EditorNode() {
 	add_print_handler(&print_handler);
 
 	ED_SHORTCUT("editor/editor_2d", TTR("Open 2D Editor"), KEY_F1);
-	ED_SHORTCUT("editor/editor_3d", TTR("Open 3D Editor"), KEY_F2);
 	ED_SHORTCUT("editor/editor_script", TTR("Open Script Editor"), KEY_F3); //hack neded for script editor F3 search to work :) Assign like this or don't use F3
 	ED_SHORTCUT("editor/editor_help", TTR("Search Help"), KEY_F4);
 	ED_SHORTCUT("editor/editor_assetlib", TTR("Open Asset Library"));

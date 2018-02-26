@@ -63,7 +63,6 @@
 #include "editor/doc/doc_data.h"
 #include "editor/doc/doc_data_class_path.gen.h"
 #include "editor/editor_node.h"
-#include "editor/project_manager.h"
 #endif
 
 #include "io/file_access_network.h"
@@ -100,10 +99,6 @@ static bool init_windowed = false;
 static bool init_fullscreen = false;
 static bool init_always_on_top = false;
 static bool init_use_custom_pos = false;
-#ifdef DEBUG_ENABLED
-static bool debug_collisions = false;
-static bool debug_navigation = false;
-#endif
 static int frame_delay = 0;
 static Vector2 init_custom_pos;
 static int video_driver_idx = -1;
@@ -120,12 +115,6 @@ static int fixed_fps = -1;
 static bool auto_quit = false;
 
 static OS::ProcessID allow_focus_steal_pid = 0;
-
-static bool project_manager = false;
-
-bool Main::is_project_manager() {
-	return project_manager;
-}
 
 static String unescape_cmdline(const String &p_str) {
 
@@ -208,10 +197,6 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("  -b, --breakpoints                Breakpoint list as source::line comma-separated pairs, no spaces (use %%20 instead).\n");
 	OS::get_singleton()->print("  --profiling                      Enable profiling in the script debugger.\n");
 	OS::get_singleton()->print("  --remote-debug <address>         Remote debug (<host/IP>:<port> address).\n");
-#ifdef DEBUG_ENABLED
-	OS::get_singleton()->print("  --debug-collisions               Show collisions shapes when running the scene.\n");
-	OS::get_singleton()->print("  --debug-navigation               Show navigation polygons when running the scene.\n");
-#endif
 	OS::get_singleton()->print("  --frame-delay <ms>               Simulate high CPU load (delay each frame by <ms> milliseconds).\n");
 	OS::get_singleton()->print("  --time-scale <scale>             Force time scale (higher values are faster, 1.0 is normal speed).\n");
 	OS::get_singleton()->print("  --disable-render-loop            Disable render loop so rendering only occurs when called explicitly from script.\n");
@@ -490,9 +475,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		} else if (I->get() == "-e" || I->get() == "--editor") { // starts editor
 
 			editor = true;
-		} else if (I->get() == "-p" || I->get() == "--project-manager") { // starts project manager
-
-			project_manager = true;
 #endif
 		} else if (I->get() == "--no-window") { // disable window creation, Windows only
 
@@ -585,12 +567,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 		} else if (I->get() == "-d" || I->get() == "--debug") {
 			debug_mode = "local";
-#ifdef DEBUG_ENABLED
-		} else if (I->get() == "--debug-collisions") {
-			debug_collisions = true;
-		} else if (I->get() == "--debug-navigation") {
-			debug_navigation = true;
-#endif
 		} else if (I->get() == "--remote-debug") {
 			if (I->next()) {
 
@@ -751,24 +727,9 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		}
 	}
 
-	if (!project_manager) {
-		// Determine if the project manager should be requested
-		project_manager = main_args.size() == 0 && !found_project;
-	}
 #endif
 
-	if (main_args.size() == 0 && String(GLOBAL_DEF("application/run/main_scene", "")) == "") {
-#ifdef TOOLS_ENABLED
-		if (!editor && !project_manager) {
-#endif
-			OS::get_singleton()->print("Error: Can't run project: no main scene defined.\n");
-			goto error;
-#ifdef TOOLS_ENABLED
-		}
-#endif
-	}
-
-	if (editor || project_manager) {
+	if (editor) {
 		use_custom_res = false;
 		input_map->load_default(); //keys for editor
 	} else {
@@ -830,7 +791,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	GLOBAL_DEF("rendering/quality/intended_usage/framebuffer_allocation", 2);
 	GLOBAL_DEF("rendering/quality/intended_usage/framebuffer_allocation.mobile", 3);
 
-	if (editor || project_manager) {
+	if (editor) {
 		// The editor and project manager always detect and use hiDPI if needed
 		OS::get_singleton()->_allow_hidpi = true;
 	}
@@ -1064,7 +1025,7 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 			MAIN_PRINT("Main: Create bootsplash");
 #if defined(TOOLS_ENABLED) && !defined(NO_EDITOR_SPLASH)
 
-			Ref<Image> splash = (editor || project_manager) ? memnew(Image(boot_splash_editor_png)) : memnew(Image(boot_splash_png));
+			Ref<Image> splash = (editor) ? memnew(Image(boot_splash_editor_png)) : memnew(Image(boot_splash_png));
 #else
 			Ref<Image> splash = memnew(Image(boot_splash_png));
 #endif
@@ -1090,7 +1051,7 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 	ProjectSettings::get_singleton()->set_custom_property_info("application/config/icon", PropertyInfo(Variant::STRING, "application/config/icon", PROPERTY_HINT_FILE, "*.png,*.webp"));
 
 	if (bool(GLOBAL_DEF("display/window/handheld/emulate_touchscreen", false))) {
-		if (!OS::get_singleton()->has_touchscreen_ui_hint() && Input::get_singleton() && !(editor || project_manager)) {
+		if (!OS::get_singleton()->has_touchscreen_ui_hint() && Input::get_singleton() && !(editor)) {
 			//only if no touchscreen ui hint, set emulation
 			InputDefault *id = Object::cast_to<InputDefault>(Input::get_singleton());
 			if (id)
@@ -1194,8 +1155,6 @@ bool Main::start() {
 #ifdef TOOLS_ENABLED
 		} else if (args[i] == "-e" || args[i] == "--editor") {
 			editor = true;
-		} else if (args[i] == "-p" || args[i] == "--project-manager") {
-			project_manager = true;
 #endif
 		} else if (args[i].length() && args[i][0] != '-' && game_path == "") {
 			game_path = args[i];
@@ -1379,15 +1338,6 @@ bool Main::start() {
 
 		SceneTree *sml = Object::cast_to<SceneTree>(main_loop);
 
-#ifdef DEBUG_ENABLED
-		if (debug_collisions) {
-			sml->set_debug_collisions_hint(true);
-		}
-		if (debug_navigation) {
-			sml->set_debug_navigation_hint(true);
-		}
-#endif
-
 #ifdef TOOLS_ENABLED
 
 		EditorNode *editor_node = NULL;
@@ -1410,7 +1360,7 @@ bool Main::start() {
 		{
 		}
 
-		if (!editor && !project_manager) {
+		if (!editor) {
 			//standard helpers that can be changed from main config
 
 			String stretch_mode = GLOBAL_DEF("display/window/stretch/mode", "disabled");
@@ -1476,7 +1426,7 @@ bool Main::start() {
 		}
 
 		String local_game_path;
-		if (game_path != "" && !project_manager) {
+		if (game_path != "") {
 
 			local_game_path = game_path.replace("\\", "/");
 
@@ -1521,7 +1471,7 @@ bool Main::start() {
 #endif
 		}
 
-		if (!project_manager && !editor) { // game
+		if (!editor) { // game
 			if (game_path != "" || script != "") {
 				//autoload
 				List<PropertyInfo> props;
@@ -1626,17 +1576,6 @@ bool Main::start() {
 				}
 			}
 		}
-
-#ifdef TOOLS_ENABLED
-		if (project_manager || (script == "" && test == "" && game_path == "" && !editor)) {
-
-			ProjectManager *pmanager = memnew(ProjectManager);
-			ProgressDialog *progress_dialog = memnew(ProgressDialog);
-			pmanager->add_child(progress_dialog);
-			sml->get_root()->add_child(pmanager);
-			OS::get_singleton()->set_context(OS::CONTEXT_PROJECTMAN);
-		}
-#endif
 	}
 
 	if (!hasicon) {

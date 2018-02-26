@@ -41,7 +41,6 @@
 #include "scene/2d/light_2d.h"
 #include "scene/2d/light_occluder_2d.h"
 #include "scene/2d/line_2d.h"
-#include "scene/2d/mesh_instance_2d.h"
 #include "scene/2d/parallax_background.h"
 #include "scene/2d/parallax_layer.h"
 #include "scene/2d/particles_2d.h"
@@ -295,7 +294,6 @@ void register_scene_types() {
 	ClassDB::register_class<AnimatedSprite>();
 	ClassDB::register_class<Position2D>();
 	ClassDB::register_class<Line2D>();
-	ClassDB::register_class<MeshInstance2D>();
 	ClassDB::register_class<VisibilityNotifier2D>();
 	ClassDB::register_class<VisibilityEnabler2D>();
 	ClassDB::register_class<Polygon2D>();

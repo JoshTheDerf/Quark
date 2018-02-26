@@ -156,6 +156,18 @@ They are marked with `/* GODOT start */` and `/* GODOT end */`
 comments and a patch is provided in the minizip/ folder.
 
 
+## nanosvg
+
+- Upstream: https://github.com/memononen/nanosvg
+- Version: 9a74da4 (git)
+- License: zlib
+
+Files extracted from the upstream source:
+
+- All .h files in `src/`
+- LICENSE.txt
+
+
 ## pcre2
 
 - Upstream: http://www.pcre.org/

@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  main.h                                                               */
+/*  register_types.cpp                                                   */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,34 +28,19 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef MAIN_H
-#define MAIN_H
+#include "register_types.h"
 
-/**
-	@author Juan Linietsky <reduzio@gmail.com>
-*/
+#include "image_loader_svg.h"
 
-#include "core/os/thread.h"
-#include "error_list.h"
-#include "typedefs.h"
+static ImageLoaderSVG *image_loader_svg = NULL;
 
-class Main {
+void register_svg_types() {
 
-	static void print_help(const char *p_binary);
-	static uint64_t last_ticks;
-	static uint64_t target_ticks;
-	static float time_accum;
-	static uint32_t frames;
-	static uint32_t frame;
-	static bool force_redraw_requested;
+	image_loader_svg = memnew(ImageLoaderSVG);
+	ImageLoader::add_image_format_loader(image_loader_svg);
+}
 
-public:
-	static Error setup(const char *execpath, int argc, char *argv[], bool p_second_phase = true);
-	static Error setup2(Thread::ID p_main_tid_override = 0);
-	static bool start();
-	static bool iteration();
-	static void cleanup();
-	static void force_redraw();
-};
+void unregister_svg_types() {
 
-#endif
+	memdelete(image_loader_svg);
+}

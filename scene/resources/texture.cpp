@@ -441,32 +441,6 @@ Error StreamTexture::_load_data(const String &p_path, int &tw, int &th, int &fla
 	print_line("flags: " + itos(flags));
 	print_line("df: " + itos(df));
 	*/
-#ifdef TOOLS_ENABLED
-
-	if (request_3d_callback && df & FORMAT_BIT_DETECT_3D) {
-		//print_line("request detect 3D at " + p_path);
-		VS::get_singleton()->texture_set_detect_3d_callback(texture, _requested_3d, this);
-	} else {
-		//print_line("not requesting detect 3D at " + p_path);
-		VS::get_singleton()->texture_set_detect_3d_callback(texture, NULL, NULL);
-	}
-
-	if (request_srgb_callback && df & FORMAT_BIT_DETECT_SRGB) {
-		//print_line("request detect srgb at " + p_path);
-		VS::get_singleton()->texture_set_detect_srgb_callback(texture, _requested_srgb, this);
-	} else {
-		//print_line("not requesting detect srgb at " + p_path);
-		VS::get_singleton()->texture_set_detect_srgb_callback(texture, NULL, NULL);
-	}
-
-	if (request_srgb_callback && df & FORMAT_BIT_DETECT_NORMAL) {
-		//print_line("request detect srgb at " + p_path);
-		VS::get_singleton()->texture_set_detect_normal_callback(texture, _requested_normal, this);
-	} else {
-		//print_line("not requesting detect normal at " + p_path);
-		VS::get_singleton()->texture_set_detect_normal_callback(texture, NULL, NULL);
-	}
-#endif
 	if (!(df & FORMAT_BIT_STREAM)) {
 		p_size_limit = 0;
 	}

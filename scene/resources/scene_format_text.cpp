@@ -1576,9 +1576,6 @@ Error ResourceFormatSaverTextInstance::save(const String &p_path, const RES &p_r
 			}
 
 			internal_resources[res] = idx;
-#ifdef TOOLS_ENABLED
-			res->set_edited(false);
-#endif
 		}
 
 		List<PropertyInfo> property_list;

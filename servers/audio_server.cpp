@@ -35,15 +35,6 @@
 #include "project_settings.h"
 #include "servers/audio/audio_driver_dummy.h"
 #include "servers/audio/effects/audio_effect_compressor.h"
-#ifdef TOOLS_ENABLED
-
-#define MARK_EDITED set_edited(true);
-
-#else
-
-#define MARK_EDITED
-
-#endif
 
 AudioDriver *AudioDriver::singleton = NULL;
 AudioDriver *AudioDriver::get_singleton() {
@@ -447,8 +438,6 @@ void AudioServer::set_bus_count(int p_count) {
 	ERR_FAIL_COND(p_count < 1);
 	ERR_FAIL_INDEX(p_count, 256);
 
-	MARK_EDITED
-
 	lock();
 	int cb = buses.size();
 
@@ -511,8 +500,6 @@ void AudioServer::remove_bus(int p_index) {
 	ERR_FAIL_INDEX(p_index, buses.size());
 	ERR_FAIL_COND(p_index == 0);
 
-	MARK_EDITED
-
 	lock();
 	bus_map.erase(buses[p_index]->name);
 	memdelete(buses[p_index]);
@@ -521,8 +508,6 @@ void AudioServer::remove_bus(int p_index) {
 }
 
 void AudioServer::add_bus(int p_at_pos) {
-
-	MARK_EDITED
 
 	if (p_at_pos >= buses.size()) {
 		p_at_pos = -1;
@@ -578,8 +563,6 @@ void AudioServer::move_bus(int p_bus, int p_to_pos) {
 	ERR_FAIL_COND(p_bus < 1 || p_bus >= buses.size());
 	ERR_FAIL_COND(p_to_pos != -1 && (p_to_pos < 1 || p_to_pos > buses.size()));
 
-	MARK_EDITED
-
 	if (p_bus == p_to_pos)
 		return;
 
@@ -605,8 +588,6 @@ void AudioServer::set_bus_name(int p_bus, const String &p_name) {
 	ERR_FAIL_INDEX(p_bus, buses.size());
 	if (p_bus == 0 && p_name != "Master")
 		return; //bus 0 is always master
-
-	MARK_EDITED
 
 	lock();
 
@@ -662,8 +643,6 @@ void AudioServer::set_bus_volume_db(int p_bus, float p_volume_db) {
 
 	ERR_FAIL_INDEX(p_bus, buses.size());
 
-	MARK_EDITED
-
 	buses[p_bus]->volume_db = p_volume_db;
 }
 float AudioServer::get_bus_volume_db(int p_bus) const {
@@ -675,8 +654,6 @@ float AudioServer::get_bus_volume_db(int p_bus) const {
 void AudioServer::set_bus_send(int p_bus, const StringName &p_send) {
 
 	ERR_FAIL_INDEX(p_bus, buses.size());
-
-	MARK_EDITED
 
 	buses[p_bus]->send = p_send;
 }
@@ -690,8 +667,6 @@ StringName AudioServer::get_bus_send(int p_bus) const {
 void AudioServer::set_bus_solo(int p_bus, bool p_enable) {
 
 	ERR_FAIL_INDEX(p_bus, buses.size());
-
-	MARK_EDITED
 
 	buses[p_bus]->solo = p_enable;
 }
@@ -707,8 +682,6 @@ void AudioServer::set_bus_mute(int p_bus, bool p_enable) {
 
 	ERR_FAIL_INDEX(p_bus, buses.size());
 
-	MARK_EDITED
-
 	buses[p_bus]->mute = p_enable;
 }
 bool AudioServer::is_bus_mute(int p_bus) const {
@@ -721,8 +694,6 @@ bool AudioServer::is_bus_mute(int p_bus) const {
 void AudioServer::set_bus_bypass_effects(int p_bus, bool p_enable) {
 
 	ERR_FAIL_INDEX(p_bus, buses.size());
-
-	MARK_EDITED
 
 	buses[p_bus]->bypass = p_enable;
 }
@@ -752,8 +723,6 @@ void AudioServer::add_bus_effect(int p_bus, const Ref<AudioEffect> &p_effect, in
 	ERR_FAIL_COND(p_effect.is_null());
 	ERR_FAIL_INDEX(p_bus, buses.size());
 
-	MARK_EDITED
-
 	lock();
 
 	Bus::Effect fx;
@@ -775,8 +744,6 @@ void AudioServer::add_bus_effect(int p_bus, const Ref<AudioEffect> &p_effect, in
 void AudioServer::remove_bus_effect(int p_bus, int p_effect) {
 
 	ERR_FAIL_INDEX(p_bus, buses.size());
-
-	MARK_EDITED
 
 	lock();
 
@@ -807,8 +774,6 @@ void AudioServer::swap_bus_effects(int p_bus, int p_effect, int p_by_effect) {
 	ERR_FAIL_INDEX(p_effect, buses[p_bus]->effects.size());
 	ERR_FAIL_INDEX(p_by_effect, buses[p_bus]->effects.size());
 
-	MARK_EDITED
-
 	lock();
 	SWAP(buses[p_bus]->effects[p_effect], buses[p_bus]->effects[p_by_effect]);
 	_update_bus_effects(p_bus);
@@ -819,8 +784,6 @@ void AudioServer::set_bus_effect_enabled(int p_bus, int p_effect, bool p_enabled
 
 	ERR_FAIL_INDEX(p_bus, buses.size());
 	ERR_FAIL_INDEX(p_effect, buses[p_bus]->effects.size());
-
-	MARK_EDITED
 
 	buses[p_bus]->effects[p_effect].enabled = p_enabled;
 }
@@ -872,10 +835,6 @@ void AudioServer::init() {
 
 	if (AudioDriver::get_singleton())
 		AudioDriver::get_singleton()->start();
-
-#ifdef TOOLS_ENABLED
-	set_edited(false); //avoid editors from thinking this was edited
-#endif
 
 	GLOBAL_DEF("audio/video_delay_compensation_ms", 0);
 }
@@ -1052,9 +1011,6 @@ void AudioServer::set_bus_layout(const Ref<AudioBusLayout> &p_bus_layout) {
 		}
 		_update_bus_effects(i);
 	}
-#ifdef TOOLS_ENABLED
-	set_edited(false);
-#endif
 	unlock();
 }
 

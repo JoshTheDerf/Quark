@@ -47,15 +47,6 @@ void Popup::_notification(int p_what) {
 
 		update_configuration_warning();
 	}
-
-	if (p_what == NOTIFICATION_ENTER_TREE) {
-//small helper to make editing of these easier in editor
-#ifdef TOOLS_ENABLED
-		if (Engine::get_singleton()->is_editor_hint() && get_tree()->get_edited_scene_root() && get_tree()->get_edited_scene_root()->is_a_parent_of(this)) {
-			set_as_toplevel(false);
-		}
-#endif
-	}
 }
 
 void Popup::_fix_size() {
@@ -253,7 +244,7 @@ Popup::Popup() {
 String Popup::get_configuration_warning() const {
 
 	if (is_visible_in_tree()) {
-		return TTR("Popups will hide by default unless you call popup() or any of the popup*() functions. Making them visible for editing is fine though, but they will hide upon running.");
+		return "Popups will hide by default unless you call popup() or any of the popup*() functions. Making them visible for editing is fine though, but they will hide upon running.";
 	}
 
 	return String();

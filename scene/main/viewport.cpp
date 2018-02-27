@@ -691,12 +691,6 @@ void Viewport::_vp_input(const Ref<InputEvent> &p_ev) {
 	if (disable_input)
 		return;
 
-#ifdef TOOLS_ENABLED
-	if (Engine::get_singleton()->is_editor_hint() && get_tree()->get_edited_scene_root() && get_tree()->get_edited_scene_root()->is_a_parent_of(this)) {
-		return;
-	}
-#endif
-
 	if (to_screen_rect == Rect2())
 		return; //if render target, can't get input events
 
@@ -711,11 +705,6 @@ void Viewport::_vp_unhandled_input(const Ref<InputEvent> &p_ev) {
 
 	if (disable_input)
 		return;
-#ifdef TOOLS_ENABLED
-	if (Engine::get_singleton()->is_editor_hint() && get_tree()->get_edited_scene_root() && get_tree()->get_edited_scene_root()->is_a_parent_of(this)) {
-		return;
-	}
-#endif
 
 	/*
 	if (parent_control && !parent_control->is_visible_in_tree())
@@ -1896,11 +1885,6 @@ Control *Viewport::get_modal_stack_top() const {
 }
 
 String Viewport::get_configuration_warning() const {
-
-	/*if (get_parent() && !Object::cast_to<Control>(get_parent()) && !render_target) {
-
-		return TTR("This viewport is not set as render target. If you intend for it to display its contents directly to the screen, make it a child of a Control so it can obtain a size. Otherwise, make it a RenderTarget and assign its internal texture to some node for display.");
-	}*/
 
 	return String();
 }

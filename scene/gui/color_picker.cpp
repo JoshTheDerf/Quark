@@ -577,7 +577,7 @@ ColorPicker::ColorPicker() :
 	HBoxContainer *hhb = memnew(HBoxContainer);
 
 	btn_mode = memnew(CheckButton);
-	btn_mode->set_text(TTR("Raw Mode"));
+	btn_mode->set_text("Raw Mode");
 	btn_mode->connect("toggled", this, "set_raw_mode");
 	hhb->add_child(btn_mode);
 	vbr->add_child(hhb);
@@ -606,7 +606,7 @@ ColorPicker::ColorPicker() :
 	preset->connect("draw", this, "_update_presets");
 
 	bt_add_preset = memnew(Button);
-	bt_add_preset->set_tooltip(TTR("Add current color as a preset"));
+	bt_add_preset->set_tooltip("Add current color as a preset");
 	bt_add_preset->connect("pressed", this, "_add_preset_pressed");
 	bbc->add_child(bt_add_preset);
 }

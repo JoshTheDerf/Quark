@@ -32,7 +32,6 @@
 
 #include "bind/core_bind.h"
 #include "class_db.h"
-#include "compressed_translation.h"
 #include "core_string_names.h"
 #include "engine.h"
 #include "func_ref.h"
@@ -47,7 +46,6 @@
 #include "io/resource_format_binary.h"
 #include "io/resource_import.h"
 #include "io/tcp_server.h"
-#include "io/translation_loader_po.h"
 #include "math/a_star.h"
 #include "math/triangle_mesh.h"
 #include "os/input.h"
@@ -55,7 +53,6 @@
 #include "packed_data_container.h"
 #include "path_remap.h"
 #include "project_settings.h"
-#include "translation.h"
 #include "undo_redo.h"
 static ResourceFormatSaverBinary *resource_saver_binary = NULL;
 static ResourceFormatLoaderBinary *resource_loader_binary = NULL;
@@ -67,7 +64,6 @@ static _OS *_os = NULL;
 static _Engine *_engine = NULL;
 static _ClassDB *_classdb = NULL;
 static _Marshalls *_marshalls = NULL;
-static TranslationLoaderPO *resource_format_po = NULL;
 
 static IP *ip = NULL;
 
@@ -94,9 +90,6 @@ void register_core_types() {
 	register_variant_methods();
 
 	CoreStringNames::create();
-
-	resource_format_po = memnew(TranslationLoaderPO);
-	ResourceLoader::add_resource_format_loader(resource_format_po);
 
 	resource_saver_binary = memnew(ResourceFormatSaverBinary);
 	ResourceSaver::add_resource_format_saver(resource_saver_binary);
@@ -142,8 +135,6 @@ void register_core_types() {
 	ClassDB::register_virtual_class<NetworkedMultiplayerPeer>();
 	ClassDB::register_class<MainLoop>();
 	//ClassDB::register_type<OptimizedSaver>();
-	ClassDB::register_class<Translation>();
-	ClassDB::register_class<PHashTranslation>();
 	ClassDB::register_class<UndoRedo>();
 	ClassDB::register_class<TriangleMesh>();
 
@@ -192,7 +183,6 @@ void register_core_singletons() {
 	ClassDB::register_class<_Engine>();
 	ClassDB::register_class<_ClassDB>();
 	ClassDB::register_class<_Marshalls>();
-	ClassDB::register_class<TranslationServer>();
 	ClassDB::register_virtual_class<Input>();
 	ClassDB::register_class<InputMap>();
 
@@ -205,7 +195,6 @@ void register_core_singletons() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Engine", _Engine::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("ClassDB", _classdb));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Marshalls", _Marshalls::get_singleton()));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("TranslationServer", TranslationServer::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Input", Input::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("InputMap", InputMap::get_singleton()));
 }
@@ -227,8 +216,6 @@ void unregister_core_types() {
 		memdelete(resource_loader_binary);
 	if (resource_format_importer)
 		memdelete(resource_format_importer);
-
-	memdelete(resource_format_po);
 
 	if (ip)
 		memdelete(ip);

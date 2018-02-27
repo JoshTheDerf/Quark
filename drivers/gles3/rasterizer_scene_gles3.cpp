@@ -1225,17 +1225,6 @@ bool RasterizerSceneGLES3::_setup_material(RasterizerStorageGLES3::Material *p_m
 		} else {
 
 			t = t->get_ptr(); //resolve for proxies
-#ifdef TOOLS_ENABLED
-			if (t->detect_3d) {
-				t->detect_3d(t->detect_3d_ud);
-			}
-#endif
-
-#ifdef TOOLS_ENABLED
-			if (t->detect_normal && texture_hints[i] == ShaderLanguage::ShaderNode::Uniform::HINT_NORMAL) {
-				t->detect_normal(t->detect_normal_ud);
-			}
-#endif
 			if (t->render_target)
 				t->render_target->used_in_frame = true;
 
@@ -1256,12 +1245,6 @@ bool RasterizerSceneGLES3::_setup_material(RasterizerStorageGLES3::Material *p_m
 			if (t->using_srgb != must_srgb) {
 				if (must_srgb) {
 					glTexParameteri(t->target, _TEXTURE_SRGB_DECODE_EXT, _DECODE_EXT);
-#ifdef TOOLS_ENABLED
-					if (t->detect_srgb) {
-						t->detect_srgb(t->detect_srgb_ud);
-					}
-#endif
-
 				} else {
 					glTexParameteri(t->target, _TEXTURE_SRGB_DECODE_EXT, _SKIP_DECODE_EXT);
 				}
@@ -1545,12 +1528,6 @@ void RasterizerSceneGLES3::_render_geometry(RenderList::Element *e) {
 					RasterizerStorageGLES3::Texture *t = storage->texture_owner.get(c.texture);
 
 					t = t->get_ptr(); //resolve for proxies
-#ifdef TOOLS_ENABLED
-					if (t->detect_3d) {
-						t->detect_3d(t->detect_3d_ud);
-					}
-#endif
-
 					if (t->render_target) {
 						t->render_target->used_in_frame = true;
 					}
@@ -2368,12 +2345,6 @@ void RasterizerSceneGLES3::_draw_sky(RasterizerStorageGLES3::Sky *p_sky, const C
 
 		glTexParameteri(tex->target, _TEXTURE_SRGB_DECODE_EXT, _DECODE_EXT);
 		tex->using_srgb = true;
-#ifdef TOOLS_ENABLED
-		if (!(tex->flags & VS::TEXTURE_FLAG_CONVERT_TO_LINEAR)) {
-			tex->flags |= VS::TEXTURE_FLAG_CONVERT_TO_LINEAR;
-			//notify that texture must be set to linear beforehand, so it works in other platforms when exported
-		}
-#endif
 	}
 
 	glDepthMask(GL_TRUE);

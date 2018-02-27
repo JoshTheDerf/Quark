@@ -262,7 +262,7 @@ void FileDialog::_action_pressed() {
 		}
 
 		if (dir_access->file_exists(f)) {
-			confirm_save->set_text(RTR("File Exists, Overwrite?"));
+			confirm_save->set_text("File Exists, Overwrite?");
 			confirm_save->popup_centered(Size2(200, 80));
 		} else {
 
@@ -319,10 +319,10 @@ void FileDialog::deselect_items() {
 
 			case MODE_OPEN_FILE:
 			case MODE_OPEN_FILES:
-				get_ok()->set_text(RTR("Open"));
+				get_ok()->set_text("Open");
 				break;
 			case MODE_OPEN_DIR:
-				get_ok()->set_text(RTR("Select Current Folder"));
+				get_ok()->set_text("Select Current Folder");
 				break;
 		}
 	}
@@ -339,7 +339,7 @@ void FileDialog::_tree_selected() {
 
 		file->set_text(d["name"]);
 	} else if (mode == MODE_OPEN_DIR) {
-		get_ok()->set_text(RTR("Select this Folder"));
+		get_ok()->set_text("Select this Folder");
 	}
 
 	get_ok()->set_disabled(_is_open_should_be_disabled());
@@ -518,7 +518,7 @@ void FileDialog::update_filters() {
 		if (max_filters < filters.size())
 			all_filters += ", ...";
 
-		filter->add_item(RTR("All Recognized") + " ( " + all_filters + " )");
+		filter->add_item("All Recognized ( " + all_filters + " )");
 	}
 	for (int i = 0; i < filters.size(); i++) {
 
@@ -530,7 +530,7 @@ void FileDialog::update_filters() {
 			filter->add_item("( " + flt + " )");
 	}
 
-	filter->add_item(RTR("All Files (*)"));
+	filter->add_item("All Files (*)");
 }
 
 void FileDialog::clear_filters() {
@@ -616,33 +616,33 @@ void FileDialog::set_mode(Mode p_mode) {
 	switch (mode) {
 
 		case MODE_OPEN_FILE:
-			get_ok()->set_text(RTR("Open"));
+			get_ok()->set_text("Open");
 			if (mode_overrides_title)
-				set_title(RTR("Open a File"));
+				set_title("Open a File");
 			makedir->hide();
 			break;
 		case MODE_OPEN_FILES:
-			get_ok()->set_text(RTR("Open"));
+			get_ok()->set_text("Open");
 			if (mode_overrides_title)
-				set_title(RTR("Open File(s)"));
+				set_title("Open File(s)");
 			makedir->hide();
 			break;
 		case MODE_OPEN_DIR:
-			get_ok()->set_text(RTR("Select Current Folder"));
+			get_ok()->set_text("Select Current Folder");
 			if (mode_overrides_title)
-				set_title(RTR("Open a Directory"));
+				set_title("Open a Directory");
 			makedir->show();
 			break;
 		case MODE_OPEN_ANY:
-			get_ok()->set_text(RTR("Open"));
+			get_ok()->set_text("Open");
 			if (mode_overrides_title)
-				set_title(RTR("Open a File or Directory"));
+				set_title("Open a File or Directory");
 			makedir->show();
 			break;
 		case MODE_SAVE_FILE:
-			get_ok()->set_text(RTR("Save"));
+			get_ok()->set_text("Save");
 			if (mode_overrides_title)
-				set_title(RTR("Save a File"));
+				set_title("Save a File");
 			makedir->show();
 			break;
 	}
@@ -838,16 +838,16 @@ FileDialog::FileDialog() {
 	add_child(vbc);
 
 	mode = MODE_SAVE_FILE;
-	set_title(RTR("Save a File"));
+	set_title("Save a File");
 
 	HBoxContainer *hbc = memnew(HBoxContainer);
 
 	dir_up = memnew(ToolButton);
-	dir_up->set_tooltip(RTR("Go to parent folder"));
+	dir_up->set_tooltip("Go to parent folder");
 	hbc->add_child(dir_up);
 	dir_up->connect("pressed", this, "_go_up");
 
-	hbc->add_child(memnew(Label(RTR("Path:"))));
+	hbc->add_child(memnew(Label("Path:")));
 	dir = memnew(LineEdit);
 	hbc->add_child(dir);
 	dir->set_h_size_flags(SIZE_EXPAND_FILL);
@@ -861,17 +861,17 @@ FileDialog::FileDialog() {
 	drives->connect("item_selected", this, "_select_drive");
 
 	makedir = memnew(Button);
-	makedir->set_text(RTR("Create Folder"));
+	makedir->set_text("Create Folder");
 	makedir->connect("pressed", this, "_make_dir");
 	hbc->add_child(makedir);
 	vbc->add_child(hbc);
 
 	tree = memnew(Tree);
 	tree->set_hide_root(true);
-	vbc->add_margin_child(RTR("Directories & Files:"), tree, true);
+	vbc->add_margin_child("Directories & Files:", tree, true);
 
 	hbc = memnew(HBoxContainer);
-	hbc->add_child(memnew(Label(RTR("File:"))));
+	hbc->add_child(memnew(Label("File:")));
 	file = memnew(LineEdit);
 	file->set_stretch_ratio(4);
 	file->set_h_size_flags(SIZE_EXPAND_FILL);
@@ -902,21 +902,21 @@ FileDialog::FileDialog() {
 	confirm_save->connect("confirmed", this, "_save_confirm_pressed");
 
 	makedialog = memnew(ConfirmationDialog);
-	makedialog->set_title(RTR("Create Folder"));
+	makedialog->set_title("Create Folder");
 	VBoxContainer *makevb = memnew(VBoxContainer);
 	makedialog->add_child(makevb);
 
 	makedirname = memnew(LineEdit);
-	makevb->add_margin_child(RTR("Name:"), makedirname);
+	makevb->add_margin_child("Name:", makedirname);
 	add_child(makedialog);
 	makedialog->register_text_enter(makedirname);
 	makedialog->connect("confirmed", this, "_make_dir_confirm");
 	mkdirerr = memnew(AcceptDialog);
-	mkdirerr->set_text(RTR("Could not create folder."));
+	mkdirerr->set_text("Could not create folder.");
 	add_child(mkdirerr);
 
 	exterr = memnew(AcceptDialog);
-	exterr->set_text(RTR("Must use a valid extension."));
+	exterr->set_text("Must use a valid extension.");
 	add_child(exterr);
 
 	update_filters();

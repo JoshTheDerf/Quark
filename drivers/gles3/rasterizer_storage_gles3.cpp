@@ -1137,12 +1137,6 @@ RID RasterizerStorageGLES3::texture_create_radiance_cubemap(RID p_source, int p_
 
 		glTexParameteri(texture->target, _TEXTURE_SRGB_DECODE_EXT, _DECODE_EXT);
 		texture->using_srgb = true;
-#ifdef TOOLS_ENABLED
-		if (!(texture->flags & VS::TEXTURE_FLAG_CONVERT_TO_LINEAR)) {
-			texture->flags |= VS::TEXTURE_FLAG_CONVERT_TO_LINEAR;
-			//notify that texture must be set to linear beforehand, so it works in other platforms when exported
-		}
-#endif
 	}
 
 	glActiveTexture(GL_TEXTURE1);
@@ -1320,12 +1314,6 @@ void RasterizerStorageGLES3::sky_set_texture(RID p_sky, RID p_panorama, int p_ra
 
 		glTexParameteri(texture->target, _TEXTURE_SRGB_DECODE_EXT, _DECODE_EXT);
 		texture->using_srgb = true;
-#ifdef TOOLS_ENABLED
-		if (!(texture->flags & VS::TEXTURE_FLAG_CONVERT_TO_LINEAR)) {
-			texture->flags |= VS::TEXTURE_FLAG_CONVERT_TO_LINEAR;
-			//notify that texture must be set to linear beforehand, so it works in other platforms when exported
-		}
-#endif
 	}
 
 	glActiveTexture(GL_TEXTURE1);

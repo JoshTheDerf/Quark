@@ -44,9 +44,6 @@ CoreStringNames::CoreStringNames() :
 		_iter_next(StaticCString::create("_iter_next")),
 		_iter_get(StaticCString::create("_iter_get")),
 		get_rid(StaticCString::create("get_rid")),
-#ifdef TOOLS_ENABLED
-		_sections_unfolded(StaticCString::create("_sections_unfolded")),
-#endif
 		_custom_features(StaticCString::create("_custom_features")) {
 
 	x = StaticCString::create("x");

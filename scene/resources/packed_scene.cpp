@@ -1669,12 +1669,10 @@ bool PackedScene::can_instance() const {
 
 Node *PackedScene::instance(GenEditState p_edit_state) const {
 
-#ifndef TOOLS_ENABLED
 	if (p_edit_state != GEN_EDIT_STATE_DISABLED) {
 		ERR_EXPLAIN("Edit state is only for editors, does not work without tools compiled");
 		ERR_FAIL_COND_V(p_edit_state != GEN_EDIT_STATE_DISABLED, NULL);
 	}
-#endif
 
 	Node *s = state->instance((SceneState::GenEditState)p_edit_state);
 	if (!s)
@@ -1696,18 +1694,12 @@ void PackedScene::replace_state(Ref<SceneState> p_by) {
 
 	state = p_by;
 	state->set_path(get_path());
-#ifdef TOOLS_ENABLED
-	state->set_last_modified_time(get_last_modified_time());
-#endif
 }
 
 void PackedScene::recreate_state() {
 
 	state = Ref<SceneState>(memnew(SceneState));
 	state->set_path(get_path());
-#ifdef TOOLS_ENABLED
-	state->set_last_modified_time(get_last_modified_time());
-#endif
 }
 
 Ref<SceneState> PackedScene::get_state() {

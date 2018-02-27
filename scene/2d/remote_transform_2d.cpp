@@ -180,7 +180,7 @@ bool RemoteTransform2D::get_update_scale() const {
 String RemoteTransform2D::get_configuration_warning() const {
 
 	if (!has_node(remote_node) || !Object::cast_to<Node2D>(get_node(remote_node))) {
-		return TTR("Path property must point to a valid Node2D node to work.");
+		return "Path property must point to a valid Node2D node to work.";
 	}
 
 	return String();

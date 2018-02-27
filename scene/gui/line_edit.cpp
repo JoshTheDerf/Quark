@@ -1465,15 +1465,15 @@ LineEdit::LineEdit() {
 	context_menu_enabled = true;
 	menu = memnew(PopupMenu);
 	add_child(menu);
-	menu->add_item(TTR("Cut"), MENU_CUT, KEY_MASK_CMD | KEY_X);
-	menu->add_item(TTR("Copy"), MENU_COPY, KEY_MASK_CMD | KEY_C);
-	menu->add_item(TTR("Paste"), MENU_PASTE, KEY_MASK_CMD | KEY_V);
+	menu->add_item("Cut", MENU_CUT, KEY_MASK_CMD | KEY_X);
+	menu->add_item("Copy", MENU_COPY, KEY_MASK_CMD | KEY_C);
+	menu->add_item("Paste", MENU_PASTE, KEY_MASK_CMD | KEY_V);
 	menu->add_separator();
-	menu->add_item(TTR("Select All"), MENU_SELECT_ALL, KEY_MASK_CMD | KEY_A);
-	menu->add_item(TTR("Clear"), MENU_CLEAR);
+	menu->add_item("Select All", MENU_SELECT_ALL, KEY_MASK_CMD | KEY_A);
+	menu->add_item("Clear", MENU_CLEAR);
 	menu->add_separator();
-	menu->add_item(TTR("Undo"), MENU_UNDO, KEY_MASK_CMD | KEY_Z);
-	menu->add_item(TTR("Redo"), MENU_REDO, KEY_MASK_CMD | KEY_MASK_SHIFT | KEY_Z);
+	menu->add_item("Undo", MENU_UNDO, KEY_MASK_CMD | KEY_Z);
+	menu->add_item("Redo", MENU_REDO, KEY_MASK_CMD | KEY_MASK_SHIFT | KEY_Z);
 	menu->connect("id_pressed", this, "menu_option");
 	expand_to_text_length = false;
 }

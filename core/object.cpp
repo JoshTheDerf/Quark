@@ -403,11 +403,6 @@ void Object::_get_valid_parents_static(List<String> *p_parents) {
 
 void Object::set(const StringName &p_name, const Variant &p_value, bool *r_valid) {
 
-#ifdef TOOLS_ENABLED
-
-	_edited = true;
-#endif
-
 	if (script_instance) {
 
 		if (script_instance->set(p_name, p_value)) {
@@ -440,16 +435,6 @@ void Object::set(const StringName &p_name, const Variant &p_value, bool *r_valid
 		if (r_valid)
 			*r_valid = true;
 		return;
-#ifdef TOOLS_ENABLED
-	} else if (p_name == CoreStringNames::get_singleton()->_sections_unfolded) {
-		Array arr = p_value;
-		for (int i = 0; i < arr.size(); i++) {
-			editor_section_folding.insert(arr[i]);
-		}
-		if (r_valid)
-			*r_valid = true;
-		return;
-#endif
 	} else {
 		//something inside the object... :|
 		bool success = _setv(p_name, p_value);
@@ -495,16 +480,6 @@ Variant Object::get(const StringName &p_name, bool *r_valid) const {
 		if (r_valid)
 			*r_valid = true;
 		return ret;
-#ifdef TOOLS_ENABLED
-	} else if (p_name == CoreStringNames::get_singleton()->_sections_unfolded) {
-		Array array;
-		for (Set<String>::Element *E = editor_section_folding.front(); E; E = E->next()) {
-			array.push_back(E->get());
-		}
-		if (r_valid)
-			*r_valid = true;
-		return array;
-#endif
 	} else {
 		//something inside the object... :|
 		bool success = _getv(p_name, ret);
@@ -603,11 +578,6 @@ void Object::get_property_list(List<PropertyInfo> *p_list, bool p_reversed) cons
 
 	if (!is_class("Script")) // can still be set, but this is for userfriendlyness
 		p_list->push_back(PropertyInfo(Variant::OBJECT, "script", PROPERTY_HINT_RESOURCE_TYPE, "Script", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_STORE_IF_NONZERO));
-#ifdef TOOLS_ENABLED
-	if (editor_section_folding.size()) {
-		p_list->push_back(PropertyInfo(Variant::ARRAY, CoreStringNames::get_singleton()->_sections_unfolded, PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL));
-	}
-#endif
 	if (!metadata.empty())
 		p_list->push_back(PropertyInfo(Variant::DICTIONARY, "__meta__", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL | PROPERTY_USAGE_STORE_IF_NONZERO));
 	if (script_instance && !p_reversed) {
@@ -1563,23 +1533,6 @@ void Object::_clear_internal_resource_paths(const Variant &p_var) {
 	}
 }
 
-#ifdef TOOLS_ENABLED
-void Object::editor_set_section_unfold(const String &p_section, bool p_unfolded) {
-
-	set_edited(true);
-	if (p_unfolded)
-		editor_section_folding.insert(p_section);
-	else
-		editor_section_folding.erase(p_section);
-}
-
-bool Object::editor_is_section_unfolded(const String &p_section) {
-
-	return editor_section_folding.has(p_section);
-}
-
-#endif
-
 void Object::clear_internal_resource_paths() {
 
 	List<PropertyInfo> pinfo;
@@ -1674,17 +1627,6 @@ void Object::_bind_methods() {
 
 	BIND_VMETHOD(MethodInfo("_notification", PropertyInfo(Variant::INT, "what")));
 	BIND_VMETHOD(MethodInfo(Variant::BOOL, "_set", PropertyInfo(Variant::STRING, "property"), PropertyInfo(Variant::NIL, "value")));
-#ifdef TOOLS_ENABLED
-	MethodInfo miget("_get", PropertyInfo(Variant::STRING, "property"));
-	miget.return_val.name = "Variant";
-	BIND_VMETHOD(miget);
-
-	MethodInfo plget("_get_property_list");
-
-	plget.return_val.type = Variant::ARRAY;
-	BIND_VMETHOD(plget);
-
-#endif
 	BIND_VMETHOD(MethodInfo("_init"));
 
 	BIND_CONSTANT(NOTIFICATION_POSTINITIALIZE);
@@ -1796,24 +1738,6 @@ bool Object::is_queued_for_deletion() const {
 	return _is_queued_for_deletion;
 }
 
-#ifdef TOOLS_ENABLED
-void Object::set_edited(bool p_edited) {
-
-	_edited = p_edited;
-	_edited_version++;
-}
-
-bool Object::is_edited() const {
-
-	return _edited;
-}
-
-uint32_t Object::get_edited_version() const {
-
-	return _edited_version;
-}
-#endif
-
 void *Object::get_script_instance_binding(int p_script_language_index) {
 #ifdef DEBUG_ENABLED
 	ERR_FAIL_INDEX_V(p_script_language_index, MAX_SCRIPT_INSTANCE_BINDINGS, NULL);
@@ -1842,11 +1766,6 @@ Object::Object() {
 	_is_queued_for_deletion = false;
 	memset(_script_instance_bindings, 0, sizeof(void *) * MAX_SCRIPT_INSTANCE_BINDINGS);
 	script_instance = NULL;
-#ifdef TOOLS_ENABLED
-
-	_edited = false;
-	_edited_version = 0;
-#endif
 
 #ifdef DEBUG_ENABLED
 	_lock_index.init(1);

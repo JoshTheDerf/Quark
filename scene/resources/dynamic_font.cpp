@@ -101,7 +101,7 @@ Error DynamicFontAtSize::_load() {
 
 	int error = FT_Init_FreeType(&library);
 
-	ERR_EXPLAIN(TTR("Error initializing FreeType."));
+	ERR_EXPLAIN("Error initializing FreeType.");
 	ERR_FAIL_COND_V(error != 0, ERR_CANT_CREATE);
 
 	// FT_OPEN_STREAM is extremely slow only on Android.
@@ -167,12 +167,12 @@ Error DynamicFontAtSize::_load() {
 	//error = FT_New_Face( library, src_path.utf8().get_data(),0,&face );
 
 	if (error == FT_Err_Unknown_File_Format) {
-		ERR_EXPLAIN(TTR("Unknown font format."));
+		ERR_EXPLAIN("Unknown font format.");
 		FT_Done_FreeType(library);
 
 	} else if (error) {
 
-		ERR_EXPLAIN(TTR("Error loading font."));
+		ERR_EXPLAIN("Error loading font.");
 		FT_Done_FreeType(library);
 	}
 

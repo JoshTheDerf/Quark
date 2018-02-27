@@ -496,7 +496,7 @@ Button *AcceptDialog::add_cancel(const String &p_cancel) {
 
 	String c = p_cancel;
 	if (p_cancel == "")
-		c = RTR("Cancel");
+		c = "Cancel";
 	Button *b = swap_ok_cancel ? add_button(c, true) : add_button(c);
 	b->connect("pressed", this, "_closed");
 	return b;
@@ -549,7 +549,7 @@ AcceptDialog::AcceptDialog() {
 
 	hbc->add_spacer();
 	ok = memnew(Button);
-	ok->set_text(RTR("OK"));
+	ok->set_text("OK");
 	hbc->add_child(ok);
 	hbc->add_spacer();
 
@@ -557,7 +557,7 @@ AcceptDialog::AcceptDialog() {
 	set_as_toplevel(true);
 
 	hide_on_ok = true;
-	set_title(RTR("Alert!"));
+	set_title("Alert!");
 }
 
 AcceptDialog::~AcceptDialog() {
@@ -577,6 +577,6 @@ Button *ConfirmationDialog::get_cancel() {
 
 ConfirmationDialog::ConfirmationDialog() {
 
-	set_title(RTR("Please Confirm..."));
+	set_title("Please Confirm...");
 	cancel = add_cancel();
 }

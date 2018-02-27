@@ -4107,31 +4107,3 @@ String String::unquote() const {
 
 	return substr(1, length() - 2);
 }
-
-#include "translation.h"
-
-#ifdef TOOLS_ENABLED
-String TTR(const String &p_text) {
-
-	if (TranslationServer::get_singleton()) {
-		return TranslationServer::get_singleton()->tool_translate(p_text);
-	}
-
-	return p_text;
-}
-
-#endif
-
-String RTR(const String &p_text) {
-
-	if (TranslationServer::get_singleton()) {
-		String rtr = TranslationServer::get_singleton()->tool_translate(p_text);
-		if (rtr == String() || rtr == p_text) {
-			return TranslationServer::get_singleton()->translate(p_text);
-		} else {
-			return rtr;
-		}
-	}
-
-	return p_text;
-}

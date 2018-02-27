@@ -251,7 +251,7 @@ String PathFollow2D::get_configuration_warning() const {
 		return String();
 
 	if (!Object::cast_to<Path2D>(get_parent())) {
-		return TTR("PathFollow2D only works when set as a child of a Path2D node.");
+		return "PathFollow2D only works when set as a child of a Path2D node.";
 	}
 
 	return String();

@@ -70,23 +70,7 @@ void Light2D::_update_light_visibility() {
 	if (!is_inside_tree())
 		return;
 
-	bool editor_ok = true;
-
-#ifdef TOOLS_ENABLED
-	if (editor_only) {
-		if (!Engine::get_singleton()->is_editor_hint()) {
-			editor_ok = false;
-		} else {
-			editor_ok = (get_tree()->get_edited_scene_root() && (this == get_tree()->get_edited_scene_root() || get_owner() == get_tree()->get_edited_scene_root()));
-		}
-	}
-#else
-	if (editor_only) {
-		editor_ok = false;
-	}
-#endif
-
-	VS::get_singleton()->canvas_light_set_enabled(canvas_light, enabled && is_visible_in_tree() && editor_ok);
+	VS::get_singleton()->canvas_light_set_enabled(canvas_light, enabled && is_visible_in_tree());
 }
 
 void Light2D::set_enabled(bool p_enabled) {
@@ -335,7 +319,7 @@ void Light2D::_notification(int p_what) {
 String Light2D::get_configuration_warning() const {
 
 	if (!texture.is_valid()) {
-		return TTR("A texture with the shape of the light must be supplied to the 'texture' property.");
+		return "A texture with the shape of the light must be supplied to the 'texture' property.";
 	}
 
 	return String();

@@ -136,12 +136,7 @@ bool NativeScript::can_instance() const {
 
 	NativeScriptDesc *script_data = get_script_desc();
 
-#ifdef TOOLS_ENABLED
-
-	return script_data || (!is_tool() && !ScriptServer::is_scripting_enabled());
-#else
 	return script_data;
-#endif
 }
 
 Ref<Script> NativeScript::get_base_script() const {
@@ -173,39 +168,12 @@ ScriptInstance *NativeScript::instance_create(Object *p_this) {
 		return NULL;
 	}
 
-#ifdef TOOLS_ENABLED
-	if (!ScriptServer::is_scripting_enabled() && !is_tool()) {
-		// placeholder for nodes. For tools we want the rool thing.
-
-		PlaceHolderScriptInstance *sins = memnew(PlaceHolderScriptInstance(NSL, Ref<Script>(this), p_this));
-		placeholders.insert(sins);
-
-		if (script_data->create_func.create_func) {
-			script_data->create_func.create_func(
-					(quark_object *)p_this,
-					script_data->create_func.method_data);
-		}
-
-		_update_placeholder(sins);
-
-		return sins;
-	}
-#endif
-
 	NativeScriptInstance *nsi = memnew(NativeScriptInstance);
 
 	nsi->owner = p_this;
 	nsi->script = Ref<NativeScript>(this);
 
-#ifndef TOOLS_ENABLED
-	if (!ScriptServer::is_scripting_enabled()) {
-		nsi->userdata = NULL;
-	} else {
-		nsi->userdata = script_data->create_func.create_func((quark_object *)p_this, script_data->create_func.method_data);
-	}
-#else
 	nsi->userdata = script_data->create_func.create_func((quark_object *)p_this, script_data->create_func.method_data);
-#endif
 
 #ifndef NO_THREADS
 	owners_lock->lock();
@@ -1334,102 +1302,6 @@ void NativeScriptLanguage::thread_exit() {
 
 void NativeReloadNode::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_notification"), &NativeReloadNode::_notification);
-}
-
-void NativeReloadNode::_notification(int p_what) {
-#ifdef TOOLS_ENABLED
-
-	switch (p_what) {
-		case MainLoop::NOTIFICATION_WM_FOCUS_OUT: {
-
-			if (unloaded)
-				break;
-#ifndef NO_THREADS
-			MutexLock lock(NSL->mutex);
-#endif
-			NSL->_unload_stuff(true);
-			for (Map<String, Ref<QNative> >::Element *L = NSL->library_qnatives.front(); L; L = L->next()) {
-
-				Ref<QNative> qns = L->get();
-
-				if (qns.is_null()) {
-					continue;
-				}
-
-				if (!qns->get_library()->is_reloadable()) {
-					continue;
-				}
-
-				qns->terminate();
-				NSL->library_classes.erase(L->key());
-			}
-
-			unloaded = true;
-
-		} break;
-
-		case MainLoop::NOTIFICATION_WM_FOCUS_IN: {
-
-			if (!unloaded)
-				break;
-#ifndef NO_THREADS
-			MutexLock lock(NSL->mutex);
-#endif
-			Set<StringName> libs_to_remove;
-			for (Map<String, Ref<QNative> >::Element *L = NSL->library_qnatives.front(); L; L = L->next()) {
-
-				Ref<QNative> qns = L->get();
-
-				if (qns.is_null()) {
-					continue;
-				}
-
-				if (!qns->get_library()->is_reloadable()) {
-					continue;
-				}
-
-				if (!qns->initialize()) {
-					libs_to_remove.insert(L->key());
-					continue;
-				}
-
-				NSL->library_classes.insert(L->key(), Map<StringName, NativeScriptDesc>());
-
-				// here the library registers all the classes and stuff.
-
-				void *proc_ptr;
-				Error err = qns->get_symbol(qns->get_library()->get_symbol_prefix() + "nativescript_init", proc_ptr);
-				if (err != OK) {
-					ERR_PRINT(String("No quark_init in \"" + L->key() + "\" found").utf8().get_data());
-				} else {
-					((void (*)(void *))proc_ptr)((void *)&L->key());
-				}
-
-				for (Map<String, Set<NativeScript *> >::Element *U = NSL->library_script_users.front(); U; U = U->next()) {
-					for (Set<NativeScript *>::Element *S = U->get().front(); S; S = S->next()) {
-						NativeScript *script = S->get();
-
-						if (script->placeholders.size() == 0)
-							continue;
-
-						for (Set<PlaceHolderScriptInstance *>::Element *P = script->placeholders.front(); P; P = P->next()) {
-							script->_update_placeholder(P->get());
-						}
-					}
-				}
-			}
-
-			unloaded = false;
-
-			for (Set<StringName>::Element *R = libs_to_remove.front(); R; R = R->next()) {
-				NSL->library_qnatives.erase(R->get());
-			}
-
-		} break;
-		default: {
-		};
-	}
-#endif
 }
 
 RES ResourceFormatLoaderNativeScript::load(const String &p_path, const String &p_original_path, Error *r_error) {

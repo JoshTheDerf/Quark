@@ -75,16 +75,6 @@ Error ResourceSaver::save(const String &p_path, const RES &p_resource, uint32_t 
 
 		if (err == OK) {
 
-#ifdef TOOLS_ENABLED
-
-			((Resource *)p_resource.ptr())->set_edited(false);
-			if (timestamp_on_save) {
-				uint64_t mt = FileAccess::get_modified_time(p_path);
-
-				((Resource *)p_resource.ptr())->set_last_modified_time(mt);
-			}
-#endif
-
 			if (p_flags & FLAG_CHANGE_PATH)
 				rwcopy->set_path(old_path);
 

@@ -269,12 +269,6 @@ void UndoRedo::_process_operation_list(List<Operation>::Element *E) {
 			case Operation::TYPE_METHOD: {
 
 				obj->call(op.name, VARIANT_ARGS_FROM_ARRAY(op.args));
-#ifdef TOOLS_ENABLED
-				Resource *res = Object::cast_to<Resource>(obj);
-				if (res)
-					res->set_edited(true);
-
-#endif
 
 				if (method_callback) {
 					method_callback(method_callbck_ud, obj, op.name, VARIANT_ARGS_FROM_ARRAY(op.args));
@@ -283,11 +277,6 @@ void UndoRedo::_process_operation_list(List<Operation>::Element *E) {
 			case Operation::TYPE_PROPERTY: {
 
 				obj->set(op.name, op.args[0]);
-#ifdef TOOLS_ENABLED
-				Resource *res = Object::cast_to<Resource>(obj);
-				if (res)
-					res->set_edited(true);
-#endif
 				if (property_callback) {
 					property_callback(prop_callback_ud, obj, op.name, op.args[0]);
 				}

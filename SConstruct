@@ -171,7 +171,6 @@ opts.Add(EnumVariable('macports_clang', "Build using clang from MacPorts", 'no',
 opts.Add(BoolVariable('builtin_freetype', "Use the builtin freetype library", True))
 opts.Add(BoolVariable('builtin_libpng', "Use the builtin libpng library", True))
 opts.Add(BoolVariable('builtin_pcre2', "Use the builtin pcre2 library)", True))
-opts.Add(BoolVariable('no_editor_splash', "Don't use the custom splash screen for the editor", False))
 
 # Compilation environment setup
 opts.Add("CXX", "C++ compiler")
@@ -207,7 +206,7 @@ Help(opts.GenerateHelpText(env_base))  # generate help
 
 # add default include paths
 
-env_base.Append(CPPPATH=['#core', '#core/math', '#editor', '#drivers', '#'])
+env_base.Append(CPPPATH=['#core', '#core/math', '#drivers', '#'])
 
 # configure ENV for platform
 env_base.platform_exporters = platform_exporters
@@ -224,9 +223,6 @@ sys.modules.pop('detect')
 if (env_base['target'] == 'debug'):
     env_base.Append(CPPFLAGS=['-DDEBUG_MEMORY_ALLOC'])
     env_base.Append(CPPFLAGS=['-DSCI_NAMESPACE'])
-
-if (env_base['no_editor_splash']):
-    env_base.Append(CPPFLAGS=['-DNO_EDITOR_SPLASH'])
 
 if not env_base['deprecated']:
     env_base.Append(CPPFLAGS=['-DDISABLE_DEPRECATED'])
@@ -431,7 +427,6 @@ if selected_platform in platform_list:
     SConscript("core/SCsub")
     SConscript("servers/SCsub")
     SConscript("scene/SCsub")
-    SConscript("editor/SCsub")
     SConscript("drivers/SCsub")
 
     SConscript("platform/SCsub")

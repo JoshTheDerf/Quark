@@ -336,7 +336,6 @@ class NativeReloadNode : public Node {
 
 public:
 	static void _bind_methods();
-	void _notification(int p_what);
 };
 
 class ResourceFormatLoaderNativeScript : public ResourceFormatLoader {

@@ -607,13 +607,12 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		}
 	}
 
-	if (globals->setup(game_path, main_pack, upwards) == OK) {
+	if (globals->setup() == OK) {
 		found_project = true;
 	} else {
+		OS::get_singleton()->print("Error: Unable to load global settings.\n");
 
-		OS::get_singleton()->print("Error: Could not load game path '%s'.\n", game_path.ascii().get_data());
-
-		goto error;
+	 	goto error;
 	}
 
 	GLOBAL_DEF("logging/file_logging/enable_file_logging", false);
@@ -993,7 +992,6 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 }
 
 bool Main::start() {
-
 	ERR_FAIL_COND_V(!_start_success, false);
 
 	bool hasicon = false;

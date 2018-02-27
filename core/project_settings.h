@@ -93,17 +93,6 @@ protected:
 
 	static ProjectSettings *singleton;
 
-	Error _load_settings_text(const String p_path);
-	Error _load_settings_binary(const String p_path);
-	Error _load_settings_text_or_binary(const String p_text_path, const String p_bin_path);
-
-	Error _save_settings_text(const String &p_file, const Map<String, List<String> > &props, const CustomMap &p_custom = CustomMap(), const String &p_custom_features = String());
-	Error _save_settings_binary(const String &p_file, const Map<String, List<String> > &props, const CustomMap &p_custom = CustomMap(), const String &p_custom_features = String());
-
-	Error _save_custom_bnd(const String &p_file);
-
-	bool _load_resource_pack(const String &p_pack);
-
 	void _add_property_info_bind(const Dictionary &p_info);
 
 protected:
@@ -130,10 +119,8 @@ public:
 	void set_order(const String &p_name, int p_order);
 	void set_builtin_order(const String &p_name);
 
-	Error setup(const String &p_path, const String &p_main_pack, bool p_upwards = false);
+	Error setup();
 
-	Error save_custom(const String &p_path = "", const CustomMap &p_custom = CustomMap(), const Vector<String> &p_custom_features = Vector<String>(), bool p_merge_with_current = true);
-	Error save();
 	void set_custom_property_info(const String &p_prop, const PropertyInfo &p_info);
 
 	Vector<String> get_optimizer_presets() const;

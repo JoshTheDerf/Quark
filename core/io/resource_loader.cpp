@@ -226,16 +226,6 @@ RES ResourceLoader::load(const String &p_path, const String &p_type_hint, bool p
 	if (xl_remapped)
 		res->set_as_translation_remapped(true);
 
-#ifdef TOOLS_ENABLED
-
-	res->set_edited(false);
-	if (timestamp_on_load) {
-		uint64_t mt = FileAccess::get_modified_time(path);
-		//printf("mt %s: %lli\n",remapped_path.utf8().get_data(),mt);
-		res->set_last_modified_time(mt);
-	}
-#endif
-
 	return res;
 }
 

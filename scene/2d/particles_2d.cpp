@@ -215,7 +215,7 @@ String Particles2D::get_configuration_warning() const {
 	if (process_material.is_null()) {
 		if (warnings != String())
 			warnings += "\n";
-		warnings += "- " + TTR("A material to process the particles is not assigned, so no behavior is imprinted.");
+		warnings += "- A material to process the particles is not assigned, so no behavior is imprinted.";
 	}
 
 	return warnings;
@@ -294,13 +294,6 @@ void Particles2D::_notification(int p_what) {
 			normal_rid = normal_map->get_rid();
 
 		VS::get_singleton()->canvas_item_add_particles(get_canvas_item(), particles, texture_rid, normal_rid, h_frames, v_frames);
-
-#ifdef TOOLS_ENABLED
-		if (Engine::get_singleton()->is_editor_hint() && (this == get_tree()->get_edited_scene_root() || get_tree()->get_edited_scene_root()->is_a_parent_of(this))) {
-
-			draw_rect(visibility_rect, Color(0, 0.7, 0.9, 0.4), false);
-		}
-#endif
 	}
 
 	if (p_what == NOTIFICATION_PAUSED || p_what == NOTIFICATION_UNPAUSED) {

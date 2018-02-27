@@ -277,30 +277,6 @@ void Resource::notify_change_to_owners() {
 	}
 }
 
-#ifdef TOOLS_ENABLED
-
-uint32_t Resource::hash_edited_version() const {
-
-	uint32_t hash = hash_djb2_one_32(get_edited_version());
-
-	List<PropertyInfo> plist;
-	get_property_list(&plist);
-
-	for (List<PropertyInfo>::Element *E = plist.front(); E; E = E->next()) {
-
-		if (E->get().type == Variant::OBJECT && E->get().hint == PROPERTY_HINT_RESOURCE_TYPE) {
-			RES res = get(E->get().name);
-			if (res.is_valid()) {
-				hash = hash_djb2_one_32(res->hash_edited_version(), hash);
-			}
-		}
-	}
-
-	return hash;
-}
-
-#endif
-
 void Resource::set_local_to_scene(bool p_enable) {
 
 	local_to_scene = p_enable;
@@ -381,11 +357,6 @@ void Resource::_bind_methods() {
 
 Resource::Resource() :
 		remapped_list(this) {
-
-#ifdef TOOLS_ENABLED
-	last_modified_time = 0;
-	import_last_modified_time = 0;
-#endif
 
 	subindex = 0;
 	local_to_scene = false;

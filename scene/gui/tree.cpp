@@ -1251,7 +1251,7 @@ int Tree::draw_item(const Point2i &p_pos, const Point2 &p_draw_ofs, const Size2 
 
 						int option = (int)p_item->cells[i].val;
 
-						String s = RTR("(Other)");
+						String s = "(Other)";
 						Vector<String> strings = p_item->cells[i].text.split(",");
 						for (int i = 0; i < strings.size(); i++) {
 							int value = i;

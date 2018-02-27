@@ -1115,45 +1115,6 @@ void AnimationPlayer::get_argument_options(const StringName &p_function, int p_i
 	Node::get_argument_options(p_function, p_idx, r_options);
 }
 
-#ifdef TOOLS_ENABLED
-AnimatedValuesBackup AnimationPlayer::backup_animated_values() {
-
-	if (!playback.current.from)
-		return AnimatedValuesBackup();
-
-	_ensure_node_caches(playback.current.from);
-
-	AnimatedValuesBackup backup;
-
-	for (int i = 0; i < playback.current.from->node_cache.size(); i++) {
-		TrackNodeCache *nc = playback.current.from->node_cache[i];
-		if (!nc)
-			continue;
-
-		for (Map<StringName, TrackNodeCache::PropertyAnim>::Element *E = nc->property_anim.front(); E; E = E->next()) {
-			AnimatedValuesBackup::Entry entry;
-			entry.object = E->value().object;
-			entry.subpath = E->value().subpath;
-			bool valid;
-			entry.value = E->value().object->get_indexed(E->value().subpath, &valid);
-			if (valid)
-				backup.entries.push_back(entry);
-		}
-	}
-
-	return backup;
-}
-
-void AnimationPlayer::restore_animated_values(const AnimatedValuesBackup &p_backup) {
-
-	for (int i = 0; i < p_backup.entries.size(); i++) {
-
-		const AnimatedValuesBackup::Entry *entry = &p_backup.entries[i];
-		entry->object->set_indexed(entry->subpath, entry->value);
-	}
-}
-#endif
-
 void AnimationPlayer::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_node_removed"), &AnimationPlayer::_node_removed);

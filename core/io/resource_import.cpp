@@ -124,13 +124,6 @@ RES ResourceFormatImporter::load(const String &p_path, const String &p_original_
 
 	RES res = ResourceLoader::_load(pat.path, p_path, pat.type, false, r_error);
 
-#ifdef TOOLS_ENABLED
-	if (res.is_valid()) {
-		res->set_import_last_modified_time(res->get_last_modified_time()); //pass this, if used
-		res->set_import_path(pat.path);
-	}
-#endif
-
 	return res;
 }
 

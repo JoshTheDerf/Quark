@@ -749,9 +749,6 @@ Error ResourceInteractiveLoaderBinary::poll() {
 
 		res->set(name, value);
 	}
-#ifdef TOOLS_ENABLED
-	res->set_edited(false);
-#endif
 	stage++;
 
 	resource_cache.push_back(res);
@@ -1880,9 +1877,6 @@ Error ResourceFormatSaverBinaryInstance::save(const String &p_path, const RES &p
 			if (takeover_paths) {
 				r->set_path(p_path + "::" + itos(r->get_subindex()), true);
 			}
-#ifdef TOOLS_ENABLED
-			r->set_edited(false);
-#endif
 		} else {
 			save_unicode_string(f, r->get_path()); //actual external
 		}

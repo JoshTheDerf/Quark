@@ -138,7 +138,7 @@ void ParallaxLayer::set_base_offset_and_scale(const Point2 &p_offset, float p_sc
 String ParallaxLayer::get_configuration_warning() const {
 
 	if (!Object::cast_to<ParallaxBackground>(get_parent())) {
-		return TTR("ParallaxLayer node only works when set as child of a ParallaxBackground node.");
+		return "ParallaxLayer node only works when set as child of a ParallaxBackground node.";
 	}
 
 	return String();

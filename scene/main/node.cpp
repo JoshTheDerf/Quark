@@ -1172,13 +1172,6 @@ void Node::set_human_readable_collision_renaming(bool p_enabled) {
 	node_hrcr = p_enabled;
 }
 
-#ifdef TOOLS_ENABLED
-String Node::validate_child_name(Node *p_child) {
-
-	return _generate_serial_child_name(p_child);
-}
-#endif
-
 void Node::_validate_child_name(Node *p_child, bool p_force_human_readable) {
 
 	/* Make sure the name is unique */
@@ -2089,10 +2082,6 @@ Node *Node::_duplicate(int p_flags, Map<const Node *, Node *> *r_duplimap) const
 		Ref<PackedScene> res = ResourceLoader::load(get_filename());
 		ERR_FAIL_COND_V(res.is_null(), NULL);
 		PackedScene::GenEditState ges = PackedScene::GEN_EDIT_STATE_DISABLED;
-#ifdef TOOLS_ENABLED
-		if (p_flags & DUPLICATE_FROM_EDITOR)
-			ges = PackedScene::GEN_EDIT_STATE_INSTANCE;
-#endif
 		node = res->instance(ges);
 		ERR_FAIL_COND_V(!node, NULL);
 
@@ -2186,20 +2175,10 @@ Node *Node::_duplicate(int p_flags, Map<const Node *, Node *> *r_duplimap) const
 
 	node->set_name(get_name());
 
-#ifdef TOOLS_ENABLED
-	if ((p_flags & DUPLICATE_FROM_EDITOR) && r_duplimap)
-		r_duplimap->insert(this, node);
-#endif
-
 	if (p_flags & DUPLICATE_GROUPS) {
 		List<GroupInfo> gi;
 		get_groups(&gi);
 		for (List<GroupInfo>::Element *E = gi.front(); E; E = E->next()) {
-
-#ifdef TOOLS_ENABLED
-			if ((p_flags & DUPLICATE_FROM_EDITOR) && !E->get().persistent)
-				continue;
-#endif
 
 			node->add_to_group(E->get().name, E->get().persistent);
 		}
@@ -2263,20 +2242,6 @@ Node *Node::duplicate(int p_flags) const {
 
 	return dupe;
 }
-
-#ifdef TOOLS_ENABLED
-Node *Node::duplicate_from_editor(Map<const Node *, Node *> &r_duplimap) const {
-
-	Node *dupe = _duplicate(DUPLICATE_SIGNALS | DUPLICATE_GROUPS | DUPLICATE_SCRIPTS | DUPLICATE_USE_INSTANCING | DUPLICATE_FROM_EDITOR, &r_duplimap);
-
-	// Duplication of signals must happen after all the node descendants have been copied,
-	// because re-targeting of connections from some descendant to another is not possible
-	// if the emitter node comes later in tree order than the receiver
-	_duplicate_signals(this, dupe);
-
-	return dupe;
-}
-#endif
 
 void Node::_duplicate_and_reown(Node *p_new_parent, const Map<Node *, Node *> &p_reown_map) const {
 
@@ -2723,19 +2688,6 @@ Array Node::_get_children() const {
 	return arr;
 }
 
-#ifdef TOOLS_ENABLED
-void Node::set_import_path(const NodePath &p_import_path) {
-
-	data.import_path = p_import_path;
-}
-
-NodePath Node::get_import_path() const {
-
-	return data.import_path;
-}
-
-#endif
-
 static void _add_nodes_to_options(const Node *p_base, const Node *p_node, List<String> *r_options) {
 
 	if (p_node != p_base && !p_node->get_owner())
@@ -2771,14 +2723,6 @@ String Node::get_configuration_warning() const {
 }
 
 void Node::update_configuration_warning() {
-
-#ifdef TOOLS_ENABLED
-	if (!is_inside_tree())
-		return;
-	if (get_tree()->get_edited_scene_root() && (get_tree()->get_edited_scene_root() == this || get_tree()->get_edited_scene_root()->is_a_parent_of(this))) {
-		get_tree()->emit_signal(SceneStringNames::get_singleton()->node_configuration_warning_changed, this);
-	}
-#endif
 }
 
 bool Node::is_owned_by_parent() const {
@@ -2888,13 +2832,6 @@ void Node::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("rpc_config", "method", "mode"), &Node::rpc_config);
 	ClassDB::bind_method(D_METHOD("rset_config", "property", "mode"), &Node::rset_config);
-
-#ifdef TOOLS_ENABLED
-	ClassDB::bind_method(D_METHOD("_set_import_path", "import_path"), &Node::set_import_path);
-	ClassDB::bind_method(D_METHOD("_get_import_path"), &Node::get_import_path);
-	ADD_PROPERTYNZ(PropertyInfo(Variant::NODE_PATH, "_import_path", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL), "_set_import_path", "_get_import_path");
-
-#endif
 
 	{
 		MethodInfo mi;

@@ -197,7 +197,7 @@ Node *SceneState::instance(GenEditState p_edit_state) const {
 
 					if (snames[nprops[j].name] == CoreStringNames::get_singleton()->_script) {
 						//work around to avoid old script variables from disappearing, should be the proper fix to:
-						//https://github.com/godotengine/godot/issues/2958
+						//https://github.com/godotegine/godot/issues/2958
 
 						//store old state
 						List<Pair<StringName, Variant> > old_state;

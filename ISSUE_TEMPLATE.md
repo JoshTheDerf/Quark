@@ -1,8 +1,8 @@
 <!-- Please search existing issues for potential duplicates before filing yours:
-https://github.com/godotengine/godot/issues?q=is%3Aissue
+https://github.com/Quark-Toolkit/Quark/issues?q=is%3Aissue
 -->
 
-**Godot version:**
+**Quark version:**
 <!-- Specify commit hash if non-official. -->
 
 
@@ -17,5 +17,5 @@ https://github.com/godotengine/godot/issues?q=is%3Aissue
 **Steps to reproduce:**
 
 
-**Minimal reproduction project:**
+**Minimal reproduction code:**
 <!-- Recommended as it greatly speeds up debugging. Drag and drop a zip archive to upload it. -->

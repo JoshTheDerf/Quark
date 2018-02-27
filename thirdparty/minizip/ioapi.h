@@ -52,7 +52,7 @@
  * Cf. https://github.com/godotengine/godot/issues/10539
  *
  *   "By and large, this is good open source behaviour, and fits with
- *    the gentoo _don't fuck with upstream's releases_ philosophy"
+ *    the gentoo _don't mess with upstream's releases_ philosophy"
  *                                     -- Gentoo philosopher
  */
 #ifndef OF /* function prototypes */

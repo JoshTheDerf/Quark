@@ -1,20 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Copyright 2017 Rémi Verschelde <akien@godotengine.org> -->
 <component type="desktop">
-  <id>godot.desktop</id>
+  <id>quark.desktop</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
-  <name>Godot Engine</name>
-  <summary>Multi-platform 2D and 3D game engine with a feature-rich editor</summary>
+  <name>Quark Toolkit</name>
+  <summary>Cross-platform, GPU-accelerated GUI toolkit.</summary>
   <description>
     <p>
-      Godot is an advanced, feature-packed, multi-platform 2D and 3D game
-      engine. It provides a huge set of common tools, so you can just focus on
-      making your game without reinventing the wheel.
+      Quark is a powerful, gpu-accelerated 2D GUI toolkit with a variety of built-in widgets
+      and a powerful theming system.
     </p>
     <p>
-      Godot is completely free and open source under the very permissive MIT
-      license. No strings attached, no royalties, nothing. Your game is yours,
+      Quark is completely free and open source under the very permissive MIT
+      license. No strings attached, no royalties, nothing. Your application is yours,
       down to the last line of engine code.
     </p>
   </description>
@@ -25,10 +24,9 @@
     </screenshot>
   </screenshots>
   <url type="homepage">https://godotengine.org</url>
-  <url type="bugtracker">https://github.com/godotengine/godot/issues</url>
+  <url type="bugtracker">https://github.com/Quark-Toolkit/Quark/issues</url>
   <url type="help">http://docs.godotengine.org</url>
   <url type="donation">https://godotengine.org/donate</url>
-  <url type="translate">https://hosted.weblate.org/projects/godot-engine/godot</url>
-  <developer_name>The Godot Engine Community</developer_name>
-  <update_contact>akien_at_godotengine_dot_org</update_contact>
+  <developer_name>The Quark Toolkit Community</developer_name>
+  <update_contact>tribex10_at_gmail_dot_com</update_contact>
 </component>

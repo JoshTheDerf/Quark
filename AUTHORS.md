@@ -1,3 +1,10 @@
+# Quark Toolkit
+
+# Project Founders
+    Joshua Bemenderfer (tribex)
+
+**Quark Toolkit is based on [Godot Engine](https://godotengine.org), whose contributors are also listed here.**
+
 # Godot Engine authors
 
 Godot Engine is developed by a community of voluntary contributors who

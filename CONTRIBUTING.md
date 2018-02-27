@@ -4,7 +4,6 @@ Sections covered in this file:
 
 * [Reporting bugs or proposing features](#reporting-bugs-or-proposing-features)
 * [Contributing pull requests](#contributing-pull-requests)
-* [Contributing to Godot's translation](#contributing-to-godots-translation)
 * [Communicating with developers](#communicating-with-developers)
 
 **Please read the first section before reporting a bug!**
@@ -29,7 +28,7 @@ new issue**. The bugsquad will handle it from there if it's a duplicate.
 
 #### Specify the platform
 
-Godot runs on a large variety of platforms and operating systems and devices.
+Quark runs on a large variety of platforms and operating systems and devices.
 If you believe your issue is device/platform dependent (for example if it is
 related to the rendering, crashes or compilation errors), please specify:
 * Operating system
@@ -112,56 +111,33 @@ description is also manually wrapped at 80 chars for readability):
 ```
 Prevent French fries carbonization by fixing heat regulation
 
-When using the French fries frying module, Godot would not regulate the heat
+When using the French fries frying module, Quark would not regulate the heat
 and thus bring the oil bath to supercritical liquid conditions, thus causing
 unwanted side effects in the physics engine.
 
 By fixing the regulation system via an added binding to the internal feature,
-this commit now ensures that Godot will not go past the ebullition temperature
+this commit now ensures that Quark will not go past the ebullition temperature
 of cooking oil under normal atmospheric conditions.
 
 Fixes #1789, long live the Realm!
 ```
 
-*Note:* When using the GitHub online editor (or worse, the drag and drop
-feature), *please* edit the commit title to something meaningful. Commits named
-"Update my_file.cpp" will not be accepted.
-
-## Contributing to Godot's translation
-
-You can contribute to Godot's translation from the [Hosted
-Weblate](https://hosted.weblate.org/projects/godot-engine/godot), an open
-source and web-based translation platform. Please refer to the [translation
-readme](editor/translations/README.md) for more information.
-
 ## Communicating with developers
-
-The Godot Engine community has [many communication
-channels](https://godotengine.org/community), some used more for user-level
-discussions and support, others more for development discussions.
 
 To communicate with developers (e.g. to discuss a feature you want to implement
 or a bug you want to fix), the following channels can be used:
-- [GitHub issues](https://github.com/godotengine/godot/issues): If there is an
+- [GitHub issues](https://github.com/Quarkengine/Quark/issues): If there is an
   existing issue about a topic you want to discuss, just add a comment to it -
   all developers watch the repository and will get an email notification. You
   can also create a new issue - please keep in mind to create issues only to
   discuss quite specific points about the development, and not general user
   feedback or support requests.
-- [#godotengine-devel IRC channel on
-  Freenode](https://webchat.freenode.net/?channels=godotengine-devel): You will
+- [Discord Server (#core)](https://discord.gg/ywzqPJz): You will
   find most core developers there, so it's the go-to channel for direct chat
-  about Godot Engine development. Feel free to start discussing something there
+  about Quark Engine development. Feel free to start discussing something there
   to get some early feedback before writing up a detailed proposal in a GitHub
   issue.
-- [devel@godotengine.org mailing
-  list](https://listengine.tuxfamily.org/godotengine.org/devel/): Mailing list
-  for Godot developers, used primarily to announce developer meetings on IRC
-  and other important discussions that need to reach people directly in their
-  mailbox. See the [index
-  page](https://listengine.tuxfamily.org/godotengine.org/devel/) for
-  subscription instructions.
 
 Thanks!
 
-The Godot development team
+The Quark development team

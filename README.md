@@ -1,69 +1,50 @@
-[![Godot Engine logo](/logo.png)](https://godotengine.org)
+![Quark Toolkit Logo](/assets/Project%20Logo.png)
 
-## Godot Engine
+### What is it?
 
-Homepage: https://godotengine.org
+Quark toolkit is a powerful, extensible GUI Toolkit written in C++ and OpenGL / ES 3.0. It runs natively on Linux, macOS, Windows, and several BSD flavors.
+It comes with a scene graph, a variety of useful widgets, a powerful built-in theming system, and support for extension through any language that can interface with C bindings.
 
-#### 2D and 3D cross-platform game engine
+Internally, Quark is based on the [Godot Game Engine](https://godotengine.org) core, but strips it down to only those features useful for GUI development in order to have the smallest library size possible.
 
-Godot Engine is a feature-packed, cross-platform game engine to create 2D and
-3D games from a unified interface. It provides a comprehensive set of common
-tools, so that users can focus on making games without having to reinvent the
-wheel. Games can be exported in one click to a number of platforms, including
-the major desktop platforms (Linux, Mac OSX, Windows) as well as mobile
-(Android, iOS) and web-based (HTML5) platforms.
+### Binary downloads
 
-#### Free, open source and community-driven
+TODO: Downloads
 
-Godot is completely free and open source under the very permissive MIT license.
-No strings attached, no royalties, nothing. The users' games are theirs, down
-to the last line of engine code. Godot's development is fully independent and
-community-driven, empowering users to help shape their engine to match their
-expectations. It is supported by the Software Freedom Conservancy
-not-for-profit.
+### Compiling from source
 
-Before being open sourced in February 2014, Godot had been developed by Juan
-Linietsky and Ariel Manzur (both still maintaining the project) for several
-years as an in-house engine, used to publish several work-for-hire titles.
-
-![Screenshot of a 3D scene in Godot Engine](http://download.tuxfamily.org/godotengine/media/screenshots/editor_3d_fracteed.jpg)
-
-### Getting the engine
-
-#### Binary downloads
-
-Official binaries for the Godot editor and the export templates can be found
-[on the homepage](https://godotengine.org/download).
-
-#### Compiling from source
-
-[See the official docs](http://docs.godotengine.org/en/latest/development/compiling/)
-for compilation instructions for every supported platform.
+TODO: Write
 
 ### Community
 
-Godot is not only an engine but an ever-growing community of users and engine
-developers. The main community channels are listed [on the homepage](https://godotengine.org/community).
-
-To get in touch with the developers, the best way is to join the
-[#godotengine IRC channel](https://webchat.freenode.net/?channels=godotengine)
-on Freenode.
+[Join us on Discord!](https://discord.gg/ywzqPJz)
 
 ### Documentation and demos
 
-The official documentation is hosted on [ReadTheDocs](http://docs.godotengine.org).
-It is maintained by the Godot community in its own [GitHub repository](https://github.com/godotengine/godot-docs).
+TODO: Write
 
-The [class reference](http://docs.godotengine.org/en/latest/classes/)
-is also accessible from within the engine.
+## License (MIT)
 
-The official demos are maintained in their own [GitHub repository](https://github.com/godotengine/godot-demo-projects)
-as well.
+```
+Copyright (c) 2007-2018 Juan Linietsky, Ariel Manzur.
+Copyright (c) 2014-2018 Godot Engine contributors (cf. AUTHORS.md)
+Copyright (c) 2018 Quark Toolkit contributors (cf. AUTHORS.md)
 
-There are also a number of other learning resources provided by the community,
-such as text and video tutorials, demos, etc. Consult the [community channels](https://godotengine.org/community)
-for more info.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-[![Travis Build Status](https://travis-ci.org/godotengine/godot.svg?branch=master)](https://travis-ci.org/godotengine/godot)
-[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/bfiihqq6byxsjxxh/branch/master?svg=true)](https://ci.appveyor.com/project/akien-mga/godot)
-[![Code Triagers Badge](https://www.codetriage.com/godotengine/godot/badges/users.svg)](https://www.codetriage.com/godotengine/godot)
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```

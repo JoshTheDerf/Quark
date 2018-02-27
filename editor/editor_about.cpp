@@ -32,7 +32,6 @@
 #include "editor_node.h"
 
 #include "authors.gen.h"
-#include "donors.gen.h"
 #include "license.gen.h"
 #include "version.h"
 #include "version_hash.gen.h"
@@ -133,8 +132,9 @@ EditorAbout::EditorAbout() {
 	Label *about_text = memnew(Label);
 	about_text->set_v_size_flags(Control::SIZE_SHRINK_CENTER);
 	about_text->set_text(VERSION_FULL_NAME + hash +
-						 String::utf8("\n\xc2\xa9 2007-2018 Juan Linietsky, Ariel Manzur.\n\xc2\xa9 2014-2018 ") +
-						 TTR("Godot Engine contributors") + "\n");
+						 String::utf8("\n\xc2\xa9 2007-2018 Juan Linietsky, Ariel Manzur. \n \n\xc2\xa9 2014-2018") +
+						 TTR("Godot Engine contributors") + "\n" +
+						 String::utf8("\n\xc2\xa9 2018 Quark Toolkit contributors."));
 	hbc->add_child(about_text);
 
 	TabContainer *tc = memnew(TabContainer);
@@ -151,18 +151,6 @@ EditorAbout::EditorAbout() {
 	dev_sections.push_back(TTR("Developers"));
 	const char **dev_src[] = { dev_founders, dev_lead, dev_manager, dev_names };
 	tc->add_child(_populate_list(TTR("Authors"), dev_sections, dev_src, 1));
-
-	// Donors
-
-	List<String> donor_sections;
-	donor_sections.push_back(TTR("Platinum Sponsors"));
-	donor_sections.push_back(TTR("Gold Sponsors"));
-	donor_sections.push_back(TTR("Mini Sponsors"));
-	donor_sections.push_back(TTR("Gold Donors"));
-	donor_sections.push_back(TTR("Silver Donors"));
-	donor_sections.push_back(TTR("Bronze Donors"));
-	const char **donor_src[] = { donor_s_plat, donor_s_gold, donor_s_mini, donor_gold, donor_silver, donor_bronze };
-	tc->add_child(_populate_list(TTR("Donors"), donor_sections, donor_src, 3));
 
 	// License
 

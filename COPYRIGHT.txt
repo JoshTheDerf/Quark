@@ -36,22 +36,20 @@
 -----------------------------------------------------------------------
 
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: Godot Engine
-Upstream-Contact: Rémi Verschelde <contact@godotengine.org>
-Source: https://github.com/godotengine/godot
+Upstream-Name: Quark Toolkit
+Upstream-Contact: Joshua Bemenderfer <tribex10@gmail.com>
+Source: https://github.com/Quark-Toolkit/Quark
 
 Files: *
-Comment: Godot Engine
-Copyright: 2007-2018, Juan Linietsky, Ariel Manzur.
+Comment: Quark Toolkit
+Copyright: 2018, Juan Linietsky, Ariel Manzur.
   2014-2018, Godot Engine contributors.
+  2018, Quark Toolkit contributors.
 License: Expat
 
-Files: ./icon.png
- ./icon.svg
- ./logo.png
- ./logo.svg
-Comment: Godot Engine logo
-Copyright: 2017, Andrea Calabró
+Files: ./assets/*
+Comment: Quark Project Logos
+Copyright: 2018, Joshua Bemenderfer
 License: CC-BY-3.0
 
 Files: ./platform/android/android_native_app_glue.c
@@ -93,57 +91,8 @@ Comment: Simple DirectMedia Layer
 Copyright: 1997-2017, Sam Lantinga
   2007-2018, Juan Linietsky, Ariel Manzur.
   2014-2018, Godot Engine contributors.
+  2018, Quark Toolkit contributors.
 License: Expat and Zlib
-
-Files: ./servers/physics/gjk_epa.cpp
- ./servers/physics/joints/generic_6dof_joint_sw.cpp
- ./servers/physics/joints/generic_6dof_joint_sw.h
- ./servers/physics/joints/hinge_joint_sw.cpp
- ./servers/physics/joints/hinge_joint_sw.h
- ./servers/physics/joints/jacobian_entry_sw.h
- ./servers/physics/joints/pin_joint_sw.cpp
- ./servers/physics/joints/pin_joint_sw.h
- ./servers/physics/joints/slider_joint_sw.cpp
- ./servers/physics/joints/slider_joint_sw.h
-Comment: Bullet Continuous Collision Detection and Physics Library
-Copyright: 2003-2008, Erwin Coumans
-  2007-2018, Juan Linietsky, Ariel Manzur.
-  2014-2018, Godot Engine contributors.
-License: Expat and Zlib
-
-Files: ./servers/physics/joints/cone_twist_joint_sw.cpp
- ./servers/physics/joints/cone_twist_joint_sw.h
-Comment: Bullet Continuous Collision Detection and Physics Library
-Copyright: 2007, Starbreeze Studios
-  2007-2018, Juan Linietsky, Ariel Manzur.
-  2014-2018, Godot Engine contributors.
-License: Expat and Zlib
-
-Files: ./thirdparty/b2d_convexdecomp/
-Comment: Box2D (ConvexDecomp)
-Copyright: 2007, Eric Jordan
-  2006-2009, Erin Catto
-License: Zlib
-
-Files: ./thirdparty/bullet/
-Comment: Bullet Continuous Collision Detection and Physics Library
-Copyright: 2003-2008, Erwin Coumans
-License: Zlib
-
-Files: ./thirdparty/certs/ca-certificates.crt
-Comment: CA certificates
-Copyright: Mozilla Contributors
-License: MPL-2.0
-
-Files: ./thirdparty/enet/
-Comment: ENet
-Copyright: 2002-2016, Lee Salzman
-License: Expat
-
-Files: ./thirdparty/etc2comp/
-Comment: Etc2Comp
-Copyright: 2015, Etc2Comp Authors
-License: Apache-2.0
 
 Files: ./thirdparty/fonts/DroidSans*.ttf
 Comment: DroidSans font
@@ -176,52 +125,12 @@ Comment: jpeg-compressor
 Copyright: 2012, Rich Geldreich
 License: public-domain
 
-Files: ./thirdparty/libogg/
-Comment: OggVorbis
-Copyright: 2002, Xiph.org Foundation
-License: BSD-3-clause
-
 Files: ./thirdparty/libpng/
 Comment: libpng
 Copyright: 1995-1996, Guy Eric Schalnat, Group 42, Inc.
  1996-1997, Andreas Dilger
  1998-2016, Glenn Randers-Pehrson
 License: Zlib
-
-Files: ./thirdparty/libsimplewebm/
-Comment: libsimplewebm
-Copyright: 2016, Błażej Szczygieł
-License: Expat
-
-Files: ./thirdparty/libsimplewebm/libwebm/
-Comment: The WebM Project
-Copyright: 2010, Google Inc.
-License: BSD-3-clause
-
-Files: ./thirdparty/libtheora/
-Comment: OggTheora
-Copyright: 2002-2009, Xiph.org Foundation
-License: BSD-3-clause
-
-Files: ./thirdparty/libvorbis/
-Comment: OggVorbis
-Copyright: 2002-2015, Xiph.org Foundation
-License: BSD-3-clause
-
-Files: ./thirdparty/libvpx/
-Comment: The WebM Project
-Copyright: 2010, The WebM Project authors.
-License: BSD-3-clause
-
-Files: ./thirdparty/libwebp/
-Comment: WebP codec
-Copyright: 2010, Google Inc.
-License: BSD-3-clause
-
-Files: ./thirdparty/mbedtls/
-Comment: Mbed TLS
-Copyright: 2006-2015, ARM Limited
-License: Apache-2.0
 
 Files: ./thirdparty/minizip/
 Comment: MiniZip
@@ -308,61 +217,21 @@ Comment: NanoSVG
 Copyright: 2013-2014, Mikko Mononen
 License: Zlib
 
-Files: ./thirdparty/opus/
-Comment: Opus
-Copyright: 2001-2011, Xiph.Org, Skype Limited, Octasic,
- Jean-Marc Valin, Timothy B. Terriberry,
- CSIRO, Gregory Maxwell, Mark Borgerding,
- Erik de Castro Lopo
-License: BSD-3-clause
-
 Files: ./thirdparty/pcre2/
 Comment: PCRE2
 Copyright: 1997-2017, University of Cambridge,
  2009-2017, Zoltan Herczeg
 License: BSD-3-clause
 
-Files: ./thirdparty/pvrtccompressor/
-Comment: PvrTcCompressor
-Copyright: 2014, Jeffrey Lim.
-License: BSD-3-clause
-
-Files: ./thirdparty/recastnavigation/
-Comment: Recast
-Copyright: 2009, Mikko Mononen
-License: Zlib
-
 Files: ./thirdparty/rtaudio/
 Comment: RtAudio
 Copyright: 2001-2016, Gary P. Scavone
 License: Expat
 
-Files: ./thirdparty/squish/
-Comment: libSquish
-Copyright: 2006, Simon Brown
-License: Expat
-
-Files: ./thirdparty/thekla_atlas/
-Comment: Thekla Atlas
-Copyright: 2013, Thekla, Inc
-License: Expat
-
-Files: ./thirdparty/tinyexr/
-Comment: TinyEXR
-Copyright: 2014-2017, Syoyo Fujita
-  2002, Industrial Light & Magic, a division of Lucas Digital Ltd. LLC
-License: BSD-3-Clause
-
 Files: ./thirdparty/zlib/
 Comment: zlib
 Copyright: 1995-2017, Jean-loup Gailly and Mark Adler
 License: Zlib
-
-Files: ./thirdparty/zstd/
-Comment: Zstandard
-Copyright: 2016-2018, Facebook, Inc.
-License: BSD-3-Clause
-
 
 
 License: Apache-2.0

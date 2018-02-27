@@ -1,0 +1,284 @@
+#!/usr/bin/env python
+
+Import('env')
+
+qns_env = env.Clone()
+qns_env.add_source_files(env.modules_sources, "qnative.cpp")
+qns_env.add_source_files(env.modules_sources, "register_types.cpp")
+qns_env.add_source_files(env.modules_sources, "qnative/*.cpp")
+qns_env.add_source_files(env.modules_sources, "nativescript/*.cpp")
+qns_env.add_source_files(env.modules_sources, "qnative_library_singleton_editor.cpp")
+qns_env.add_source_files(env.modules_sources, "qnative_library_editor_plugin.cpp")
+
+qns_env.Append(CPPPATH=['#modules/qnative/include/'])
+
+SConscript("pluginscript/SCsub")
+
+def _spaced(e):
+    return e if e[-1] == '*' else e + ' '
+
+def _build_qnative_api_struct_header(api):
+    qnative_api_init_macro = [
+        '\textern const quark__core_api_struct *_qnative_wrapper_api_struct;'
+    ]
+
+    for name in api['extensions']:
+        qnative_api_init_macro.append(
+            '\textern const quark__ext_{0}_api_struct *_qnative_wrapper_{0}_api_struct;'.format(name))
+
+    qnative_api_init_macro.append('\t_qnative_wrapper_api_struct = options->api_struct;')
+    qnative_api_init_macro.append('\tfor (unsigned int i = 0; i < _qnative_wrapper_api_struct->num_extensions; i++) { ')
+    qnative_api_init_macro.append('\t\tswitch (_qnative_wrapper_api_struct->extensions[i]->type) {')
+
+    for name in api['extensions']:
+        qnative_api_init_macro.append(
+            '\t\t\tcase QNATIVE_EXT_%s:' % api['extensions'][name]['type'])
+        qnative_api_init_macro.append(
+            '\t\t\t\t_qnative_wrapper_{0}_api_struct = (quark__ext_{0}_api_struct *)'
+            ' _qnative_wrapper_api_struct->extensions[i];'.format(name))
+        qnative_api_init_macro.append('\t\t\t\tbreak;')
+    qnative_api_init_macro.append('\t\t}')
+    qnative_api_init_macro.append('\t}')
+
+    out = [
+        '/* THIS FILE IS GENERATED DO NOT EDIT */',
+        '#ifndef QUARK_QNATIVE_API_STRUCT_H',
+        '#define QUARK_QNATIVE_API_STRUCT_H',
+        '',
+        '#include <qnative/qnative.h>',
+        '#include <nativescript/quark_nativescript.h>',
+        '#include <pluginscript/quark_pluginscript.h>',
+        '',
+        '#define QNATIVE_API_INIT(options) do {  \\\n' + '  \\\n'.join(qnative_api_init_macro) + '  \\\n } while (0)',
+        '',
+        '#ifdef __cplusplus',
+        'extern "C" {',
+        '#endif',
+        '',
+        'enum QNATIVE_API_TYPES {',
+        '\tQNATIVE_' + api['core']['type'] + ','
+    ]
+
+    for name in api['extensions']:
+        out += ['\tQNATIVE_EXT_' + api['extensions'][name]['type'] + ',']
+
+    out += ['};', '']
+
+
+    def generate_extension_struct(name, ext, include_version=True):
+        ret_val = []
+        if ext['next']:
+            ret_val += generate_extension_struct(name, ext['next'])
+        
+        ret_val += [
+            'typedef struct quark__ext_' + name + ('' if not include_version else ('_{0}_{1}'.format(ext['version']['major'], ext['version']['minor']))) + '_api_struct {',
+            '\tunsigned int type;',
+            '\tquark__api_version version;',
+            '\tconst quark__api_struct *next;'
+        ]
+
+        for funcdef in ext['api']:
+            args = ', '.join(['%s%s' % (_spaced(t), n) for t, n in funcdef['arguments']])
+            ret_val.append('\t%s(*%s)(%s);' % (_spaced(funcdef['return_type']), funcdef['name'], args))
+
+        ret_val += ['} quark__ext_' + name + ('' if not include_version else ('_{0}_{1}'.format(ext['version']['major'], ext['version']['minor']))) + '_api_struct;', '']
+
+        return ret_val
+
+
+    for name in api['extensions']:
+        out += generate_extension_struct(name, api['extensions'][name], False)
+
+    out += [
+        'typedef struct quark__core_api_struct {',
+        '\tunsigned int type;',
+        '\tquark__api_version version;',
+        '\tconst quark__api_struct *next;',
+        '\tunsigned int num_extensions;',
+        '\tconst quark__api_struct **extensions;',
+    ]
+
+    for funcdef in api['core']['api']:
+        args = ', '.join(['%s%s' % (_spaced(t), n) for t, n in funcdef['arguments']])
+        out.append('\t%s(*%s)(%s);' % (_spaced(funcdef['return_type']), funcdef['name'], args))
+
+    out += [
+        '} quark__core_api_struct;',
+        '',
+        '#ifdef __cplusplus',
+        '}',
+        '#endif',
+        '',
+        '#endif // QUARK_QNATIVE_API_STRUCT_H',
+        ''
+    ]
+    return '\n'.join(out)
+
+def _build_qnative_api_struct_source(api):
+    out = [
+        '/* THIS FILE IS GENERATED DO NOT EDIT */',
+        '',
+        '#include <qnative_api_struct.gen.h>',
+        ''
+    ]
+
+    def get_extension_struct_name(name, ext, include_version=True):
+        return 'quark__ext_' + name + ('' if not include_version else ('_{0}_{1}'.format(ext['version']['major'], ext['version']['minor']))) + '_api_struct'
+
+    def get_extension_struct_instance_name(name, ext, include_version=True):
+        return 'api_extension_' + name + ('' if not include_version else ('_{0}_{1}'.format(ext['version']['major'], ext['version']['minor']))) + '_struct'
+
+    def get_extension_struct_definition(name, ext, include_version=True):
+
+        ret_val = []
+
+        if ext['next']:
+            ret_val += get_extension_struct_definition(name, ext['next'])
+
+        ret_val += [
+            'extern const ' + get_extension_struct_name(name, ext, include_version) + ' ' + get_extension_struct_instance_name(name, ext, include_version) + ' = {',
+            '\tQNATIVE_EXT_' + ext['type'] + ',',
+            '\t{' + str(ext['version']['major']) + ', ' + str(ext['version']['minor']) + '},',
+            '\t' + ('NULL' if not ext['next'] else ('(const quark__api_struct *)&' + get_extension_struct_instance_name(name, ext['next']))) + ','
+        ]
+
+        for funcdef in ext['api']:
+            ret_val.append('\t%s,' % funcdef['name'])
+
+        ret_val += ['};\n']
+
+        return ret_val
+
+    for name in api['extensions']:
+        out += get_extension_struct_definition(name, api['extensions'][name], False)
+
+    out += ['', 'const quark__api_struct *qnative_extensions_pointers[] = {']
+
+    for name in api['extensions']:
+        out += ['\t(quark__api_struct *)&api_extension_' + name + '_struct,']
+
+    out += ['};\n']
+
+    out += [
+        'extern const quark__core_api_struct api_struct = {',
+        '\tQNATIVE_' + api['core']['type'] + ',',
+        '\t{' + str(api['core']['version']['major']) + ', ' + str(api['core']['version']['minor']) + '},',
+        '\tNULL,',
+        '\t' + str(len(api['extensions'])) + ',',
+        '\tqnative_extensions_pointers,',
+    ]
+
+    for funcdef in api['core']['api']:
+        out.append('\t%s,' % funcdef['name'])
+    out.append('};\n')
+
+    return '\n'.join(out)
+
+def build_qnative_api_struct(target, source, env):
+    import json
+    from collections import OrderedDict
+
+    with open(source[0].path, 'r') as fd:
+        api = json.load(fd)
+
+    header, source = target
+    with open(header.path, 'w') as fd:
+        fd.write(_build_qnative_api_struct_header(api))
+    with open(source.path, 'w') as fd:
+        fd.write(_build_qnative_api_struct_source(api))
+
+_, gensource = qns_env.Command(['include/qnative_api_struct.gen.h', 'qnative_api_struct.gen.cpp'],
+                               'qnative_api.json', build_qnative_api_struct)
+qns_env.add_source_files(env.modules_sources, [gensource])
+
+env.use_ptrcall = True
+
+
+def _build_qnative_wrapper_code(api):
+    out = [
+        '/* THIS FILE IS GENERATED DO NOT EDIT */',
+        '',
+        '#include <qnative/qnative.h>',
+        '#include <nativescript/quark_nativescript.h>',
+        '#include <pluginscript/quark_pluginscript.h>',
+        '',
+        '#include <qnative_api_struct.gen.h>',
+        '',
+        '#ifdef __cplusplus',
+        'extern "C" {',
+        '#endif',
+        '',
+        'quark__core_api_struct *_qnative_wrapper_api_struct = 0;',
+    ]
+
+    for name in api['extensions']:
+        out.append('quark__ext_' + name + '_api_struct *_qnative_wrapper_' + name + '_api_struct = 0;')
+
+    out += ['']
+
+    for funcdef in api['core']['api']:
+        args = ', '.join(['%s%s' % (_spaced(t), n) for t, n in funcdef['arguments']])
+        out.append('%s%s(%s) {' % (_spaced(funcdef['return_type']), funcdef['name'], args))
+
+        args = ', '.join(['%s' % n for t, n in funcdef['arguments']])
+
+        return_line = '\treturn ' if funcdef['return_type'] != 'void' else '\t'
+        return_line += '_qnative_wrapper_api_struct->' + funcdef['name'] + '(' + args + ');'
+
+        out.append(return_line)
+        out.append('}')
+        out.append('')
+
+    for name in api['extensions']:
+        for funcdef in api['extensions'][name]['api']:
+            args = ', '.join(['%s%s' % (_spaced(t), n) for t, n in funcdef['arguments']])
+            out.append('%s%s(%s) {' % (_spaced(funcdef['return_type']), funcdef['name'], args))
+
+            args = ', '.join(['%s' % n for t, n in funcdef['arguments']])
+
+            return_line = '\treturn ' if funcdef['return_type'] != 'void' else '\t'
+            return_line += '_qnative_wrapper_' + name + '_api_struct->' + funcdef['name'] + '(' + args + ');'
+
+            out.append(return_line)
+            out.append('}')
+            out.append('')
+
+    out += [
+        '#ifdef __cplusplus',
+        '}',
+        '#endif'
+    ]
+
+    return '\n'.join(out)
+
+
+def build_qnative_wrapper_code(target, source, env):
+    import json
+    with open(source[0].path, 'r') as fd:
+        api = json.load(fd)
+
+    wrapper_file = target[0]
+    with open(wrapper_file.path, 'w') as fd:
+        fd.write(_build_qnative_wrapper_code(api))
+
+
+
+if ARGUMENTS.get('qnative_wrapper', False):
+    #build wrapper code
+    gensource, = qns_env.Command('qnative_wrapper_code.gen.cpp', 'qnative_api.json', build_qnative_wrapper_code)
+
+    gd_wrapper_env = env.Clone()
+    gd_wrapper_env.Append(CPPPATH=['#modules/qnative/include/'])
+
+    if gd_wrapper_env['use_lto']:
+        if not env.msvc:
+            gd_wrapper_env.Append(CCFLAGS=['--no-lto'])
+            gd_wrapper_env.Append(LINKFLAGS=['--no-lto'])
+        else:
+            gd_wrapper_env.Append(CCFLAGS=['/GL-'])
+            gd_wrapper_env.Append(LINKFLAGS=['/LTCG:OFF'])
+
+    if not env.msvc:
+        gd_wrapper_env.Append(CCFLAGS=['-fPIC'])
+
+    lib = gd_wrapper_env.add_library("#bin/qnative_wrapper_code", [gensource])

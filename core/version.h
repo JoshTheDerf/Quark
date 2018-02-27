@@ -36,26 +36,26 @@
 
 // Defines the main "branch" version. Patch versions in this branch should be
 // forward-compatible.
-// Example: "3.1"
+// Example: "1.1"
 #define VERSION_BRANCH "" _MKSTR(VERSION_MAJOR) "." _MKSTR(VERSION_MINOR)
 #ifdef VERSION_PATCH
-// Example: "3.1.4"
+// Example: "1.1.4"
 #define VERSION_NUMBER "" VERSION_BRANCH "." _MKSTR(VERSION_PATCH)
 #else
-// Example: "3.1"
+// Example: "1.1"
 #define VERSION_NUMBER "" VERSION_BRANCH
 #endif // VERSION_PATCH
 
 // Describes the full configuration of that Godot version, including the version number,
 // the status (beta, stable, etc.) and potential module-specific features (e.g. mono).
-// Example: "3.1.4.stable.mono"
+// Example: "1.1.4.stable.mono"
 #define VERSION_FULL_CONFIG "" VERSION_NUMBER "." VERSION_STATUS VERSION_MODULE_CONFIG
 
 // Similar to VERSION_FULL_CONFIG, but also includes the (potentially custom) VERSION_BUILD
 // description (e.g. official, custom_build, etc.).
-// Example: "3.1.4.stable.mono.official"
+// Example: "1.1.4.stable.mono.official"
 #define VERSION_FULL_BUILD "" VERSION_FULL_CONFIG "." VERSION_BUILD
 
 // Same as above, but prepended with Godot's name and a cosmetic "v" for "version".
-// Example: "Godot v3.1.4.stable.official.mono"
+// Example: "Godot v1.1.4.stable.official.mono"
 #define VERSION_FULL_NAME "" VERSION_NAME " v" VERSION_FULL_BUILD

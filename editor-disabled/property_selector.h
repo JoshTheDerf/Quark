@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  xml_parser.h                                                         */
+/*  property_selector.h                                                  */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,97 +28,51 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef XML_PARSER_H
-#define XML_PARSER_H
+#ifndef PROPERTYSELECTOR_H
+#define PROPERTYSELECTOR_H
 
-#include "os/file_access.h"
-#include "reference.h"
-#include "ustring.h"
-#include "vector.h"
+#include "editor/property_editor.h"
+#include "scene/gui/rich_text_label.h"
 
-/*
-  Based on irrXML (see their zlib license). Added mainly for compatibility with their Collada loader.
-*/
+class PropertySelector : public ConfirmationDialog {
+	GDCLASS(PropertySelector, ConfirmationDialog)
 
-class XMLParser : public Reference {
+	LineEdit *search_box;
+	Tree *search_options;
 
-	GDCLASS(XMLParser, Reference);
+	void _update_search();
 
-public:
-	//! Enumeration of all supported source text file formats
-	enum SourceFormat {
-		SOURCE_ASCII,
-		SOURCE_UTF8,
-		SOURCE_UTF16_BE,
-		SOURCE_UTF16_LE,
-		SOURCE_UTF32_BE,
-		SOURCE_UTF32_LE
-	};
+	void _sbox_input(const Ref<InputEvent> &p_ie);
 
-	enum NodeType {
-		NODE_NONE,
-		NODE_ELEMENT,
-		NODE_ELEMENT_END,
-		NODE_TEXT,
-		NODE_COMMENT,
-		NODE_CDATA,
-		NODE_UNKNOWN
-	};
+	void _confirmed();
+	void _text_changed(const String &p_newtext);
 
-private:
-	char *data;
-	char *P;
-	uint64_t length;
-	void unescape(String &p_str);
-	Vector<String> special_characters;
-	String node_name;
-	bool node_empty;
-	NodeType node_type;
-	uint64_t node_offset;
+	bool properties;
+	String selected;
+	Variant::Type type;
+	String base_type;
+	ObjectID script;
+	Object *instance;
+	bool virtuals_only;
 
-	struct Attribute {
-		String name;
-		String value;
-	};
+	void _item_selected();
 
-	Vector<Attribute> attributes;
-
-	String _replace_special_characters(const String &origstr);
-	bool _set_text(char *start, char *end);
-	void _parse_closing_xml_element();
-	void _ignore_definition();
-	bool _parse_cdata();
-	void _parse_comment();
-	void _parse_opening_xml_element();
-	void _parse_current_node();
-
+protected:
+	void _notification(int p_what);
 	static void _bind_methods();
 
 public:
-	Error read();
-	NodeType get_node_type();
-	String get_node_name() const;
-	String get_node_data() const;
-	uint64_t get_node_offset() const;
-	int get_attribute_count() const;
-	String get_attribute_name(int p_idx) const;
-	String get_attribute_value(int p_idx) const;
-	bool has_attribute(const String &p_name) const;
-	String get_attribute_value(const String &p_name) const;
-	String get_attribute_value_safe(const String &p_name) const; // do not print error if doesn't exist
-	bool is_empty() const;
-	int get_current_line() const;
+	void select_method_from_base_type(const String &p_base, const String &p_current = "", bool p_virtuals_only = false);
+	void select_method_from_script(const Ref<Script> &p_script, const String &p_current = "");
+	void select_method_from_basic_type(Variant::Type p_type, const String &p_current = "");
+	void select_method_from_instance(Object *p_instance, const String &p_current = "");
 
-	void skip_section();
-	Error seek(uint64_t p_pos);
+	void select_property_from_base_type(const String &p_base, const String &p_current = "");
+	void select_property_from_script(const Ref<Script> &p_script, const String &p_current = "");
+	void select_property_from_basic_type(Variant::Type p_type, const String &p_current = "");
+	void select_property_from_instance(Object *p_instance, const String &p_current = "");
 
-	Error open(const String &p_path);
-	Error open_buffer(const Vector<uint8_t> &p_buffer);
-
-	void close();
-
-	XMLParser();
-	~XMLParser();
+	PropertySelector();
 };
 
-#endif
+#endif // PROPERTYSELECTOR_H

@@ -32,17 +32,11 @@
 #include "core/math/math_funcs.h"
 #include "scene/scene_string_names.h"
 #include "servers/visual_server.h"
-#include <editor/editor_node.h>
 
 void Camera2D::_update_scroll() {
 
 	if (!is_inside_tree())
 		return;
-
-	if (Engine::get_singleton()->is_editor_hint()) {
-		update(); //will just be drawn
-		return;
-	}
 
 	if (current) {
 
@@ -90,30 +84,16 @@ Transform2D Camera2D::get_camera_transform() {
 
 		if (anchor_mode == ANCHOR_MODE_DRAG_CENTER) {
 
-			if (h_drag_enabled && !Engine::get_singleton()->is_editor_hint()) {
-				camera_pos.x = MIN(camera_pos.x, (new_camera_pos.x + screen_size.x * 0.5 * drag_margin[MARGIN_LEFT]));
-				camera_pos.x = MAX(camera_pos.x, (new_camera_pos.x - screen_size.x * 0.5 * drag_margin[MARGIN_RIGHT]));
+			if (h_ofs < 0) {
+				camera_pos.x = new_camera_pos.x + screen_size.x * 0.5 * drag_margin[MARGIN_RIGHT] * h_ofs;
 			} else {
-
-				if (h_ofs < 0) {
-					camera_pos.x = new_camera_pos.x + screen_size.x * 0.5 * drag_margin[MARGIN_RIGHT] * h_ofs;
-				} else {
-					camera_pos.x = new_camera_pos.x + screen_size.x * 0.5 * drag_margin[MARGIN_LEFT] * h_ofs;
-				}
+				camera_pos.x = new_camera_pos.x + screen_size.x * 0.5 * drag_margin[MARGIN_LEFT] * h_ofs;
 			}
 
-			if (v_drag_enabled && !Engine::get_singleton()->is_editor_hint()) {
-
-				camera_pos.y = MIN(camera_pos.y, (new_camera_pos.y + screen_size.y * 0.5 * drag_margin[MARGIN_TOP]));
-				camera_pos.y = MAX(camera_pos.y, (new_camera_pos.y - screen_size.y * 0.5 * drag_margin[MARGIN_BOTTOM]));
-
+			if (v_ofs < 0) {
+				camera_pos.y = new_camera_pos.y + screen_size.y * 0.5 * drag_margin[MARGIN_TOP] * v_ofs;
 			} else {
-
-				if (v_ofs < 0) {
-					camera_pos.y = new_camera_pos.y + screen_size.y * 0.5 * drag_margin[MARGIN_TOP] * v_ofs;
-				} else {
-					camera_pos.y = new_camera_pos.y + screen_size.y * 0.5 * drag_margin[MARGIN_BOTTOM] * v_ofs;
-				}
+				camera_pos.y = new_camera_pos.y + screen_size.y * 0.5 * drag_margin[MARGIN_BOTTOM] * v_ofs;
 			}
 
 		} else if (anchor_mode == ANCHOR_MODE_FIXED_TOP_LEFT) {
@@ -141,16 +121,7 @@ Transform2D Camera2D::get_camera_transform() {
 				camera_pos.y -= screen_rect.position.y - limit[MARGIN_TOP];
 		}
 
-		if (smoothing_enabled && !Engine::get_singleton()->is_editor_hint()) {
-
-			float c = smoothing * get_process_delta_time();
-			smoothed_camera_pos = ((camera_pos - smoothed_camera_pos) * c) + smoothed_camera_pos;
-			ret_camera_pos = smoothed_camera_pos;
-			//camera_pos=camera_pos*(1.0-smoothing)+new_camera_pos*smoothing;
-		} else {
-
-			ret_camera_pos = smoothed_camera_pos = camera_pos;
-		}
+		ret_camera_pos = smoothed_camera_pos = camera_pos;
 
 	} else {
 		ret_camera_pos = smoothed_camera_pos = camera_pos = new_camera_pos;
@@ -245,10 +216,6 @@ void Camera2D::_notification(int p_what) {
 			add_to_group(group_name);
 			add_to_group(canvas_group_name);
 
-			if (Engine::get_singleton()->is_editor_hint()) {
-				set_process_internal(false);
-			}
-
 			_update_scroll();
 			first = true;
 
@@ -263,84 +230,6 @@ void Camera2D::_notification(int p_what) {
 			remove_from_group(group_name);
 			remove_from_group(canvas_group_name);
 			viewport = NULL;
-
-		} break;
-		case NOTIFICATION_DRAW: {
-
-			if (!is_inside_tree() || !Engine::get_singleton()->is_editor_hint())
-				break;
-
-			if (screen_drawing_enabled) {
-				Color area_axis_color(0.5, 0.42, 0.87, 0.63);
-				float area_axis_width = 1;
-				if (is_current()) {
-					area_axis_width = 3;
-					area_axis_color.a = 0.83;
-				}
-
-				Transform2D inv_camera_transform = get_camera_transform().affine_inverse();
-				Size2 screen_size = get_viewport_rect().size;
-
-				Vector2 screen_endpoints[4] = {
-					inv_camera_transform.xform(Vector2(0, 0)),
-					inv_camera_transform.xform(Vector2(screen_size.width, 0)),
-					inv_camera_transform.xform(Vector2(screen_size.width, screen_size.height)),
-					inv_camera_transform.xform(Vector2(0, screen_size.height))
-				};
-
-				Transform2D inv_transform = get_global_transform().affine_inverse(); // undo global space
-
-				for (int i = 0; i < 4; i++) {
-					draw_line(inv_transform.xform(screen_endpoints[i]), inv_transform.xform(screen_endpoints[(i + 1) % 4]), area_axis_color, area_axis_width);
-				}
-			}
-
-			if (limit_drawing_enabled) {
-				Color limit_drawing_color(1, 1, 0, 0.63);
-				float limit_drawing_width = 1;
-				if (is_current()) {
-					limit_drawing_color.a = 0.83;
-					limit_drawing_width = 3;
-				}
-
-				Vector2 camera_origin = get_global_transform().get_origin();
-				Vector2 camera_scale = get_global_transform().get_scale().abs();
-				Vector2 limit_points[4] = {
-					(Vector2(limit[MARGIN_LEFT], limit[MARGIN_TOP]) - camera_origin) / camera_scale,
-					(Vector2(limit[MARGIN_RIGHT], limit[MARGIN_TOP]) - camera_origin) / camera_scale,
-					(Vector2(limit[MARGIN_RIGHT], limit[MARGIN_BOTTOM]) - camera_origin) / camera_scale,
-					(Vector2(limit[MARGIN_LEFT], limit[MARGIN_BOTTOM]) - camera_origin) / camera_scale
-				};
-
-				for (int i = 0; i < 4; i++) {
-					draw_line(limit_points[i], limit_points[(i + 1) % 4], limit_drawing_color, limit_drawing_width);
-				}
-			}
-
-			if (margin_drawing_enabled) {
-				Color margin_drawing_color(0, 1, 1, 0.63);
-				float margin_drawing_width = 1;
-				if (is_current()) {
-					margin_drawing_width = 3;
-					margin_drawing_color.a = 0.83;
-				}
-
-				Transform2D inv_camera_transform = get_camera_transform().affine_inverse();
-				Size2 screen_size = get_viewport_rect().size;
-
-				Vector2 margin_endpoints[4] = {
-					inv_camera_transform.xform(Vector2((screen_size.width / 2) - ((screen_size.width / 2) * drag_margin[MARGIN_LEFT]), (screen_size.height / 2) - ((screen_size.height / 2) * drag_margin[MARGIN_TOP]))),
-					inv_camera_transform.xform(Vector2((screen_size.width / 2) + ((screen_size.width / 2) * drag_margin[MARGIN_RIGHT]), (screen_size.height / 2) - ((screen_size.height / 2) * drag_margin[MARGIN_TOP]))),
-					inv_camera_transform.xform(Vector2((screen_size.width / 2) + ((screen_size.width / 2) * drag_margin[MARGIN_RIGHT]), (screen_size.height / 2) + ((screen_size.height / 2) * drag_margin[MARGIN_BOTTOM]))),
-					inv_camera_transform.xform(Vector2((screen_size.width / 2) - ((screen_size.width / 2) * drag_margin[MARGIN_LEFT]), (screen_size.height / 2) + ((screen_size.height / 2) * drag_margin[MARGIN_BOTTOM])))
-				};
-
-				Transform2D inv_transform = get_global_transform().affine_inverse(); // undo global space
-
-				for (int i = 0; i < 4; i++) {
-					draw_line(inv_transform.xform(margin_endpoints[i]), inv_transform.xform(margin_endpoints[(i + 1) % 4]), margin_drawing_color, margin_drawing_width);
-				}
-			}
 
 		} break;
 	}
@@ -502,10 +391,7 @@ void Camera2D::align() {
 void Camera2D::set_follow_smoothing(float p_speed) {
 
 	smoothing = p_speed;
-	if (smoothing > 0 && !(is_inside_tree() && Engine::get_singleton()->is_editor_hint()))
-		set_process_internal(true);
-	else
-		set_process_internal(false);
+	set_process_internal(true);
 }
 
 float Camera2D::get_follow_smoothing() const {
@@ -741,11 +627,6 @@ void Camera2D::_bind_methods() {
 	ADD_PROPERTYI(PropertyInfo(Variant::REAL, "drag_margin_top", PROPERTY_HINT_RANGE, "0,1,0.01"), "set_drag_margin", "get_drag_margin", MARGIN_TOP);
 	ADD_PROPERTYI(PropertyInfo(Variant::REAL, "drag_margin_right", PROPERTY_HINT_RANGE, "0,1,0.01"), "set_drag_margin", "get_drag_margin", MARGIN_RIGHT);
 	ADD_PROPERTYI(PropertyInfo(Variant::REAL, "drag_margin_bottom", PROPERTY_HINT_RANGE, "0,1,0.01"), "set_drag_margin", "get_drag_margin", MARGIN_BOTTOM);
-
-	ADD_GROUP("Editor", "editor_");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "editor_draw_screen"), "set_screen_drawing_enabled", "is_screen_drawing_enabled");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "editor_draw_limits"), "set_limit_drawing_enabled", "is_limit_drawing_enabled");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "editor_draw_drag_margin"), "set_margin_drawing_enabled", "is_margin_drawing_enabled");
 
 	BIND_ENUM_CONSTANT(ANCHOR_MODE_FIXED_TOP_LEFT);
 	BIND_ENUM_CONSTANT(ANCHOR_MODE_DRAG_CENTER);

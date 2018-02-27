@@ -43,7 +43,6 @@
 #include "script_debugger_remote.h"
 #include "servers/register_server_types.h"
 #include "splash.gen.h"
-#include "splash_editor.gen.h"
 
 #include "input_map.h"
 #include "io/resource_loader.h"
@@ -58,12 +57,6 @@
 #include "os/dir_access.h"
 #include "scene/main/viewport.h"
 #include "scene/resources/packed_scene.h"
-
-#ifdef TOOLS_ENABLED
-#include "editor/doc/doc_data.h"
-#include "editor/doc/doc_data_class_path.gen.h"
-#include "editor/editor_node.h"
-#endif
 
 #include "core/io/file_access_pack.h"
 #include "core/io/file_access_zip.h"
@@ -105,7 +98,6 @@ static bool use_debug_profiler = false;
 static bool force_lowdpi = false;
 static int init_screen = -1;
 static bool use_vsync = true;
-static bool editor = false;
 static bool show_help = false;
 static bool disable_render_loop = false;
 static int fixed_fps = -1;
@@ -150,10 +142,6 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("\n");
 
 	OS::get_singleton()->print("Run options:\n");
-#ifdef TOOLS_ENABLED
-	OS::get_singleton()->print("  -e, --editor                     Start the editor instead of running the scene.\n");
-	OS::get_singleton()->print("  -p, --project-manager            Start the project manager, even if a project is auto-detected.\n");
-#endif
 	OS::get_singleton()->print("  -q, --quit                       Quit after the first iteration.\n");
 	OS::get_singleton()->print("  -l, --language <locale>          Use a specific locale (<locale> being a two-letter code).\n");
 	OS::get_singleton()->print("  --path <directory>               Path to a project (<directory> must contain a 'project.godot' file).\n");
@@ -202,13 +190,9 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("\n");
 
 	OS::get_singleton()->print("Standalone tools:\n");
-	OS::get_singleton()->print("  -s, --script <script>            Run a script.\n");
 #ifdef TOOLS_ENABLED
-	OS::get_singleton()->print("  --export <target>                Export the project using the given export target.\n");
-	OS::get_singleton()->print("  --export-debug                   Use together with --export, enables debug mode for the template.\n");
 	OS::get_singleton()->print("  --doctool <path>                 Dump the engine API reference to the given <path> in XML format, merging if existing files are found.\n");
 	OS::get_singleton()->print("  --no-docbase                     Disallow dumping the base types (used with --doctool).\n");
-	OS::get_singleton()->print("  --build-solutions                Build the scripting solutions (e.g. for C# projects).\n");
 #ifdef DEBUG_METHODS_ENABLED
 	OS::get_singleton()->print("  --gdnative-generate-json-api     Generate JSON dump of the Godot API for GDNative bindings.\n");
 #endif
@@ -445,11 +429,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 			//video_mode.fullscreen=false;
 			init_fullscreen = true;
-#ifdef TOOLS_ENABLED
-		} else if (I->get() == "-e" || I->get() == "--editor") { // starts editor
-
-			editor = true;
-#endif
 		} else if (I->get() == "--no-window") { // disable window creation, Windows only
 
 			OS::get_singleton()->set_no_window_mode(true);
@@ -491,9 +470,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			} else {
 				game_path = path;
 			}
-#ifdef TOOLS_ENABLED
-			editor = true;
-#endif
 		} else if (I->get() == "-b" || I->get() == "--breakpoints") { // add breakpoints
 
 			if (I->next()) {
@@ -553,15 +529,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 				N = I->next()->next();
 			} else {
 				OS::get_singleton()->print("Missing remote debug host address, aborting.\n");
-				goto error;
-			}
-		} else if (I->get() == "--allow_focus_steal_pid") { // not exposed to user
-			if (I->next()) {
-
-				allow_focus_steal_pid = I->next()->get().to_int64();
-				N = I->next()->next();
-			} else {
-				OS::get_singleton()->print("Missing editor PID argument, aborting.\n");
 				goto error;
 			}
 		} else if (I->get() == "--disable-render-loop") {
@@ -640,25 +607,13 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		}
 	}
 
-#ifdef TOOLS_ENABLED
-	if (editor) {
-		packed_data->set_disabled(true);
-		globals->set_disable_feature_overrides(true);
-	}
-
-#endif
-
 	if (globals->setup(game_path, main_pack, upwards) == OK) {
 		found_project = true;
 	} else {
 
-#ifdef TOOLS_ENABLED
-		editor = false;
-#else
 		OS::get_singleton()->print("Error: Could not load game path '%s'.\n", game_path.ascii().get_data());
 
 		goto error;
-#endif
 	}
 
 	GLOBAL_DEF("logging/file_logging/enable_file_logging", false);
@@ -670,24 +625,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		OS::get_singleton()->add_logger(memnew(RotatedFileLogger(base_path, max_files)));
 	}
 
-#ifdef TOOLS_ENABLED
-	if (editor) {
-		Engine::get_singleton()->set_editor_hint(true);
-		main_args.push_back("--editor");
-		if (!init_windowed) {
-			init_maximized = true;
-			video_mode.maximized = true;
-		}
-	}
-
-#endif
-
-	if (editor) {
-		use_custom_res = false;
-		input_map->load_default(); //keys for editor
-	} else {
-		input_map->load_from_globals(); //keys for game
-	}
+	input_map->load_from_globals(); //keys for game
 
 	if (bool(ProjectSettings::get_singleton()->get("application/run/disable_stdout"))) {
 		quiet_stdout = true;
@@ -744,11 +682,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	GLOBAL_DEF("rendering/quality/intended_usage/framebuffer_allocation", 2);
 	GLOBAL_DEF("rendering/quality/intended_usage/framebuffer_allocation.mobile", 3);
 
-	if (editor) {
-		// The editor and project manager always detect and use hiDPI if needed
-		OS::get_singleton()->_allow_hidpi = true;
-	}
-
 	Engine::get_singleton()->_pixel_snap = GLOBAL_DEF("rendering/quality/2d/use_pixel_snap", false);
 	OS::get_singleton()->_keep_screen_on = GLOBAL_DEF("display/window/energy_saving/keep_screen_on", true);
 	if (rtm == -1) {
@@ -756,9 +689,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 
 	if (rtm >= 0 && rtm < 3) {
-		if (editor) {
-			rtm = OS::RENDER_THREAD_SAFE;
-		}
 		OS::get_singleton()->_render_thread_mode = OS::RenderThreadMode(rtm);
 	}
 
@@ -965,21 +895,12 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 			OS::get_singleton()->_msec_splash = OS::get_singleton()->get_ticks_msec();
 			Color boot_bg = GLOBAL_DEF("application/boot_splash/bg_color", clear);
 			VisualServer::get_singleton()->set_boot_image(boot_logo, boot_bg, boot_logo_scale);
-#ifndef TOOLS_ENABLED
-//no tools, so free the boot logo (no longer needed)
-//ProjectSettings::get_singleton()->set("application/boot_logo",Image());
-#endif
 
 		} else {
 #ifndef NO_DEFAULT_BOOT_LOGO
 
 			MAIN_PRINT("Main: Create bootsplash");
-#if defined(TOOLS_ENABLED) && !defined(NO_EDITOR_SPLASH)
-
-			Ref<Image> splash = (editor) ? memnew(Image(boot_splash_editor_png)) : memnew(Image(boot_splash_png));
-#else
 			Ref<Image> splash = memnew(Image(boot_splash_png));
-#endif
 
 			MAIN_PRINT("Main: ClearColor");
 			VisualServer::get_singleton()->set_default_clear_color(boot_splash_bg_color);
@@ -987,11 +908,6 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 			VisualServer::get_singleton()->set_boot_image(splash, boot_splash_bg_color, false);
 #endif
 		}
-
-#ifdef TOOLS_ENABLED
-		Ref<Image> icon = memnew(Image(app_icon_png));
-		OS::get_singleton()->set_icon(icon);
-#endif
 	}
 
 	MAIN_PRINT("Main: DCC");
@@ -1002,7 +918,7 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 	ProjectSettings::get_singleton()->set_custom_property_info("application/config/icon", PropertyInfo(Variant::STRING, "application/config/icon", PROPERTY_HINT_FILE, "*.png,*.webp"));
 
 	if (bool(GLOBAL_DEF("display/window/handheld/emulate_touchscreen", false))) {
-		if (!OS::get_singleton()->has_touchscreen_ui_hint() && Input::get_singleton() && !(editor)) {
+		if (!OS::get_singleton()->has_touchscreen_ui_hint() && Input::get_singleton()) {
 			//only if no touchscreen ui hint, set emulation
 			InputDefault *id = Object::cast_to<InputDefault>(Input::get_singleton());
 			if (id)
@@ -1030,13 +946,6 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 			Input::get_singleton()->set_custom_mouse_cursor(cursor, Input::CURSOR_ARROW, hotspot);
 		}
 	}
-#ifdef TOOLS_ENABLED
-	ClassDB::set_current_api(ClassDB::API_EDITOR);
-	EditorNode::register_editor_types();
-
-	ClassDB::set_current_api(ClassDB::API_CORE);
-
-#endif
 
 	if (allow_focus_steal_pid) {
 		OS::get_singleton()->enable_for_stealing_focus(allow_focus_steal_pid);
@@ -1077,7 +986,6 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 
 	if (OS::get_singleton()->is_stdout_verbose()) {
 		print_line("CORE API HASH: " + itos(ClassDB::get_api_hash(ClassDB::API_CORE)));
-		print_line("EDITOR API HASH: " + itos(ClassDB::get_api_hash(ClassDB::API_EDITOR)));
 	}
 	MAIN_PRINT("Main: Done");
 
@@ -1103,10 +1011,6 @@ bool Main::start() {
 		//parameters that do not have an argument to the right
 		if (args[i] == "--no-docbase") {
 			doc_base = false;
-#ifdef TOOLS_ENABLED
-		} else if (args[i] == "-e" || args[i] == "--editor") {
-			editor = true;
-#endif
 		} else if (args[i].length() && args[i][0] != '-' && game_path == "") {
 			game_path = args[i];
 		}
@@ -1122,23 +1026,6 @@ bool Main::start() {
 				doc_tool = args[i + 1];
 				for (int j = i + 2; j < args.size(); j++)
 					removal_docs.push_back(args[j]);
-			} else if (args[i] == "--export") {
-				editor = true; //needs editor
-				if (i + 1 < args.size()) {
-					_export_preset = args[i + 1];
-				} else {
-					ERR_PRINT("Export preset name not specified");
-					return false;
-				}
-			} else if (args[i] == "--export-debug") {
-				editor = true; //needs editor
-				if (i + 1 < args.size()) {
-					_export_preset = args[i + 1];
-				} else {
-					ERR_PRINT("Export preset name not specified");
-					return false;
-				}
-				export_debug = true;
 #endif
 			} else {
 				// The parameter does not match anything known, don't skip the next argument
@@ -1150,57 +1037,7 @@ bool Main::start() {
 		}
 	}
 
-	GLOBAL_DEF("editor/active", editor);
-
 	String main_loop_type;
-#ifdef TOOLS_ENABLED
-	if (doc_tool != "") {
-
-		{
-			DirAccessRef da = DirAccess::open(doc_tool);
-			if (!da) {
-				ERR_EXPLAIN("Argument supplied to --doctool must be a base godot build directory");
-				ERR_FAIL_V(false);
-			}
-		}
-		DocData doc;
-		doc.generate(doc_base);
-
-		DocData docsrc;
-		Map<String, String> doc_data_classes;
-		Set<String> checked_paths;
-		print_line("Loading docs..");
-
-		for (int i = 0; i < _doc_data_class_path_count; i++) {
-			String path = doc_tool.plus_file(_doc_data_class_paths[i].path);
-			String name = _doc_data_class_paths[i].name;
-			doc_data_classes[name] = path;
-			if (!checked_paths.has(path)) {
-				checked_paths.insert(path);
-				docsrc.load_classes(path);
-				print_line("Loading docs from: " + path);
-			}
-		}
-
-		String index_path = doc_tool.plus_file("doc/classes");
-		docsrc.load_classes(index_path);
-		checked_paths.insert(index_path);
-		print_line("Loading docs from: " + index_path);
-
-		print_line("Merging docs..");
-		doc.merge_from(docsrc);
-		for (Set<String>::Element *E = checked_paths.front(); E; E = E->next()) {
-			print_line("Erasing old docs at: " + E->get());
-			DocData::erase_classes(E->get());
-		}
-
-		print_line("Generating new docs..");
-		doc.save_classes(index_path, doc_data_classes);
-
-		return false;
-	}
-
-#endif
 
 	if (_export_preset != "") {
 		if (game_path == "") {
@@ -1218,9 +1055,6 @@ bool Main::start() {
 	}
 
 	MainLoop *main_loop = NULL;
-	if (editor) {
-		main_loop = memnew(SceneTree);
-	};
 
 	if (test != "") {
 #ifdef DEBUG_ENABLED
@@ -1289,92 +1123,56 @@ bool Main::start() {
 
 		SceneTree *sml = Object::cast_to<SceneTree>(main_loop);
 
-#ifdef TOOLS_ENABLED
+		//standard helpers that can be changed from main config
 
-		EditorNode *editor_node = NULL;
-		if (editor) {
+		String stretch_mode = GLOBAL_DEF("display/window/stretch/mode", "disabled");
+		String stretch_aspect = GLOBAL_DEF("display/window/stretch/aspect", "ignore");
+		Size2i stretch_size = Size2(GLOBAL_DEF("display/window/size/width", 0), GLOBAL_DEF("display/window/size/height", 0));
+		real_t stretch_shrink = GLOBAL_DEF("display/window/stretch/shrink", 1.0f);
 
-			editor_node = memnew(EditorNode);
-			sml->get_root()->add_child(editor_node);
+		SceneTree::StretchMode sml_sm = SceneTree::STRETCH_MODE_DISABLED;
+		if (stretch_mode == "2d")
+			sml_sm = SceneTree::STRETCH_MODE_2D;
+		else if (stretch_mode == "viewport")
+			sml_sm = SceneTree::STRETCH_MODE_VIEWPORT;
 
-			//root_node->set_editor(editor);
-			//startup editor
+		SceneTree::StretchAspect sml_aspect = SceneTree::STRETCH_ASPECT_IGNORE;
+		if (stretch_aspect == "keep")
+			sml_aspect = SceneTree::STRETCH_ASPECT_KEEP;
+		else if (stretch_aspect == "keep_width")
+			sml_aspect = SceneTree::STRETCH_ASPECT_KEEP_WIDTH;
+		else if (stretch_aspect == "keep_height")
+			sml_aspect = SceneTree::STRETCH_ASPECT_KEEP_HEIGHT;
+		else if (stretch_aspect == "expand")
+			sml_aspect = SceneTree::STRETCH_ASPECT_EXPAND;
 
-			if (_export_preset != "") {
+		sml->set_screen_stretch(sml_sm, sml_aspect, stretch_size, stretch_shrink);
 
-				editor_node->export_preset(_export_preset, game_path, export_debug, "", true);
-				game_path = ""; //no load anything
-			}
-		}
-#endif
+		sml->set_auto_accept_quit(GLOBAL_DEF("application/config/auto_accept_quit", true));
+		sml->set_quit_on_go_back(GLOBAL_DEF("application/config/quit_on_go_back", true));
+		String appname = ProjectSettings::get_singleton()->get("application/config/name");
+		appname = TranslationServer::get_singleton()->translate(appname);
+		OS::get_singleton()->set_window_title(appname);
 
-		{
-		}
+		int shadow_atlas_size = GLOBAL_GET("rendering/quality/shadow_atlas/size");
+		int shadow_atlas_q0_subdiv = GLOBAL_GET("rendering/quality/shadow_atlas/quadrant_0_subdiv");
+		int shadow_atlas_q1_subdiv = GLOBAL_GET("rendering/quality/shadow_atlas/quadrant_1_subdiv");
+		int shadow_atlas_q2_subdiv = GLOBAL_GET("rendering/quality/shadow_atlas/quadrant_2_subdiv");
+		int shadow_atlas_q3_subdiv = GLOBAL_GET("rendering/quality/shadow_atlas/quadrant_3_subdiv");
 
-		if (!editor) {
-			//standard helpers that can be changed from main config
+		sml->get_root()->set_shadow_atlas_size(shadow_atlas_size);
+		sml->get_root()->set_shadow_atlas_quadrant_subdiv(0, Viewport::ShadowAtlasQuadrantSubdiv(shadow_atlas_q0_subdiv));
+		sml->get_root()->set_shadow_atlas_quadrant_subdiv(1, Viewport::ShadowAtlasQuadrantSubdiv(shadow_atlas_q1_subdiv));
+		sml->get_root()->set_shadow_atlas_quadrant_subdiv(2, Viewport::ShadowAtlasQuadrantSubdiv(shadow_atlas_q2_subdiv));
+		sml->get_root()->set_shadow_atlas_quadrant_subdiv(3, Viewport::ShadowAtlasQuadrantSubdiv(shadow_atlas_q3_subdiv));
+		Viewport::Usage usage = Viewport::Usage(int(GLOBAL_GET("rendering/quality/intended_usage/framebuffer_allocation")));
+		sml->get_root()->set_usage(usage);
 
-			String stretch_mode = GLOBAL_DEF("display/window/stretch/mode", "disabled");
-			String stretch_aspect = GLOBAL_DEF("display/window/stretch/aspect", "ignore");
-			Size2i stretch_size = Size2(GLOBAL_DEF("display/window/size/width", 0), GLOBAL_DEF("display/window/size/height", 0));
-			real_t stretch_shrink = GLOBAL_DEF("display/window/stretch/shrink", 1.0f);
+		bool snap_controls = GLOBAL_DEF("gui/common/snap_controls_to_pixels", true);
+		sml->get_root()->set_snap_controls_to_pixels(snap_controls);
 
-			SceneTree::StretchMode sml_sm = SceneTree::STRETCH_MODE_DISABLED;
-			if (stretch_mode == "2d")
-				sml_sm = SceneTree::STRETCH_MODE_2D;
-			else if (stretch_mode == "viewport")
-				sml_sm = SceneTree::STRETCH_MODE_VIEWPORT;
-
-			SceneTree::StretchAspect sml_aspect = SceneTree::STRETCH_ASPECT_IGNORE;
-			if (stretch_aspect == "keep")
-				sml_aspect = SceneTree::STRETCH_ASPECT_KEEP;
-			else if (stretch_aspect == "keep_width")
-				sml_aspect = SceneTree::STRETCH_ASPECT_KEEP_WIDTH;
-			else if (stretch_aspect == "keep_height")
-				sml_aspect = SceneTree::STRETCH_ASPECT_KEEP_HEIGHT;
-			else if (stretch_aspect == "expand")
-				sml_aspect = SceneTree::STRETCH_ASPECT_EXPAND;
-
-			sml->set_screen_stretch(sml_sm, sml_aspect, stretch_size, stretch_shrink);
-
-			sml->set_auto_accept_quit(GLOBAL_DEF("application/config/auto_accept_quit", true));
-			sml->set_quit_on_go_back(GLOBAL_DEF("application/config/quit_on_go_back", true));
-			String appname = ProjectSettings::get_singleton()->get("application/config/name");
-			appname = TranslationServer::get_singleton()->translate(appname);
-			OS::get_singleton()->set_window_title(appname);
-
-			int shadow_atlas_size = GLOBAL_GET("rendering/quality/shadow_atlas/size");
-			int shadow_atlas_q0_subdiv = GLOBAL_GET("rendering/quality/shadow_atlas/quadrant_0_subdiv");
-			int shadow_atlas_q1_subdiv = GLOBAL_GET("rendering/quality/shadow_atlas/quadrant_1_subdiv");
-			int shadow_atlas_q2_subdiv = GLOBAL_GET("rendering/quality/shadow_atlas/quadrant_2_subdiv");
-			int shadow_atlas_q3_subdiv = GLOBAL_GET("rendering/quality/shadow_atlas/quadrant_3_subdiv");
-
-			sml->get_root()->set_shadow_atlas_size(shadow_atlas_size);
-			sml->get_root()->set_shadow_atlas_quadrant_subdiv(0, Viewport::ShadowAtlasQuadrantSubdiv(shadow_atlas_q0_subdiv));
-			sml->get_root()->set_shadow_atlas_quadrant_subdiv(1, Viewport::ShadowAtlasQuadrantSubdiv(shadow_atlas_q1_subdiv));
-			sml->get_root()->set_shadow_atlas_quadrant_subdiv(2, Viewport::ShadowAtlasQuadrantSubdiv(shadow_atlas_q2_subdiv));
-			sml->get_root()->set_shadow_atlas_quadrant_subdiv(3, Viewport::ShadowAtlasQuadrantSubdiv(shadow_atlas_q3_subdiv));
-			Viewport::Usage usage = Viewport::Usage(int(GLOBAL_GET("rendering/quality/intended_usage/framebuffer_allocation")));
-			sml->get_root()->set_usage(usage);
-
-			bool snap_controls = GLOBAL_DEF("gui/common/snap_controls_to_pixels", true);
-			sml->get_root()->set_snap_controls_to_pixels(snap_controls);
-
-			bool font_oversampling = GLOBAL_DEF("rendering/quality/dynamic_fonts/use_oversampling", false);
-			sml->set_use_font_oversampling(font_oversampling);
-
-		} else {
-			GLOBAL_DEF("display/window/stretch/mode", "disabled");
-			ProjectSettings::get_singleton()->set_custom_property_info("display/window/stretch/mode", PropertyInfo(Variant::STRING, "display/window/stretch/mode", PROPERTY_HINT_ENUM, "disabled,2d,viewport"));
-			GLOBAL_DEF("display/window/stretch/aspect", "ignore");
-			ProjectSettings::get_singleton()->set_custom_property_info("display/window/stretch/aspect", PropertyInfo(Variant::STRING, "display/window/stretch/aspect", PROPERTY_HINT_ENUM, "ignore,keep,keep_width,keep_height,expand"));
-			GLOBAL_DEF("display/window/stretch/shrink", 1);
-			ProjectSettings::get_singleton()->set_custom_property_info("display/window/stretch/shrink", PropertyInfo(Variant::STRING, "display/window/stretch/shrink", PROPERTY_HINT_RANGE, "1,8,1"));
-			sml->set_auto_accept_quit(GLOBAL_DEF("application/config/auto_accept_quit", true));
-			sml->set_quit_on_go_back(GLOBAL_DEF("application/config/quit_on_go_back", true));
-			GLOBAL_DEF("gui/common/snap_controls_to_pixels", true);
-			GLOBAL_DEF("rendering/quality/dynamic_fonts/use_oversampling", false);
-		}
+		bool font_oversampling = GLOBAL_DEF("rendering/quality/dynamic_fonts/use_oversampling", false);
+		sml->set_use_font_oversampling(font_oversampling);
 
 		String local_game_path;
 		if (game_path != "") {
@@ -1410,120 +1208,108 @@ bool Main::start() {
 			}
 
 			local_game_path = ProjectSettings::get_singleton()->localize_path(local_game_path);
-
-#ifdef TOOLS_ENABLED
-			if (editor) {
-
-				Error serr = editor_node->load_scene(local_game_path);
-				if (serr != OK)
-					ERR_PRINT("Failed to load scene");
-				OS::get_singleton()->set_context(OS::CONTEXT_EDITOR);
-			}
-#endif
 		}
 
-		if (!editor) { // game
-			if (game_path != "" || script != "") {
-				//autoload
-				List<PropertyInfo> props;
-				ProjectSettings::get_singleton()->get_property_list(&props);
+		if (game_path != "" || script != "") {
+			//autoload
+			List<PropertyInfo> props;
+			ProjectSettings::get_singleton()->get_property_list(&props);
 
-				//first pass, add the constants so they exist before any script is loaded
-				for (List<PropertyInfo>::Element *E = props.front(); E; E = E->next()) {
+			//first pass, add the constants so they exist before any script is loaded
+			for (List<PropertyInfo>::Element *E = props.front(); E; E = E->next()) {
 
-					String s = E->get().name;
-					if (!s.begins_with("autoload/"))
-						continue;
-					String name = s.get_slicec('/', 1);
-					String path = ProjectSettings::get_singleton()->get(s);
-					bool global_var = false;
-					if (path.begins_with("*")) {
-						global_var = true;
-					}
-
-					if (global_var) {
-						for (int i = 0; i < ScriptServer::get_language_count(); i++) {
-							ScriptServer::get_language(i)->add_global_constant(name, Variant());
-						}
-					}
+				String s = E->get().name;
+				if (!s.begins_with("autoload/"))
+					continue;
+				String name = s.get_slicec('/', 1);
+				String path = ProjectSettings::get_singleton()->get(s);
+				bool global_var = false;
+				if (path.begins_with("*")) {
+					global_var = true;
 				}
 
-				//second pass, load into global constants
-				List<Node *> to_add;
-				for (List<PropertyInfo>::Element *E = props.front(); E; E = E->next()) {
-
-					String s = E->get().name;
-					if (!s.begins_with("autoload/"))
-						continue;
-					String name = s.get_slicec('/', 1);
-					String path = ProjectSettings::get_singleton()->get(s);
-					bool global_var = false;
-					if (path.begins_with("*")) {
-						global_var = true;
-						path = path.substr(1, path.length() - 1);
+				if (global_var) {
+					for (int i = 0; i < ScriptServer::get_language_count(); i++) {
+						ScriptServer::get_language(i)->add_global_constant(name, Variant());
 					}
-
-					RES res = ResourceLoader::load(path);
-					ERR_EXPLAIN("Can't autoload: " + path);
-					ERR_CONTINUE(res.is_null());
-					Node *n = NULL;
-					if (res->is_class("PackedScene")) {
-						Ref<PackedScene> ps = res;
-						n = ps->instance();
-					} else if (res->is_class("Script")) {
-						Ref<Script> s = res;
-						StringName ibt = s->get_instance_base_type();
-						bool valid_type = ClassDB::is_parent_class(ibt, "Node");
-						ERR_EXPLAIN("Script does not inherit a Node: " + path);
-						ERR_CONTINUE(!valid_type);
-
-						Object *obj = ClassDB::instance(ibt);
-
-						ERR_EXPLAIN("Cannot instance script for autoload, expected 'Node' inheritance, got: " + String(ibt));
-						ERR_CONTINUE(obj == NULL);
-
-						n = Object::cast_to<Node>(obj);
-						n->set_script(s.get_ref_ptr());
-					}
-
-					ERR_EXPLAIN("Path in autoload not a node or script: " + path);
-					ERR_CONTINUE(!n);
-					n->set_name(name);
-
-					//defer so references are all valid on _ready()
-					to_add.push_back(n);
-
-					if (global_var) {
-						for (int i = 0; i < ScriptServer::get_language_count(); i++) {
-							ScriptServer::get_language(i)->add_global_constant(name, n);
-						}
-					}
-				}
-
-				for (List<Node *>::Element *E = to_add.front(); E; E = E->next()) {
-
-					sml->get_root()->add_child(E->get());
 				}
 			}
 
-			if (game_path != "") {
-				Node *scene = NULL;
-				Ref<PackedScene> scenedata = ResourceLoader::load(local_game_path);
-				if (scenedata.is_valid())
-					scene = scenedata->instance();
+			//second pass, load into global constants
+			List<Node *> to_add;
+			for (List<PropertyInfo>::Element *E = props.front(); E; E = E->next()) {
 
-				ERR_EXPLAIN("Failed loading scene: " + local_game_path);
-				ERR_FAIL_COND_V(!scene, false)
-				sml->add_current_scene(scene);
+				String s = E->get().name;
+				if (!s.begins_with("autoload/"))
+					continue;
+				String name = s.get_slicec('/', 1);
+				String path = ProjectSettings::get_singleton()->get(s);
+				bool global_var = false;
+				if (path.begins_with("*")) {
+					global_var = true;
+					path = path.substr(1, path.length() - 1);
+				}
 
-				String iconpath = GLOBAL_DEF("application/config/icon", "Variant()");
-				if (iconpath != "") {
-					Ref<Image> icon;
-					icon.instance();
-					if (icon->load(iconpath) == OK) {
-						OS::get_singleton()->set_icon(icon);
-						hasicon = true;
+				RES res = ResourceLoader::load(path);
+				ERR_EXPLAIN("Can't autoload: " + path);
+				ERR_CONTINUE(res.is_null());
+				Node *n = NULL;
+				if (res->is_class("PackedScene")) {
+					Ref<PackedScene> ps = res;
+					n = ps->instance();
+				} else if (res->is_class("Script")) {
+					Ref<Script> s = res;
+					StringName ibt = s->get_instance_base_type();
+					bool valid_type = ClassDB::is_parent_class(ibt, "Node");
+					ERR_EXPLAIN("Script does not inherit a Node: " + path);
+					ERR_CONTINUE(!valid_type);
+
+					Object *obj = ClassDB::instance(ibt);
+
+					ERR_EXPLAIN("Cannot instance script for autoload, expected 'Node' inheritance, got: " + String(ibt));
+					ERR_CONTINUE(obj == NULL);
+
+					n = Object::cast_to<Node>(obj);
+					n->set_script(s.get_ref_ptr());
+				}
+
+				ERR_EXPLAIN("Path in autoload not a node or script: " + path);
+				ERR_CONTINUE(!n);
+				n->set_name(name);
+
+				//defer so references are all valid on _ready()
+				to_add.push_back(n);
+
+				if (global_var) {
+					for (int i = 0; i < ScriptServer::get_language_count(); i++) {
+						ScriptServer::get_language(i)->add_global_constant(name, n);
 					}
+				}
+			}
+
+			for (List<Node *>::Element *E = to_add.front(); E; E = E->next()) {
+
+				sml->get_root()->add_child(E->get());
+			}
+		}
+
+		if (game_path != "") {
+			Node *scene = NULL;
+			Ref<PackedScene> scenedata = ResourceLoader::load(local_game_path);
+			if (scenedata.is_valid())
+				scene = scenedata->instance();
+
+			ERR_EXPLAIN("Failed loading scene: " + local_game_path);
+			ERR_FAIL_COND_V(!scene, false)
+			sml->add_current_scene(scene);
+
+			String iconpath = GLOBAL_DEF("application/config/icon", "Variant()");
+			if (iconpath != "") {
+				Ref<Image> icon;
+				icon.instance();
+				if (icon->load(iconpath) == OK) {
+					OS::get_singleton()->set_icon(icon);
+					hasicon = true;
 				}
 			}
 		}
@@ -1638,7 +1424,7 @@ bool Main::iteration() {
 
 	if (frame > 1000000) {
 
-		if (GLOBAL_DEF("debug/settings/stdout/print_fps", OS::get_singleton()->is_stdout_verbose()) && !editor) {
+		if (GLOBAL_DEF("debug/settings/stdout/print_fps", OS::get_singleton()->is_stdout_verbose())) {
 			print_line("FPS: " + itos(frames));
 		};
 
@@ -1706,10 +1492,6 @@ void Main::cleanup() {
 	ResourceLoader::clear_path_remaps();
 
 	ScriptServer::finish_languages();
-
-#ifdef TOOLS_ENABLED
-	EditorNode::unregister_editor_types();
-#endif
 
 	unregister_driver_types();
 	unregister_module_types();

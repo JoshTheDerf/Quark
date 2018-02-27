@@ -54,7 +54,6 @@
 #include "editor/animation_editor.h"
 #include "editor/editor_audio_buses.h"
 #include "editor/editor_file_system.h"
-#include "editor/editor_help.h"
 #include "editor/editor_settings.h"
 #include "editor/editor_themes.h"
 #include "editor/import/resource_importer_bitmask.h"
@@ -75,8 +74,6 @@
 #include "editor/plugins/path_2d_editor_plugin.h"
 #include "editor/plugins/polygon_2d_editor_plugin.h"
 #include "editor/plugins/resource_preloader_editor_plugin.h"
-#include "editor/plugins/script_editor_plugin.h"
-#include "editor/plugins/script_text_editor.h"
 #include "editor/plugins/shader_editor_plugin.h"
 #include "editor/plugins/shader_graph_editor_plugin.h"
 #include "editor/plugins/sprite_frames_editor_plugin.h"
@@ -183,8 +180,6 @@ void EditorNode::_unhandled_input(const Ref<InputEvent> &p_event) {
 			_editor_select(EDITOR_2D);
 		} else if (ED_IS_SHORTCUT("editor/editor_script", p_event)) {
 			_editor_select(EDITOR_SCRIPT);
-		} else if (ED_IS_SHORTCUT("editor/editor_help", p_event)) {
-			emit_signal("request_help_search", "");
 		} else if (ED_IS_SHORTCUT("editor/editor_next", p_event)) {
 			_editor_select_next();
 		} else if (ED_IS_SHORTCUT("editor/editor_prev", p_event)) {
@@ -302,7 +297,6 @@ void EditorNode::_notification(int p_what) {
 		project_menu->add_style_override("hover", gui_base->get_stylebox("MenuHover", "EditorStyles"));
 		debug_menu->add_style_override("hover", gui_base->get_stylebox("MenuHover", "EditorStyles"));
 		settings_menu->add_style_override("hover", gui_base->get_stylebox("MenuHover", "EditorStyles"));
-		help_menu->add_style_override("hover", gui_base->get_stylebox("MenuHover", "EditorStyles"));
 
 		if (bool(EDITOR_DEF("interface/scene_tabs/resize_if_many_tabs", true))) {
 			scene_tabs->set_min_width(int(EDITOR_DEF("interface/scene_tabs/minimum_width", 50)) * EDSCALE);
@@ -312,10 +306,6 @@ void EditorNode::_notification(int p_what) {
 		_update_scene_tabs();
 
 		recent_scenes->set_as_minsize();
-
-		// debugger area
-		if (ScriptEditor::get_singleton()->get_debugger()->is_visible())
-			bottom_panel->add_style_override("panel", gui_base->get_stylebox("BottomPanelDebuggerOverride", "EditorStyles"));
 
 		// update_icons
 		for (int i = 0; i < singleton->main_editor_buttons.size(); i++) {
@@ -1284,8 +1274,6 @@ void EditorNode::_prepare_history() {
 			}
 		} else if (Object::cast_to<Node>(obj)) {
 			text = Object::cast_to<Node>(obj)->get_name();
-		} else if (obj->is_class("ScriptEditorDebuggerInspectedObject")) {
-			text = obj->call("get_title");
 		} else {
 			text = obj->get_class();
 		}
@@ -1388,8 +1376,10 @@ void EditorNode::_edit_current() {
 	bool is_node = current_obj->is_class("Node");
 	resource_save_button->set_disabled(!is_resource);
 
-	if (is_resource) {
+	printf("%s\n", "GOT HERE 1");
 
+	if (is_resource) {
+		printf("%s\n", "GOT HERE 2.1");
 		Resource *current_res = Object::cast_to<Resource>(current_obj);
 		ERR_FAIL_COND(!current_res);
 		scene_tree_dock->set_selected(NULL);
@@ -1414,7 +1404,7 @@ void EditorNode::_edit_current() {
 			}
 		}
 	} else if (is_node) {
-
+		printf("%s\n", "GOT HERE 2.2");
 		Node *current_node = Object::cast_to<Node>(current_obj);
 		ERR_FAIL_COND(!current_node);
 
@@ -1422,6 +1412,7 @@ void EditorNode::_edit_current() {
 		if (current_node->is_inside_tree()) {
 			node_dock->set_node(current_node);
 			scene_tree_dock->set_selected(current_node);
+			printf("%s\n", "GOT HERE 2.3");
 		} else {
 			node_dock->set_node(NULL);
 			scene_tree_dock->set_selected(NULL);
@@ -1436,65 +1427,34 @@ void EditorNode::_edit_current() {
 		}
 
 	} else {
-
-		if (current_obj->is_class("ScriptEditorDebuggerInspectedObject")) {
-			editable_warning = TTR("This is a remote object so changes to it will not be kept.\nPlease read the documentation relevant to debugging to better understand this workflow.");
-			capitalize = false;
-		}
-
+		printf("%s\n", "GOT HERE 2.3");
 		property_editor->edit(current_obj);
 		node_dock->set_node(NULL);
 	}
 
+	printf("%s\n", "GOT HERE 3");
 	if (editable_warning != String()) {
 		property_editable_warning->show(); //hide by default
 		property_editable_warning_dialog->set_text(editable_warning);
 	}
 
+	printf("%s\n", "GOT HERE 4");
 	if (property_editor->is_capitalize_paths_enabled() != capitalize) {
 		property_editor->set_enable_capitalize_paths(capitalize);
 	}
 
 	/* Take care of PLUGIN EDITOR */
-
+	printf("%s\n", "GOT HERE 5");
 	EditorPlugin *main_plugin = editor_data.get_editor(current_obj);
+	printf("%s\n", "GOT HERE 5.1");
 
 	if (main_plugin) {
-
-		// special case if use of external editor is true
-		if (main_plugin->get_name() == "Script" && (bool(EditorSettings::get_singleton()->get("text_editor/external/use_external_editor")) || overrides_external_editor(current_obj))) {
-			main_plugin->edit(current_obj);
-		}
-
-		else if (main_plugin != editor_plugin_screen && (!ScriptEditor::get_singleton() || !ScriptEditor::get_singleton()->is_visible_in_tree() || ScriptEditor::get_singleton()->can_take_away_focus())) {
-			// update screen main_plugin
-
-			if (!changing_scene) {
-
-				if (editor_plugin_screen)
-					editor_plugin_screen->make_visible(false);
-				editor_plugin_screen = main_plugin;
-				editor_plugin_screen->edit(current_obj);
-
-				editor_plugin_screen->make_visible(true);
-
-				int plugin_count = editor_data.get_editor_plugin_count();
-				for (int i = 0; i < plugin_count; i++) {
-					editor_data.get_editor_plugin(i)->notify_main_screen_changed(editor_plugin_screen->get_name());
-				}
-
-				for (int i = 0; i < editor_table.size(); i++) {
-
-					main_editor_buttons[i]->set_pressed(editor_table[i] == main_plugin);
-				}
-			}
-
-		} else {
-
-			editor_plugin_screen->edit(current_obj);
-		}
+		printf("%s\n", "GOT HERE 5.21");
+		editor_plugin_screen->edit(current_obj);
+		printf("%s\n", "GOT HERE 5.22");
 	}
 
+	printf("%s\n", "GOT HERE 6");
 	Vector<EditorPlugin *> sub_plugins = editor_data.get_subeditors(current_obj);
 
 	if (!sub_plugins.empty()) {
@@ -1503,10 +1463,11 @@ void EditorNode::_edit_current() {
 		_set_top_editors(sub_plugins);
 		_set_editing_top_editors(current_obj);
 		_display_top_editors(true);
-
+		printf("%s\n", "GOT HERE 7");
 	} else if (!editor_plugins_over->get_plugins_list().empty()) {
 
 		_hide_top_editors();
+		printf("%s\n", "GOT HERE 8");
 	}
 
 	object_menu->set_disabled(false);
@@ -1529,8 +1490,6 @@ void EditorNode::_edit_current() {
 	if (is_resource || is_node) {
 		p->add_separator();
 		p->add_shortcut(ED_SHORTCUT("property_editor/make_subresources_unique", TTR("Make Sub-Resources Unique")), OBJECT_UNIQUE_RESOURCES);
-		p->add_separator();
-		p->add_icon_shortcut(gui_base->get_icon("HelpSearch", "EditorIcons"), ED_SHORTCUT("property_editor/open_help", TTR("Open in Help")), OBJECT_REQUEST_HELP);
 	}
 
 	List<MethodInfo> methods;
@@ -1757,12 +1716,6 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 
 			quick_open->popup("PackedScene", true);
 			quick_open->set_title(TTR("Quick Open Scene.."));
-
-		} break;
-		case FILE_QUICK_OPEN_SCRIPT: {
-
-			quick_open->popup("Script", true);
-			quick_open->set_title(TTR("Quick Open Script.."));
 
 		} break;
 		case FILE_OPEN_PREV: {
@@ -2037,14 +1990,6 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 			}
 
 		} break;
-		case OBJECT_REQUEST_HELP: {
-
-			if (current) {
-				_editor_select(EDITOR_SCRIPT);
-				emit_signal("request_help", current->get_class());
-			}
-
-		} break;
 		case OBJECT_COPY_PARAMS: {
 
 			editor_data.apply_changes_in_editors();
@@ -2229,7 +2174,6 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 			bool ischecked = debug_menu->get_popup()->is_item_checked(debug_menu->get_popup()->get_item_index(RUN_LIVE_DEBUG));
 
 			debug_menu->get_popup()->set_item_checked(debug_menu->get_popup()->get_item_index(RUN_LIVE_DEBUG), !ischecked);
-			ScriptEditor::get_singleton()->get_debugger()->set_live_debugging(!ischecked);
 			EditorSettings::get_singleton()->set_project_metadata("debug_options", "run_live_debug", !ischecked);
 
 		} break;
@@ -2246,7 +2190,6 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 			bool ischecked = debug_menu->get_popup()->is_item_checked(debug_menu->get_popup()->get_item_index(RUN_RELOAD_SCRIPTS));
 			debug_menu->get_popup()->set_item_checked(debug_menu->get_popup()->get_item_index(RUN_RELOAD_SCRIPTS), !ischecked);
 
-			ScriptEditor::get_singleton()->set_live_auto_reload_running_scripts(!ischecked);
 			EditorSettings::get_singleton()->set_project_metadata("debug_options", "run_reload_scripts", !ischecked);
 
 		} break;
@@ -2308,12 +2251,6 @@ void EditorNode::_menu_option_confirm(int p_option, bool p_confirmed) {
 			file->set_title(TTR("Pick a Main Scene"));
 			file->popup_centered_ratio();
 
-		} break;
-		case HELP_CLASSES: {
-			emit_signal("request_help_index", "");
-		} break;
-		case HELP_SEARCH: {
-			emit_signal("request_help_search", "");
 		} break;
 		case HELP_DOCS: {
 			OS::get_singleton()->shell_open("http://docs.godotengine.org/");
@@ -2614,9 +2551,6 @@ void EditorNode::_remove_edited_scene() {
 		new_index = 1;
 	}
 
-	if (editor_data.get_scene_path(old_index) != String()) {
-		ScriptEditor::get_singleton()->close_builtin_scripts_from_scene(editor_data.get_scene_path(old_index));
-	}
 	_scene_tab_changed(new_index);
 	editor_data.remove_scene(old_index);
 	editor_data.get_undo_redo().clear_history();
@@ -2714,8 +2648,6 @@ void EditorNode::_set_main_scene_state(Dictionary p_state, Node *p_for_scene) {
 
 	//this should only happen at the very end
 
-	ScriptEditor::get_singleton()->get_debugger()->update_live_edit_root();
-	ScriptEditor::get_singleton()->set_scene_root_script(editor_data.get_scene_root_script(editor_data.get_edited_scene()));
 	editor_data.notify_edited_scene_changed();
 }
 
@@ -2927,8 +2859,6 @@ Error EditorNode::load_scene(const String &p_scene, bool p_ignore_broken_deps, b
 	prev_scene->set_disabled(previous_scenes.size() == 0);
 	opening_prev = false;
 
-	ScriptEditor::get_singleton()->get_debugger()->update_live_edit_root();
-
 	push_item(new_scene);
 
 	if (!restoring_scenes) {
@@ -3128,7 +3058,6 @@ void EditorNode::register_editor_types() {
 
 	ClassDB::register_class<EditorPlugin>();
 	ClassDB::register_class<EditorImportPlugin>();
-	ClassDB::register_class<EditorScript>();
 	ClassDB::register_class<EditorSelection>();
 	ClassDB::register_class<EditorFileDialog>();
 	ClassDB::register_virtual_class<EditorSettings>();
@@ -3136,7 +3065,6 @@ void EditorNode::register_editor_types() {
 	ClassDB::register_class<EditorResourcePreviewGenerator>();
 	ClassDB::register_virtual_class<EditorFileSystem>();
 	ClassDB::register_class<EditorFileSystemDirectory>();
-	ClassDB::register_virtual_class<ScriptEditor>();
 	ClassDB::register_virtual_class<EditorInterface>();
 	ClassDB::register_class<EditorExportPlugin>();
 	ClassDB::register_class<EditorResourceConversionPlugin>();
@@ -4005,11 +3933,8 @@ void EditorNode::_bottom_panel_switch(bool p_enable, int p_idx) {
 			bottom_panel_items[i].button->set_pressed(i == p_idx);
 			bottom_panel_items[i].control->set_visible(i == p_idx);
 		}
-		if (ScriptEditor::get_singleton()->get_debugger() == bottom_panel_items[p_idx].control) { // this is the debug panel which uses tabs, so the top section should be smaller
-			bottom_panel->add_style_override("panel", gui_base->get_stylebox("BottomPanelDebuggerOverride", "EditorStyles"));
-		} else {
-			bottom_panel->add_style_override("panel", gui_base->get_stylebox("panel", "TabContainer"));
-		}
+
+		bottom_panel->add_style_override("panel", gui_base->get_stylebox("panel", "TabContainer"));
 		center_split->set_dragger_visibility(SplitContainer::DRAGGER_VISIBLE);
 		center_split->set_collapsed(false);
 	} else {
@@ -4463,9 +4388,6 @@ void EditorNode::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("play_pressed"));
 	ADD_SIGNAL(MethodInfo("pause_pressed"));
 	ADD_SIGNAL(MethodInfo("stop_pressed"));
-	ADD_SIGNAL(MethodInfo("request_help"));
-	ADD_SIGNAL(MethodInfo("request_help_search"));
-	ADD_SIGNAL(MethodInfo("request_help_index"));
 	ADD_SIGNAL(MethodInfo("script_add_function_request", PropertyInfo(Variant::OBJECT, "obj"), PropertyInfo(Variant::STRING, "function"), PropertyInfo(Variant::POOL_STRING_ARRAY, "args")));
 	ADD_SIGNAL(MethodInfo("resource_saved", PropertyInfo(Variant::OBJECT, "obj")));
 }
@@ -4487,7 +4409,6 @@ EditorNode::EditorNode() {
 	VisualServer::get_singleton()->textures_keep_original(true);
 	VisualServer::get_singleton()->set_debug_generate_wireframes(true);
 
-	EditorHelp::generate_doc(); //before any editor classes are crated
 	SceneState::set_disable_placeholders(true);
 	ResourceLoader::clear_translation_remaps(); //no remaps using during editor
 	ResourceLoader::clear_path_remaps();
@@ -4891,7 +4812,6 @@ EditorNode::EditorNode() {
 	p->add_submenu_item(TTR("Open Recent"), "RecentScenes", FILE_OPEN_RECENT);
 	p->add_separator();
 	p->add_shortcut(ED_SHORTCUT("editor/quick_open_scene", TTR("Quick Open Scene.."), KEY_MASK_SHIFT + KEY_MASK_CMD + KEY_O), FILE_QUICK_OPEN_SCENE);
-	p->add_shortcut(ED_SHORTCUT("editor/quick_open_script", TTR("Quick Open Script.."), KEY_MASK_ALT + KEY_MASK_CMD + KEY_O), FILE_QUICK_OPEN_SCRIPT);
 	p->add_separator();
 	PopupMenu *pm_export = memnew(PopupMenu);
 	pm_export->set_name("Export");
@@ -4985,9 +4905,6 @@ EditorNode::EditorNode() {
 
 	p = help_menu->get_popup();
 	p->connect("id_pressed", this, "_menu_option");
-	p->add_icon_item(gui_base->get_icon("ClassList", "EditorIcons"), TTR("Classes"), HELP_CLASSES);
-	p->add_icon_item(gui_base->get_icon("HelpSearch", "EditorIcons"), TTR("Search"), HELP_SEARCH);
-	p->add_separator();
 	p->add_icon_item(gui_base->get_icon("Instance", "EditorIcons"), TTR("Online Docs"), HELP_DOCS);
 	p->add_icon_item(gui_base->get_icon("Instance", "EditorIcons"), TTR("Q&A"), HELP_QA);
 	p->add_icon_item(gui_base->get_icon("Instance", "EditorIcons"), TTR("Issue Tracker"), HELP_ISSUES);
@@ -5327,18 +5244,6 @@ EditorNode::EditorNode() {
 	file_export_password->set_editable(false);
 	file_export->get_vbox()->add_margin_child(TTR("Password:"), file_export_password);
 
-	file_script = memnew(EditorFileDialog);
-	file_script->set_title(TTR("Open & Run a Script"));
-	file_script->set_access(EditorFileDialog::ACCESS_FILESYSTEM);
-	file_script->set_mode(EditorFileDialog::MODE_OPEN_FILE);
-	List<String> sexts;
-	ResourceLoader::get_recognized_extensions_for_type("Script", &sexts);
-	for (List<String>::Element *E = sexts.front(); E; E = E->next()) {
-		file_script->add_filter("*." + E->get());
-	}
-	gui_base->add_child(file_script);
-	file_script->connect("file_selected", this, "_dialog_action");
-
 	property_forward->connect("pressed", this, "_property_editor_forward");
 	property_back->connect("pressed", this, "_property_editor_back");
 
@@ -5356,11 +5261,8 @@ EditorNode::EditorNode() {
 
 	add_editor_plugin(memnew(AnimationPlayerEditorPlugin(this)));
 	add_editor_plugin(memnew(CanvasItemEditorPlugin(this)));
-	add_editor_plugin(memnew(ScriptEditorPlugin(this)));
 
 	EditorAudioBuses *audio_bus_editor = EditorAudioBuses::register_editor();
-
-	ScriptTextEditor::register_editor(); //register one for text scripts
 
 	//add interface before adding plugins
 
@@ -5406,7 +5308,6 @@ EditorNode::EditorNode() {
 	resource_preview->add_preview_generator(Ref<EditorTexturePreviewPlugin>(memnew(EditorTexturePreviewPlugin)));
 	resource_preview->add_preview_generator(Ref<EditorPackedScenePreviewPlugin>(memnew(EditorPackedScenePreviewPlugin)));
 	resource_preview->add_preview_generator(Ref<EditorMaterialPreviewPlugin>(memnew(EditorMaterialPreviewPlugin)));
-	resource_preview->add_preview_generator(Ref<EditorScriptPreviewPlugin>(memnew(EditorScriptPreviewPlugin)));
 	// FIXME: Needs to be rewritten for AudioStream in Godot 3.0+
 	//resource_preview->add_preview_generator( Ref<EditorSamplePreviewPlugin>( memnew(EditorSamplePreviewPlugin )));
 	resource_preview->add_preview_generator(Ref<EditorBitmapPreviewPlugin>(memnew(EditorBitmapPreviewPlugin)));
@@ -5532,8 +5433,6 @@ EditorNode::EditorNode() {
 	add_print_handler(&print_handler);
 
 	ED_SHORTCUT("editor/editor_2d", TTR("Open 2D Editor"), KEY_F1);
-	ED_SHORTCUT("editor/editor_script", TTR("Open Script Editor"), KEY_F3); //hack neded for script editor F3 search to work :) Assign like this or don't use F3
-	ED_SHORTCUT("editor/editor_help", TTR("Search Help"), KEY_F4);
 	ED_SHORTCUT("editor/editor_next", TTR("Open the next Editor"));
 	ED_SHORTCUT("editor/editor_prev", TTR("Open the previous Editor"));
 }
@@ -5541,7 +5440,6 @@ EditorNode::EditorNode() {
 EditorNode::~EditorNode() {
 
 	remove_print_handler(&print_handler);
-	memdelete(EditorHelp::get_doc_data());
 	memdelete(editor_selection);
 	memdelete(editor_plugins_over);
 	memdelete(editor_plugins_force_over);

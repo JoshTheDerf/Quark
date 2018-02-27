@@ -32,7 +32,6 @@
 
 #include "editor_node.h"
 #include "editor_settings.h"
-#include "plugins/script_editor_plugin.h"
 #include "print_string.h"
 #include "scene/gui/label.h"
 
@@ -666,19 +665,6 @@ void ConnectionsDock::_something_activated() {
 		connect_dialog->popup_centered_ratio();
 		connect_dialog->set_dst_method("_on_" + midname + "_" + signal);
 		connect_dialog->set_dst_node(node->get_owner() ? node->get_owner() : node);
-	} else {
-		// a slot - go to target method
-		Connection c = item->get_metadata(0);
-		ERR_FAIL_COND(c.source != node); //shouldn't happen but...bugcheck
-
-		if (!c.target)
-			return;
-
-		Ref<Script> script = c.target->get_script();
-
-		if (script.is_valid() && ScriptEditor::get_singleton()->script_goto_method(script, c.method)) {
-			editor->call("_editor_select", EditorNode::EDITOR_SCRIPT);
-		}
 	}
 }
 

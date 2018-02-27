@@ -37,10 +37,6 @@
 #include "project_settings.h"
 #include "scene/main/viewport.h"
 
-#ifdef TOOLS_ENABLED
-#include "editor/editor_scale.h"
-#endif
-
 #define TAB_PIXELS
 
 inline bool _is_symbol(CharType c) {
@@ -894,11 +890,7 @@ void TextEdit::_notification(int p_what) {
 				}
 
 				if (text.is_breakpoint(line) && !draw_breakpoint_gutter) {
-#ifdef TOOLS_ENABLED
-					VisualServer::get_singleton()->canvas_item_add_rect(ci, Rect2(xmargin_beg + ofs_x, ofs_y + get_row_height() - EDSCALE, xmargin_end - xmargin_beg, EDSCALE), cache.breakpoint_color);
-#else
 					VisualServer::get_singleton()->canvas_item_add_rect(ci, Rect2(xmargin_beg + ofs_x, ofs_y, xmargin_end - xmargin_beg, get_row_height()), cache.breakpoint_color);
-#endif
 				}
 
 				// draw breakpoint marker

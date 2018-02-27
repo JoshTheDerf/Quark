@@ -92,8 +92,6 @@ quark_variant QAPI *quark_dictionary_next(const quark_dictionary *p_self, const 
 
 quark_bool QAPI quark_dictionary_operator_equal(const quark_dictionary *p_self, const quark_dictionary *p_b);
 
-quark_string QAPI quark_dictionary_to_json(const quark_dictionary *p_self);
-
 #ifdef __cplusplus
 }
 #endif

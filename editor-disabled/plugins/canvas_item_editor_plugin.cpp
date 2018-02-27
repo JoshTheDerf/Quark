@@ -34,8 +34,6 @@
 #include "editor/editor_node.h"
 #include "editor/editor_settings.h"
 #include "editor/plugins/animation_player_editor_plugin.h"
-#include "editor/plugins/script_editor_plugin.h"
-#include "editor/script_editor_debugger.h"
 #include "os/input.h"
 #include "os/keyboard.h"
 #include "print_string.h"
@@ -4219,13 +4217,6 @@ void CanvasItemEditorViewport::_create_nodes(Node *parent, Node *child, String &
 		editor_data->get_undo_redo().add_undo_method(editor, "set_edited_scene", (Object *)NULL);
 	}
 
-	if (parent) {
-		String new_name = parent->validate_child_name(child);
-		ScriptEditorDebugger *sed = ScriptEditor::get_singleton()->get_debugger();
-		editor_data->get_undo_redo().add_do_method(sed, "live_debug_create_node", editor->get_edited_scene()->get_path_to(parent), child->get_class(), new_name);
-		editor_data->get_undo_redo().add_undo_method(sed, "live_debug_remove_node", NodePath(String(editor->get_edited_scene()->get_path_to(parent)) + "/" + new_name));
-	}
-
 	// handle with different property for texture
 	String property = "texture";
 	List<PropertyInfo> props;
@@ -4292,11 +4283,6 @@ bool CanvasItemEditorViewport::_create_instance(Node *parent, String &path, cons
 	editor_data->get_undo_redo().add_do_method(instanced_scene, "set_owner", editor->get_edited_scene());
 	editor_data->get_undo_redo().add_do_reference(instanced_scene);
 	editor_data->get_undo_redo().add_undo_method(parent, "remove_child", instanced_scene);
-
-	String new_name = parent->validate_child_name(instanced_scene);
-	ScriptEditorDebugger *sed = ScriptEditor::get_singleton()->get_debugger();
-	editor_data->get_undo_redo().add_do_method(sed, "live_debug_instance_node", editor->get_edited_scene()->get_path_to(parent), path, new_name);
-	editor_data->get_undo_redo().add_undo_method(sed, "live_debug_remove_node", NodePath(String(editor->get_edited_scene()->get_path_to(parent)) + "/" + new_name));
 
 	CanvasItem *parent_ci = Object::cast_to<CanvasItem>(parent);
 	if (parent_ci) {

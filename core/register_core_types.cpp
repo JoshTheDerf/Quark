@@ -33,7 +33,6 @@
 #include "bind/core_bind.h"
 #include "class_db.h"
 #include "compressed_translation.h"
-#include "core/io/xml_parser.h"
 #include "core_string_names.h"
 #include "engine.h"
 #include "func_ref.h"
@@ -69,7 +68,6 @@ static _Engine *_engine = NULL;
 static _ClassDB *_classdb = NULL;
 static _Marshalls *_marshalls = NULL;
 static TranslationLoaderPO *resource_format_po = NULL;
-static _JSON *_json = NULL;
 
 static IP *ip = NULL;
 
@@ -157,8 +155,6 @@ void register_core_types() {
 	ClassDB::register_class<_Mutex>();
 	ClassDB::register_class<_Semaphore>();
 
-	ClassDB::register_class<XMLParser>();
-
 	ClassDB::register_class<ConfigFile>();
 
 	ClassDB::register_class<PCKPacker>();
@@ -167,8 +163,6 @@ void register_core_types() {
 	ClassDB::register_virtual_class<PackedDataContainerRef>();
 	ClassDB::register_class<AStar>();
 	ClassDB::register_class<EncodedObjectAsID>();
-
-	ClassDB::register_class<JSONParseResult>();
 
 	ip = IP::create();
 
@@ -180,7 +174,6 @@ void register_core_types() {
 	_engine = memnew(_Engine);
 	_classdb = memnew(_ClassDB);
 	_marshalls = memnew(_Marshalls);
-	_json = memnew(_JSON);
 }
 
 void register_core_settings() {
@@ -202,7 +195,6 @@ void register_core_singletons() {
 	ClassDB::register_class<TranslationServer>();
 	ClassDB::register_virtual_class<Input>();
 	ClassDB::register_class<InputMap>();
-	ClassDB::register_class<_JSON>();
 
 	Engine::get_singleton()->add_singleton(Engine::Singleton("ProjectSettings", ProjectSettings::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("IP", IP::get_singleton()));
@@ -216,7 +208,6 @@ void register_core_singletons() {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("TranslationServer", TranslationServer::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Input", Input::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("InputMap", InputMap::get_singleton()));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("JSON", _JSON::get_singleton()));
 }
 
 void unregister_core_types() {
@@ -227,7 +218,6 @@ void unregister_core_types() {
 	memdelete(_engine);
 	memdelete(_classdb);
 	memdelete(_marshalls);
-	memdelete(_json);
 
 	memdelete(_geometry);
 

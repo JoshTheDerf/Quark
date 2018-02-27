@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  doc_data.h                                                           */
+/*  create_dialog.h                                                      */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,86 +28,78 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef DOC_DATA_H
-#define DOC_DATA_H
+#ifndef CREATE_DIALOG_H
+#define CREATE_DIALOG_H
 
-#include "io/xml_parser.h"
-#include "map.h"
-#include "variant.h"
+#include "scene/gui/button.h"
+#include "scene/gui/dialogs.h"
+#include "scene/gui/item_list.h"
+#include "scene/gui/label.h"
+#include "scene/gui/line_edit.h"
+#include "scene/gui/tree.h"
+/**
+	@author Juan Linietsky <reduzio@gmail.com>
+*/
 
-class DocData {
-public:
-	struct ArgumentDoc {
+class CreateDialog : public ConfirmationDialog {
 
-		String name;
-		String type;
-		String enumeration;
-		String default_value;
-	};
+	GDCLASS(CreateDialog, ConfirmationDialog)
 
-	struct MethodDoc {
+	Vector<String> favorite_list;
+	Tree *favorites;
+	Tree *recent;
 
-		String name;
-		String return_type;
-		String return_enum;
-		String qualifiers;
-		String description;
-		Vector<ArgumentDoc> arguments;
-		bool operator<(const MethodDoc &p_md) const {
-			return name < p_md.name;
-		}
-	};
+	Button *favorite;
+	LineEdit *search_box;
+	Tree *search_options;
+	bool is_replace_mode;
+	String base_type;
+	String preferred_search_result_type;
+	List<StringName> type_list;
 
-	struct ConstantDoc {
+	void _item_selected();
 
-		String name;
-		String value;
-		String enumeration;
-		String description;
-	};
+	void _update_search();
+	void _update_favorite_list();
+	void _save_favorite_list();
+	void _favorite_toggled();
 
-	struct PropertyDoc {
+	void _history_selected();
+	void _favorite_selected();
 
-		String name;
-		String type;
-		String enumeration;
-		String description;
-		String setter, getter;
-		bool operator<(const PropertyDoc &p_prop) const {
-			return name < p_prop.name;
-		}
-	};
+	void _history_activated();
+	void _favorite_activated();
 
-	struct ClassDoc {
+	void _sbox_input(const Ref<InputEvent> &p_ie);
 
-		String name;
-		String inherits;
-		String category;
-		String brief_description;
-		String description;
-		String tutorials;
-		String demos;
-		Vector<MethodDoc> methods;
-		Vector<MethodDoc> signals;
-		Vector<ConstantDoc> constants;
-		Vector<PropertyDoc> properties;
-		Vector<PropertyDoc> theme_properties;
-	};
+	void _confirmed();
+	void _text_changed(const String &p_newtext);
 
-	String version;
+	Ref<Texture> _get_editor_icon(const String &p_type) const;
 
-	Map<String, ClassDoc> class_list;
-	Error _load(Ref<XMLParser> parser);
+	void add_type(const String &p_type, HashMap<String, TreeItem *> &p_types, TreeItem *p_root, TreeItem **to_select);
+
+	Variant get_drag_data_fw(const Point2 &p_point, Control *p_from);
+	bool can_drop_data_fw(const Point2 &p_point, const Variant &p_data, Control *p_from) const;
+	void drop_data_fw(const Point2 &p_point, const Variant &p_data, Control *p_from);
+
+protected:
+	void _notification(int p_what);
+	static void _bind_methods();
 
 public:
-	void merge_from(const DocData &p_data);
-	void remove_from(const DocData &p_data);
-	void generate(bool p_basic_types = false);
-	Error load_classes(const String &p_dir);
-	static Error erase_classes(const String &p_dir);
-	Error save_classes(const String &p_default_path, const Map<String, String> &p_class_path);
+	Object *instance_selected();
+	String get_selected_type();
 
-	Error load_compressed(const uint8_t *p_data, int p_compressed_size, int p_uncompressed_size);
+	void set_base_type(const String &p_base);
+	String get_base_type() const;
+
+	void set_preferred_search_result_type(const String &p_preferred_type);
+	String get_preferred_search_result_type();
+
+	void popup_create(bool p_dont_clear, bool p_replace_mode = false);
+
+	CreateDialog();
 };
 
-#endif // DOC_DATA_H
+#endif

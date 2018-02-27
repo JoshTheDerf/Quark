@@ -33,10 +33,6 @@
 #include "os/os.h"
 #include "scene/scene_string_names.h"
 
-#ifdef TOOLS_ENABLED
-#include "editor/editor_node.h"
-#endif
-
 RichTextLabel::Item *RichTextLabel::_get_next_item(Item *p_item, bool p_free) {
 
 	if (p_free) {
@@ -399,9 +395,6 @@ int RichTextLabel::_process_line(ItemFrame *p_frame, const Vector2 &p_ofs, int &
 							uc.a *= 0.5;
 							int uy = y + lh - line_descent + 2;
 							float underline_width = 1.0;
-#ifdef TOOLS_ENABLED
-							underline_width *= EDSCALE;
-#endif
 							VS::get_singleton()->canvas_item_add_line(ci, p_ofs + Point2(align_ofs + wofs, uy), p_ofs + Point2(align_ofs + wofs + w, uy), uc, underline_width);
 						}
 					}

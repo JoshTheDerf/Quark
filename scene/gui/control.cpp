@@ -41,9 +41,6 @@
 #include "scene/gui/label.h"
 #include "scene/gui/panel.h"
 #include "scene/scene_string_names.h"
-#ifdef TOOLS_ENABLED
-#include "editor/editor_settings.h"
-#endif
 #include <stdio.h>
 
 Dictionary Control::_edit_get_state() const {
@@ -1390,15 +1387,7 @@ void Control::set_anchor(Margin p_margin, float p_anchor, bool p_keep_margin, bo
 }
 
 void Control::_set_anchor(Margin p_margin, float p_anchor) {
-#ifdef TOOLS_ENABLED
-	if (is_inside_tree() && Engine::get_singleton()->is_editor_hint()) {
-		set_anchor(p_margin, p_anchor, EDITOR_DEF("editors/2d/keep_margins_when_changing_anchors", false));
-	} else {
-		set_anchor(p_margin, p_anchor, false);
-	}
-#else
 	set_anchor(p_margin, p_anchor, false);
-#endif
 }
 
 void Control::set_anchor_and_margin(Margin p_margin, float p_anchor, float p_pos, bool p_push_opposite_anchor) {

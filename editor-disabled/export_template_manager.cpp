@@ -34,7 +34,6 @@
 #include "core/os/keyboard.h"
 #include "editor_node.h"
 #include "editor_scale.h"
-#include "io/json.h"
 #include "io/zip_io.h"
 #include "os/dir_access.h"
 #include "version.h"

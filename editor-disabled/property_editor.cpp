@@ -44,7 +44,6 @@
 #include "editor/dictionary_property_edit.h"
 #include "editor/editor_export.h"
 #include "editor/editor_file_system.h"
-#include "editor/editor_help.h"
 #include "editor/editor_node.h"
 #include "editor/editor_settings.h"
 #include "editor/multi_node_edit.h"
@@ -2835,21 +2834,6 @@ void PropertyEditor::update_tree() {
 			sep->set_text_align(0, TreeItem::ALIGN_CENTER);
 			sep->set_disable_folding(true);
 
-			if (use_doc_hints) {
-				StringName type = p.name;
-				if (!class_descr_cache.has(type)) {
-
-					String descr;
-					DocData *dd = EditorHelp::get_doc_data();
-					Map<String, DocData::ClassDoc>::Element *E = dd->class_list.find(type);
-					if (E) {
-						descr = E->get().brief_description;
-					}
-					class_descr_cache[type] = descr.word_wrap(80);
-				}
-
-				sep->set_tooltip(0, TTR("Class:") + " " + p.name + (class_descr_cache[type] == "" ? "" : "\n\n" + class_descr_cache[type]));
-			}
 			continue;
 
 		} else if (!(p.usage & PROPERTY_USAGE_EDITOR))
@@ -2964,25 +2948,6 @@ void PropertyEditor::update_tree() {
 					found = true;
 					descr = F->get();
 				}
-			}
-
-			if (!found) {
-				DocData *dd = EditorHelp::get_doc_data();
-				Map<String, DocData::ClassDoc>::Element *E = dd->class_list.find(classname);
-				while (E && descr == String()) {
-					for (int i = 0; i < E->get().properties.size(); i++) {
-						if (E->get().properties[i].name == propname.operator String()) {
-							descr = E->get().properties[i].description.strip_edges().word_wrap(80);
-							break;
-						}
-					}
-					if (!E->get().inherits.empty()) {
-						E = dd->class_list.find(E->get().inherits);
-					} else {
-						break;
-					}
-				}
-				descr_cache[classname][propname] = descr;
 			}
 
 			item->set_tooltip(0, TTR("Property:") + " " + p.name + (descr == "" ? "" : "\n\n" + descr));

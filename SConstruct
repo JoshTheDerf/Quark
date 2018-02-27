@@ -149,7 +149,7 @@ opts.Add(EnumVariable('bits', "Target platform bits", 'default', ('default', '32
 opts.Add('p', "Platform (alias for 'platform')", '')
 opts.Add('platform', "Target platform (%s)" % ('|'.join(platform_list), ), '')
 opts.Add(EnumVariable('target', "Compilation target", 'debug', ('debug', 'release_debug', 'release')))
-opts.Add(BoolVariable('tools', "Build the tools a.k.a. the Godot editor", True))
+opts.Add(BoolVariable('tools', "Build the tools, such as documentation and binding generation.", True))
 opts.Add(BoolVariable('use_lto', 'Use linking time optimization', False))
 
 # Components

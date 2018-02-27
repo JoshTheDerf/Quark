@@ -31,7 +31,6 @@
 #include "editor_export.h"
 
 #include "editor/editor_file_system.h"
-#include "editor/plugins/script_editor_plugin.h"
 #include "editor_node.h"
 #include "editor_settings.h"
 #include "io/config_file.h"
@@ -243,23 +242,6 @@ void EditorExportPlatform::gen_debug_flags(Vector<String> &r_flags, int p_flags)
 		r_flags.push_back("--remote-debug");
 
 		r_flags.push_back(host + ":" + String::num(remote_port));
-
-		List<String> breakpoints;
-		ScriptEditor::get_singleton()->get_breakpoints(&breakpoints);
-
-		if (breakpoints.size()) {
-
-			r_flags.push_back("--breakpoints");
-			String bpoints;
-			for (const List<String>::Element *E = breakpoints.front(); E; E = E->next()) {
-
-				bpoints += E->get().replace(" ", "%20");
-				if (E->next())
-					bpoints += ",";
-			}
-
-			r_flags.push_back(bpoints);
-		}
 	}
 
 	if (p_flags & DEBUG_FLAG_VIEW_COLLISONS) {
@@ -935,23 +917,6 @@ void EditorExportPlatform::gen_export_flags(Vector<String> &r_flags, int p_flags
 		r_flags.push_back("--remote-debug");
 
 		r_flags.push_back(host + ":" + String::num(remote_port));
-
-		List<String> breakpoints;
-		ScriptEditor::get_singleton()->get_breakpoints(&breakpoints);
-
-		if (breakpoints.size()) {
-
-			r_flags.push_back("--breakpoints");
-			String bpoints;
-			for (const List<String>::Element *E = breakpoints.front(); E; E = E->next()) {
-
-				bpoints += E->get().replace(" ", "%20");
-				if (E->next())
-					bpoints += ",";
-			}
-
-			r_flags.push_back(bpoints);
-		}
 	}
 
 	if (p_flags & DEBUG_FLAG_VIEW_COLLISONS) {

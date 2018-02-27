@@ -33,7 +33,6 @@
 #include "core/variant.h"
 // core/variant.h before to avoid compile errors with MSVC
 #include "core/dictionary.h"
-#include "core/io/json.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -145,14 +144,6 @@ quark_bool QAPI quark_dictionary_operator_equal(const quark_dictionary *p_self, 
 	const Dictionary *self = (const Dictionary *)p_self;
 	const Dictionary *b = (const Dictionary *)p_b;
 	return *self == *b;
-}
-
-quark_string QAPI quark_dictionary_to_json(const quark_dictionary *p_self) {
-	quark_string raw_dest;
-	String *dest = (String *)&raw_dest;
-	const Dictionary *self = (const Dictionary *)p_self;
-	memnew_placement(dest, String(JSON::print(Variant(*self))));
-	return raw_dest;
 }
 
 #ifdef __cplusplus

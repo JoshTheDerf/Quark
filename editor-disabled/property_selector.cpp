@@ -82,7 +82,6 @@ void PropertySelector::_update_search() {
 		set_title(TTR("Select Method"));
 
 	search_options->clear();
-	help_bit->set_text("");
 
 	TreeItem *root = search_options->create_item();
 
@@ -329,8 +328,6 @@ void PropertySelector::_confirmed() {
 
 void PropertySelector::_item_selected() {
 
-	help_bit->set_text("");
-
 	TreeItem *item = search_options->get_selected();
 	if (!item)
 		return;
@@ -343,50 +340,6 @@ void PropertySelector::_item_selected() {
 	} else {
 		class_type = base_type;
 	}
-
-	DocData *dd = EditorHelp::get_doc_data();
-	String text;
-
-	if (properties) {
-
-		String at_class = class_type;
-
-		while (at_class != String()) {
-
-			Map<String, DocData::ClassDoc>::Element *E = dd->class_list.find(at_class);
-			if (E) {
-				for (int i = 0; i < E->get().properties.size(); i++) {
-					if (E->get().properties[i].name == name) {
-						text = E->get().properties[i].description;
-					}
-				}
-			}
-
-			at_class = ClassDB::get_parent_class(at_class);
-		}
-	} else {
-
-		String at_class = class_type;
-
-		while (at_class != String()) {
-
-			Map<String, DocData::ClassDoc>::Element *E = dd->class_list.find(at_class);
-			if (E) {
-				for (int i = 0; i < E->get().methods.size(); i++) {
-					if (E->get().methods[i].name == name) {
-						text = E->get().methods[i].description;
-					}
-				}
-			}
-
-			at_class = ClassDB::get_parent_class(at_class);
-		}
-	}
-
-	if (text == String())
-		return;
-
-	help_bit->set_text(text);
 }
 
 void PropertySelector::_notification(int p_what) {
@@ -564,8 +517,4 @@ PropertySelector::PropertySelector() {
 	search_options->set_hide_root(true);
 	search_options->set_hide_folding(true);
 	virtuals_only = false;
-
-	help_bit = memnew(EditorHelpBit);
-	vbc->add_margin_child(TTR("Description:"), help_bit);
-	help_bit->connect("request_hide", this, "_closed");
 }

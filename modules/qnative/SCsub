@@ -7,8 +7,6 @@ qns_env.add_source_files(env.modules_sources, "qnative.cpp")
 qns_env.add_source_files(env.modules_sources, "register_types.cpp")
 qns_env.add_source_files(env.modules_sources, "qnative/*.cpp")
 qns_env.add_source_files(env.modules_sources, "nativescript/*.cpp")
-qns_env.add_source_files(env.modules_sources, "qnative_library_singleton_editor.cpp")
-qns_env.add_source_files(env.modules_sources, "qnative_library_editor_plugin.cpp")
 
 qns_env.Append(CPPPATH=['#modules/qnative/include/'])
 

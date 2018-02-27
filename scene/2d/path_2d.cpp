@@ -33,10 +33,6 @@
 #include "engine.h"
 #include "scene/scene_string_names.h"
 
-#ifdef TOOLS_ENABLED
-#include "editor/editor_scale.h"
-#endif
-
 Rect2 Path2D::_edit_get_rect() const {
 
 	if (!curve.is_valid() || curve->get_point_count() == 0)
@@ -83,15 +79,11 @@ void Path2D::_notification(int p_what) {
 	if (p_what == NOTIFICATION_DRAW && curve.is_valid()) {
 		//draw the curve!!
 
-		if (!Engine::get_singleton()->is_editor_hint() && !get_tree()->is_debugging_navigation_hint()) {
+		if (!get_tree()->is_debugging_navigation_hint()) {
 			return;
 		}
 
-#if TOOLS_ENABLED
-		const float line_width = 2 * EDSCALE;
-#else
 		const float line_width = 2;
-#endif
 		const Color color = Color(0.5, 0.6, 1.0, 0.7);
 
 		for (int i = 0; i < curve->get_point_count(); i++) {
@@ -110,9 +102,6 @@ void Path2D::_notification(int p_what) {
 }
 
 void Path2D::_curve_changed() {
-
-	if (is_inside_tree() && Engine::get_singleton()->is_editor_hint())
-		update();
 }
 
 void Path2D::set_curve(const Ref<Curve2D> &p_curve) {

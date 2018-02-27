@@ -31,7 +31,6 @@
 #include "create_dialog.h"
 
 #include "class_db.h"
-#include "editor_help.h"
 #include "editor_node.h"
 #include "editor_settings.h"
 #include "os/keyboard.h"
@@ -214,9 +213,6 @@ void CreateDialog::add_type(const String &p_type, HashMap<String, TreeItem *> &p
 		item->set_collapsed(collapse);
 	}
 
-	const String &description = EditorHelp::get_doc_data()->class_list[p_type].brief_description;
-	item->set_tooltip(0, description);
-
 	if (has_icon(p_type, "EditorIcons")) {
 
 		item->set_icon(0, get_icon(p_type, "EditorIcons"));
@@ -230,7 +226,6 @@ void CreateDialog::_update_search() {
 	search_options->clear();
 	favorite->set_disabled(true);
 
-	help_bit->set_text("");
 	/*
 	TreeItem *root = search_options->create_item();
 	_parse_fs(EditorFileSystem::get_singleton()->get_filesystem());
@@ -471,11 +466,6 @@ void CreateDialog::_item_selected() {
 
 	favorite->set_disabled(false);
 	favorite->set_pressed(favorite_list.find(name) != -1);
-
-	if (!EditorHelp::get_doc_data()->class_list.has(name))
-		return;
-
-	help_bit->set_text(EditorHelp::get_doc_data()->class_list[name].brief_description);
 }
 
 void CreateDialog::_favorite_toggled() {
@@ -712,8 +702,4 @@ CreateDialog::CreateDialog() {
 	search_options->connect("cell_selected", this, "_item_selected");
 	base_type = "Object";
 	preferred_search_result_type = "";
-
-	help_bit = memnew(EditorHelpBit);
-	vbc->add_margin_child(TTR("Description:"), help_bit);
-	help_bit->connect("request_hide", this, "_closed");
 }

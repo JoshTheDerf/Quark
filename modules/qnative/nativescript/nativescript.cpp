@@ -50,10 +50,6 @@
 #include "api_generator.h"
 #endif
 
-#ifdef TOOLS_ENABLED
-#include "editor/editor_node.h"
-#endif
-
 //
 //
 // Script stuff
@@ -982,13 +978,6 @@ String NativeScriptLanguage::get_name() const {
 	return "NativeScript";
 }
 
-void _add_reload_node() {
-#ifdef TOOLS_ENABLED
-	NativeReloadNode *rn = memnew(NativeReloadNode);
-	EditorNode::get_singleton()->add_child(rn);
-#endif
-}
-
 void NativeScriptLanguage::init() {
 
 #if defined(TOOLS_ENABLED) && defined(DEBUG_METHODS_ENABLED)
@@ -1005,10 +994,6 @@ void NativeScriptLanguage::init() {
 		ERR_PRINT("Failed to generate C API. No output path passed.\n");
 		exit(0);
 	}
-#endif
-
-#ifdef TOOLS_ENABLED
-	EditorNode::add_init_callback(&_add_reload_node);
 #endif
 }
 String NativeScriptLanguage::get_type() const {

@@ -69,7 +69,6 @@ public:
 
 	Node *get_edited_scene_root();
 	Array get_open_scenes() const;
-	ScriptEditor *get_script_editor();
 
 	void select_file(const String &p_file);
 	String get_selected_path() const;

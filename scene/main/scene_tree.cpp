@@ -30,7 +30,6 @@
 
 #include "scene_tree.h"
 
-#include "editor/editor_node.h"
 #include "io/marshalls.h"
 #include "io/resource_loader.h"
 #include "message_queue.h"
@@ -388,10 +387,6 @@ bool SceneTree::is_input_handled() {
 }
 
 void SceneTree::input_event(const Ref<InputEvent> &p_event) {
-
-	if (Engine::get_singleton()->is_editor_hint() && (Object::cast_to<InputEventJoypadButton>(p_event.ptr()) || Object::cast_to<InputEventJoypadMotion>(*p_event)))
-		return; //avoid joy input on editor
-
 	current_event++;
 	root_lock++;
 
@@ -591,9 +586,7 @@ void SceneTree::_notification(int p_notification) {
 			get_root()->propagate_notification(p_notification);
 		} break;
 		case NOTIFICATION_TRANSLATION_CHANGED: {
-			if (!Engine::get_singleton()->is_editor_hint()) {
-				get_root()->propagate_notification(Node::NOTIFICATION_TRANSLATION_CHANGED);
-			}
+			get_root()->propagate_notification(Node::NOTIFICATION_TRANSLATION_CHANGED);
 		} break;
 		case NOTIFICATION_WM_UNFOCUS_REQUEST: {
 
@@ -602,16 +595,7 @@ void SceneTree::_notification(int p_notification) {
 		} break;
 
 		case NOTIFICATION_WM_ABOUT: {
-
-#ifdef TOOLS_ENABLED
-			if (EditorNode::get_singleton()) {
-				EditorNode::get_singleton()->show_about();
-			} else {
-#endif
-				get_root()->propagate_notification(p_notification);
-#ifdef TOOLS_ENABLED
-			}
-#endif
+			get_root()->propagate_notification(p_notification);
 		} break;
 
 		default:
@@ -628,14 +612,6 @@ void SceneTree::set_quit_on_go_back(bool p_enable) {
 
 	quit_on_go_back = p_enable;
 }
-
-#ifdef TOOLS_ENABLED
-
-bool SceneTree::is_node_being_edited(const Node *p_node) const {
-
-	return Engine::get_singleton()->is_editor_hint() && edited_scene_root && (edited_scene_root->is_a_parent_of(p_node) || edited_scene_root == p_node);
-}
-#endif
 
 #ifdef DEBUG_ENABLED
 void SceneTree::set_debug_collisions_hint(bool p_enabled) {

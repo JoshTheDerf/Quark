@@ -136,9 +136,6 @@ void EditorSettingsDialog::_notification(int p_what) {
 
 	switch (p_what) {
 		case NOTIFICATION_READY: {
-			ScriptEditorDebugger *sed = ScriptEditor::get_singleton()->get_debugger();
-			undo_redo->set_method_notify_callback(sed->_method_changeds, sed);
-			undo_redo->set_property_notify_callback(sed->_property_changeds, sed);
 			undo_redo->set_commit_notify_callback(_undo_redo_callback, this);
 		} break;
 		case NOTIFICATION_ENTER_TREE: {

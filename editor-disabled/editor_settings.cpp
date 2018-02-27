@@ -1387,11 +1387,7 @@ Ref<ShortCut> ED_SHORTCUT(const String &p_path, const String &p_name, uint32_t p
 		{ "editor/editor_script", KEY_MASK_ALT | KEY_3 },
 		{ "editor/editor_help", KEY_MASK_ALT | KEY_SPACE },
 		{ "editor/fullscreen_mode", KEY_MASK_CMD | KEY_MASK_CTRL | KEY_F },
-		{ "editor/distraction_free_mode", KEY_MASK_CMD | KEY_MASK_CTRL | KEY_D },
-		{ "script_text_editor/contextual_help", KEY_MASK_ALT | KEY_MASK_SHIFT | KEY_SPACE },
-		{ "script_text_editor/find_next", KEY_MASK_CMD | KEY_G },
-		{ "script_text_editor/find_previous", KEY_MASK_CMD | KEY_MASK_SHIFT | KEY_G },
-		{ "script_text_editor/toggle_breakpoint", KEY_MASK_CMD | KEY_MASK_SHIFT | KEY_B }
+		{ "editor/distraction_free_mode", KEY_MASK_CMD | KEY_MASK_CTRL | KEY_D }
 	};
 
 	if (p_keycode == KEY_DELETE) {

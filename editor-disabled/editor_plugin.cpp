@@ -84,10 +84,6 @@ Array EditorInterface::get_open_scenes() const {
 	return ret;
 }
 
-ScriptEditor *EditorInterface::get_script_editor() {
-	return ScriptEditor::get_singleton();
-}
-
 void EditorInterface::select_file(const String &p_file) {
 	return EditorNode::get_singleton()->get_filesystem_dock()->select_file(p_file);
 }
@@ -152,7 +148,6 @@ void EditorInterface::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("inspect_object", "object", "for_property"), &EditorInterface::inspect_object, DEFVAL(String()));
 	ClassDB::bind_method(D_METHOD("get_selection"), &EditorInterface::get_selection);
 	ClassDB::bind_method(D_METHOD("get_editor_settings"), &EditorInterface::get_editor_settings);
-	ClassDB::bind_method(D_METHOD("get_script_editor"), &EditorInterface::get_script_editor);
 	ClassDB::bind_method(D_METHOD("get_base_control"), &EditorInterface::get_base_control);
 	ClassDB::bind_method(D_METHOD("edit_resource", "resource"), &EditorInterface::edit_resource);
 	ClassDB::bind_method(D_METHOD("open_scene_from_path", "scene_filepath"), &EditorInterface::open_scene_from_path);

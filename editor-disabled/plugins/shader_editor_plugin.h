@@ -111,7 +111,6 @@ class ShaderEditor : public PanelContainer {
 protected:
 	void _notification(int p_what);
 	static void _bind_methods();
-	void _make_context_menu(bool p_selection);
 	void _text_edit_gui_input(const Ref<InputEvent> &ev);
 
 public:

@@ -33,10 +33,6 @@
 #include "print_string.h"
 #include "translation.h"
 
-#ifdef TOOLS_ENABLED
-#include "editor/editor_node.h"
-#endif
-
 // WindowDialog
 
 void WindowDialog::_post_popup() {
@@ -226,16 +222,6 @@ void WindowDialog::_notification(int p_what) {
 					set_default_cursor_shape(CURSOR_ARROW);
 			}
 		} break;
-#ifdef TOOLS_ENABLED
-		case NOTIFICATION_POST_POPUP: {
-			if (get_tree() && Engine::get_singleton()->is_editor_hint() && EditorNode::get_singleton())
-				EditorNode::get_singleton()->dim_editor(true);
-		} break;
-		case NOTIFICATION_POPUP_HIDE: {
-			if (get_tree() && Engine::get_singleton()->is_editor_hint() && EditorNode::get_singleton())
-				EditorNode::get_singleton()->dim_editor(false);
-		} break;
-#endif
 	}
 }
 
@@ -592,8 +578,5 @@ Button *ConfirmationDialog::get_cancel() {
 ConfirmationDialog::ConfirmationDialog() {
 
 	set_title(RTR("Please Confirm..."));
-#ifdef TOOLS_ENABLED
-	set_custom_minimum_size(Size2(200, 70) * EDSCALE);
-#endif
 	cancel = add_cancel();
 }

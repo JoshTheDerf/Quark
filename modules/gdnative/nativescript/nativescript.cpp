@@ -994,13 +994,15 @@ void NativeScriptLanguage::init() {
 #if defined(TOOLS_ENABLED) && defined(DEBUG_METHODS_ENABLED)
 
 	List<String> args = OS::get_singleton()->get_cmdline_args();
-
 	List<String>::Element *E = args.find("--gdnative-generate-json-api");
 
 	if (E && E->next()) {
 		if (generate_c_api(E->next()->get()) != OK) {
 			ERR_PRINT("Failed to generate C API\n");
 		}
+		exit(0);
+	} else {
+		ERR_PRINT("Failed to generate C API. No output path passed.\n");
 		exit(0);
 	}
 #endif

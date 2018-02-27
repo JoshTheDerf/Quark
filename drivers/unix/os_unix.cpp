@@ -43,7 +43,6 @@
 //#include "core/io/file_access_buffered_fa.h"
 #include "dir_access_unix.h"
 #include "file_access_unix.h"
-#include "packet_peer_udp_posix.h"
 #include "stream_peer_tcp_posix.h"
 #include "tcp_server_posix.h"
 
@@ -119,7 +118,6 @@ void OS_Unix::initialize_core() {
 #ifndef NO_NETWORK
 	TCPServerPosix::make_default();
 	StreamPeerTCPPosix::make_default();
-	PacketPeerUDPPosix::make_default();
 	IP_Unix::make_default();
 #endif
 

@@ -65,15 +65,6 @@ public:
 #endif
 	};
 
-	enum RPCMode {
-
-		RPC_MODE_DISABLED, //no rpc for this method, calls to this will be blocked (default)
-		RPC_MODE_REMOTE, // using rpc() on it will call method / set property in all other peers
-		RPC_MODE_SYNC, // using rpc() on it will call method / set property in all other peers and locally
-		RPC_MODE_MASTER, // usinc rpc() on it will call method on wherever the master is, be it local or remote
-		RPC_MODE_SLAVE, // usinc rpc() on it will call method for all slaves, be it local or remote
-	};
-
 	struct Comparator {
 
 		bool operator()(const Node *p_a, const Node *p_b) const { return p_b->is_greater_than(p_a); }
@@ -118,10 +109,6 @@ private:
 
 		PauseMode pause_mode;
 		Node *pause_owner;
-
-		int network_master;
-		Map<StringName, RPCMode> rpc_methods;
-		Map<StringName, RPCMode> rpc_properties;
 
 		// variables used to properly sort the node when processing, ignored otherwise
 		//should move all the stuff below to bits
@@ -177,11 +164,6 @@ private:
 
 	Array _get_children() const;
 	Array _get_groups() const;
-
-	Variant _rpc_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
-	Variant _rpc_unreliable_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
-	Variant _rpc_id_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
-	Variant _rpc_unreliable_id_bind(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
 
 	friend class SceneTree;
 
@@ -389,31 +371,6 @@ public:
 
 	void set_display_folded(bool p_folded);
 	bool is_displayed_folded() const;
-	/* NETWORK */
-
-	void set_network_master(int p_peer_id, bool p_recursive = true);
-	int get_network_master() const;
-	bool is_network_master() const;
-
-	void rpc_config(const StringName &p_method, RPCMode p_mode); // config a local method for RPC
-	void rset_config(const StringName &p_property, RPCMode p_mode); // config a local property for RPC
-
-	void rpc(const StringName &p_method, VARIANT_ARG_LIST); //rpc call, honors RPCMode
-	void rpc_unreliable(const StringName &p_method, VARIANT_ARG_LIST); //rpc call, honors RPCMode
-	void rpc_id(int p_peer_id, const StringName &p_method, VARIANT_ARG_LIST); //rpc call, honors RPCMode
-	void rpc_unreliable_id(int p_peer_id, const StringName &p_method, VARIANT_ARG_LIST); //rpc call, honors RPCMode
-
-	void rpcp(int p_peer_id, bool p_unreliable, const StringName &p_method, const Variant **p_arg, int p_argcount);
-
-	void rset(const StringName &p_property, const Variant &p_value); //remote set call, honors RPCMode
-	void rset_unreliable(const StringName &p_property, const Variant &p_value); //remote set call, honors RPCMode
-	void rset_id(int p_peer_id, const StringName &p_property, const Variant &p_value); //remote set call, honors RPCMode
-	void rset_unreliable_id(int p_peer_id, const StringName &p_property, const Variant &p_value); //remote set call, honors RPCMode
-
-	void rsetp(int p_peer_id, bool p_unreliable, const StringName &p_property, const Variant &p_value);
-
-	bool can_call_rpc(const StringName &p_method, int p_from) const;
-	bool can_call_rset(const StringName &p_property, int p_from) const;
 
 	Node();
 	~Node();

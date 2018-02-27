@@ -39,9 +39,6 @@
 #include "input_map.h"
 #include "io/config_file.h"
 #include "io/marshalls.h"
-#include "io/networked_multiplayer_peer.h"
-#include "io/packet_peer.h"
-#include "io/packet_peer_udp.h"
 #include "io/pck_packer.h"
 #include "io/resource_format_binary.h"
 #include "io/resource_import.h"
@@ -128,11 +125,7 @@ void register_core_types() {
 	ClassDB::register_class<StreamPeerBuffer>();
 	ClassDB::register_custom_instance_class<StreamPeerTCP>();
 	ClassDB::register_custom_instance_class<TCP_Server>();
-	ClassDB::register_custom_instance_class<PacketPeerUDP>();
 	ClassDB::register_virtual_class<IP>();
-	ClassDB::register_virtual_class<PacketPeer>();
-	ClassDB::register_class<PacketPeerStream>();
-	ClassDB::register_virtual_class<NetworkedMultiplayerPeer>();
 	ClassDB::register_class<MainLoop>();
 	//ClassDB::register_type<OptimizedSaver>();
 	ClassDB::register_class<UndoRedo>();
@@ -168,8 +161,6 @@ void register_core_types() {
 }
 
 void register_core_settings() {
-	//since in register core types, globals may not e present
-	GLOBAL_DEF("network/limits/packet_peer_stream/max_buffer_po2", (16));
 }
 
 void register_core_singletons() {

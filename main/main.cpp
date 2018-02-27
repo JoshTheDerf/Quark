@@ -40,7 +40,6 @@
 #include "project_settings.h"
 #include "scene/register_scene_types.h"
 #include "script_debugger_local.h"
-#include "script_debugger_remote.h"
 #include "servers/register_server_types.h"
 #include "splash.gen.h"
 
@@ -148,8 +147,6 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("  -u, --upwards                    Scan folders upwards for project.godot file.\n");
 	OS::get_singleton()->print("  --main-pack <file>               Path to a pack (.pck) file to load.\n");
 	OS::get_singleton()->print("  --render-thread <mode>           Render thread mode ('unsafe', 'safe', 'separate').\n");
-	OS::get_singleton()->print("  --remote-fs <address>            Remote filesystem (<host/IP>[:<port>] address).\n");
-	OS::get_singleton()->print("  --remote-fs-password <password>  Password for remote filesystem.\n");
 	OS::get_singleton()->print("  --audio-driver <driver>          Audio driver (");
 	for (int i = 0; i < OS::get_singleton()->get_audio_driver_count(); i++) {
 		if (i != 0)
@@ -181,7 +178,6 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("  -d, --debug                      Debug (local stdout debugger).\n");
 	OS::get_singleton()->print("  -b, --breakpoints                Breakpoint list as source::line comma-separated pairs, no spaces (use %%20 instead).\n");
 	OS::get_singleton()->print("  --profiling                      Enable profiling in the script debugger.\n");
-	OS::get_singleton()->print("  --remote-debug <address>         Remote debug (<host/IP>:<port> address).\n");
 	OS::get_singleton()->print("  --frame-delay <ms>               Simulate high CPU load (delay each frame by <ms> milliseconds).\n");
 	OS::get_singleton()->print("  --time-scale <scale>             Force time scale (higher values are faster, 1.0 is normal speed).\n");
 	OS::get_singleton()->print("  --disable-render-loop            Disable render loop so rendering only occurs when called explicitly from script.\n");
@@ -517,20 +513,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 		} else if (I->get() == "-d" || I->get() == "--debug") {
 			debug_mode = "local";
-		} else if (I->get() == "--remote-debug") {
-			if (I->next()) {
-
-				debug_mode = "remote";
-				debug_host = I->next()->get();
-				if (debug_host.find(":") == -1) { // wrong address
-					OS::get_singleton()->print("Invalid debug host address, it should be of the form <host/IP>:<port>.\n");
-					goto error;
-				}
-				N = I->next()->next();
-			} else {
-				OS::get_singleton()->print("Missing remote debug host address, aborting.\n");
-				goto error;
-			}
 		} else if (I->get() == "--disable-render-loop") {
 			disable_render_loop = true;
 		} else if (I->get() == "--fixed-fps") {
@@ -570,23 +552,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	GLOBAL_DEF("network/limits/debugger_stdout/max_messages_per_frame", 10);
 	GLOBAL_DEF("network/limits/debugger_stdout/max_errors_per_frame", 10);
 
-	if (debug_mode == "remote") {
-
-		ScriptDebuggerRemote *sdr = memnew(ScriptDebuggerRemote);
-		uint16_t debug_port = 6007;
-		if (debug_host.find(":") != -1) {
-			int sep_pos = debug_host.find_last(":");
-			debug_port = debug_host.substr(sep_pos + 1, debug_host.length()).to_int();
-			debug_host = debug_host.substr(0, sep_pos);
-		}
-		Error derr = sdr->connect_to_host(debug_host, debug_port);
-
-		if (derr != OK) {
-			memdelete(sdr);
-		} else {
-			script_debugger = sdr;
-		}
-	} else if (debug_mode == "local") {
+	if (debug_mode == "local") {
 
 		script_debugger = memnew(ScriptDebuggerLocal);
 	}

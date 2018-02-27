@@ -34,7 +34,6 @@
 #include "drivers/windows/dir_access_windows.h"
 #include "drivers/windows/file_access_windows.h"
 #include "drivers/windows/mutex_windows.h"
-#include "drivers/windows/packet_peer_udp_winsock.h"
 #include "drivers/windows/rw_lock_windows.h"
 #include "drivers/windows/semaphore_windows.h"
 #include "drivers/windows/stream_peer_tcp_winsock.h"
@@ -197,7 +196,6 @@ void OS_Windows::initialize_core() {
 
 	TCPServerWinsock::make_default();
 	StreamPeerTCPWinsock::make_default();
-	PacketPeerUDPWinsock::make_default();
 
 	// We need to know how often the clock is updated
 	if (!QueryPerformanceFrequency((LARGE_INTEGER *)&ticks_per_second))

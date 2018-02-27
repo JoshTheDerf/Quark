@@ -48,26 +48,8 @@
 #include "audio/effects/audio_effect_reverb.h"
 #include "audio/effects/audio_effect_stereo_enhance.h"
 #include "audio_server.h"
-#include "script_debugger_remote.h"
 #include "visual/shader_types.h"
 #include "visual_server.h"
-
-static void _debugger_get_resource_usage(List<ScriptDebuggerRemote::ResourceUsage> *r_usage) {
-
-	List<VS::TextureInfo> tinfo;
-	VS::get_singleton()->texture_debug_usage(&tinfo);
-
-	for (List<VS::TextureInfo>::Element *E = tinfo.front(); E; E = E->next()) {
-
-		ScriptDebuggerRemote::ResourceUsage usage;
-		usage.path = E->get().path;
-		usage.vram = E->get().bytes;
-		usage.id = E->get().texture;
-		usage.type = "Texture";
-		usage.format = itos(E->get().size.width) + "x" + itos(E->get().size.height) + " " + Image::get_format_name(E->get().format);
-		r_usage->push_back(usage);
-	}
-}
 
 ShaderTypes *shader_types = NULL;
 
@@ -116,8 +98,6 @@ void register_server_types() {
 		ClassDB::register_class<AudioEffectPitchShift>();
 		ClassDB::register_class<AudioEffectPhaser>();
 	}
-
-	ScriptDebuggerRemote::resource_usage_func = _debugger_get_resource_usage;
 
 }
 

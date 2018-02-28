@@ -2943,13 +2943,6 @@
         ]
       },
       {
-        "name": "quark_dictionary_to_json",
-        "return_type": "quark_string",
-        "arguments": [
-          ["const quark_dictionary *", "p_self"]
-        ]
-      },
-      {
         "name": "quark_node_path_new",
         "return_type": "void",
         "arguments": [

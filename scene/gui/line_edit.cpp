@@ -34,7 +34,6 @@
 #include "os/keyboard.h"
 #include "os/os.h"
 #include "print_string.h"
-#include "translation.h"
 
 static bool _is_text_char(CharType c) {
 
@@ -996,7 +995,7 @@ String LineEdit::get_text() const {
 
 void LineEdit::set_placeholder(String p_text) {
 
-	placeholder = tr(p_text);
+	placeholder = p_text;
 	update();
 }
 

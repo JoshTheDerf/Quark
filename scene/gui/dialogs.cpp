@@ -31,7 +31,6 @@
 #include "dialogs.h"
 #include "line_edit.h"
 #include "print_string.h"
-#include "translation.h"
 
 // WindowDialog
 
@@ -257,8 +256,6 @@ int WindowDialog::_drag_hit_test(const Point2 &pos) const {
 }
 
 void WindowDialog::set_title(const String &p_title) {
-
-	title = tr(p_title);
 	update();
 }
 String WindowDialog::get_title() const {

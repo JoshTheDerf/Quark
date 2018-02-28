@@ -35,7 +35,6 @@
 #include "path_remap.h"
 #include "print_string.h"
 #include "project_settings.h"
-#include "translation.h"
 #include "variant_parser.h"
 ResourceFormatLoader *ResourceLoader::loader[MAX_LOADERS];
 
@@ -106,7 +105,6 @@ public:
 	virtual Error poll() { return ERR_FILE_EOF; }
 	virtual int get_stage() const { return 1; }
 	virtual int get_stage_count() const { return 1; }
-	virtual void set_translation_remapped(bool p_remapped) { resource->set_as_translation_remapped(p_remapped); }
 
 	ResourceInteractiveLoaderDefault() {}
 };
@@ -207,8 +205,7 @@ RES ResourceLoader::load(const String &p_path, const String &p_type_hint, bool p
 		return RES(ResourceCache::get(local_path));
 	}
 
-	bool xl_remapped = false;
-	String path = _path_remap(local_path, &xl_remapped);
+	String path = local_path;
 
 	ERR_FAIL_COND_V(path == "", RES());
 
@@ -222,9 +219,6 @@ RES ResourceLoader::load(const String &p_path, const String &p_type_hint, bool p
 	}
 	if (!p_no_cache)
 		res->set_path(local_path);
-
-	if (xl_remapped)
-		res->set_as_translation_remapped(true);
 
 	return res;
 }
@@ -252,8 +246,7 @@ Ref<ResourceInteractiveLoader> ResourceLoader::load_interactive(const String &p_
 		return ril;
 	}
 
-	bool xl_remapped = false;
-	String path = _path_remap(local_path, &xl_remapped);
+	String path = local_path;
 
 	ERR_FAIL_COND_V(path == "", Ref<ResourceInteractiveLoader>());
 
@@ -272,8 +265,6 @@ Ref<ResourceInteractiveLoader> ResourceLoader::load_interactive(const String &p_
 			continue;
 		if (!p_no_cache)
 			ril->set_local_path(local_path);
-		if (xl_remapped)
-			ril->set_translation_remapped(true);
 
 		return ril;
 	}
@@ -417,80 +408,9 @@ String ResourceLoader::get_resource_type(const String &p_path) {
 	return "";
 }
 
-String ResourceLoader::_path_remap(const String &p_path, bool *r_translation_remapped) {
-
-	String new_path = p_path;
-
-	if (translation_remaps.has(new_path)) {
-
-		Vector<String> &v = *translation_remaps.getptr(new_path);
-		String locale = TranslationServer::get_singleton()->get_locale();
-		if (r_translation_remapped) {
-			*r_translation_remapped = true;
-		}
-		for (int i = 0; i < v.size(); i++) {
-
-			int split = v[i].find_last(":");
-			if (split == -1)
-				continue;
-			String l = v[i].right(split + 1).strip_edges();
-			if (l == String())
-				continue;
-
-			if (l.begins_with(locale)) {
-				new_path = v[i].left(split);
-				break;
-			}
-		}
-	}
-
-	if (path_remaps.has(new_path)) {
-		new_path = path_remaps[new_path];
-	}
-
-	if (new_path == p_path) { //did not remap
-		//try file remap
-		Error err;
-		FileAccess *f = FileAccess::open(p_path + ".remap", FileAccess::READ, &err);
-
-		if (f) {
-
-			VariantParser::StreamFile stream;
-			stream.f = f;
-
-			String assign;
-			Variant value;
-			VariantParser::Tag next_tag;
-
-			int lines = 0;
-			String error_text;
-			while (true) {
-
-				assign = Variant();
-				next_tag.fields.clear();
-				next_tag.name = String();
-
-				err = VariantParser::parse_tag_assign_eof(&stream, lines, error_text, next_tag, assign, value, NULL, true);
-				if (err == ERR_FILE_EOF) {
-					break;
-				} else if (err != OK) {
-					ERR_PRINTS("Parse error: " + p_path + ".remap:" + itos(lines) + " error: " + error_text);
-					break;
-				}
-
-				if (assign == "path") {
-					new_path = value;
-					break;
-				} else if (next_tag.name != "remap") {
-					break;
-				}
-			}
-
-			memdelete(f);
-		}
-	}
-
-	return new_path;
+String ResourceLoader::_path_remap(const String &p_path) {
+	// TOOD: Figure out what this is supposed to do.
+	return p_path;
 }
 
 String ResourceLoader::import_remap(const String &p_path) {
@@ -505,72 +425,6 @@ String ResourceLoader::import_remap(const String &p_path) {
 
 String ResourceLoader::path_remap(const String &p_path) {
 	return _path_remap(p_path);
-}
-
-void ResourceLoader::reload_translation_remaps() {
-
-	if (ResourceCache::lock) {
-		ResourceCache::lock->read_lock();
-	}
-
-	List<Resource *> to_reload;
-	SelfList<Resource> *E = remapped_list.first();
-
-	while (E) {
-		to_reload.push_back(E->self());
-		E = E->next();
-	}
-
-	if (ResourceCache::lock) {
-		ResourceCache::lock->read_unlock();
-	}
-
-	//now just make sure to not delete any of these resources while changing locale..
-	while (to_reload.front()) {
-		to_reload.front()->get()->reload_from_file();
-		to_reload.pop_front();
-	}
-}
-
-void ResourceLoader::load_translation_remaps() {
-
-	if (!ProjectSettings::get_singleton()->has_setting("locale/translation_remaps"))
-		return;
-
-	Dictionary remaps = ProjectSettings::get_singleton()->get("locale/translation_remaps");
-	List<Variant> keys;
-	remaps.get_key_list(&keys);
-	for (List<Variant>::Element *E = keys.front(); E; E = E->next()) {
-
-		Array langs = remaps[E->get()];
-		Vector<String> lang_remaps;
-		lang_remaps.resize(langs.size());
-		for (int i = 0; i < langs.size(); i++) {
-			lang_remaps[i] = langs[i];
-		}
-
-		translation_remaps[String(E->get())] = lang_remaps;
-	}
-}
-
-void ResourceLoader::clear_translation_remaps() {
-	translation_remaps.clear();
-}
-
-void ResourceLoader::load_path_remaps() {
-
-	if (!ProjectSettings::get_singleton()->has_setting("path_remap/remapped_paths"))
-		return;
-
-	PoolVector<String> remaps = ProjectSettings::get_singleton()->get("path_remap/remapped_paths");
-	int rc = remaps.size();
-	ERR_FAIL_COND(rc & 1); //must be even
-	PoolVector<String>::Read r = remaps.read();
-
-	for (int i = 0; i < rc; i += 2) {
-
-		path_remaps[r[i]] = r[i + 1];
-	}
 }
 
 void ResourceLoader::clear_path_remaps() {
@@ -588,5 +442,4 @@ bool ResourceLoader::abort_on_missing_resource = true;
 bool ResourceLoader::timestamp_on_load = false;
 
 SelfList<Resource>::List ResourceLoader::remapped_list;
-HashMap<String, Vector<String> > ResourceLoader::translation_remaps;
 HashMap<String, String> ResourceLoader::path_remaps;

@@ -31,7 +31,6 @@
 #include "label.h"
 #include "print_string.h"
 #include "project_settings.h"
-#include "translation.h"
 
 void Label::set_autowrap(bool p_autowrap) {
 
@@ -61,17 +60,6 @@ int Label::get_line_height() const {
 }
 
 void Label::_notification(int p_what) {
-
-	if (p_what == NOTIFICATION_TRANSLATION_CHANGED) {
-
-		String new_text = tr(text);
-		if (new_text == xl_text)
-			return; //nothing new
-		xl_text = new_text;
-
-		regenerate_word_cache();
-		update();
-	}
 
 	if (p_what == NOTIFICATION_DRAW) {
 
@@ -237,8 +225,8 @@ void Label::_notification(int p_what) {
 					for (int i = 0; i < from->word_len; i++) {
 
 						if (visible_chars < 0 || chars_total_shadow < visible_chars) {
-							CharType c = xl_text[i + pos];
-							CharType n = xl_text[i + pos + 1];
+							CharType c = text[i + pos];
+							CharType n = text[i + pos + 1];
 							if (uppercase) {
 								c = String::char_uppercase(c);
 								n = String::char_uppercase(c);
@@ -258,8 +246,8 @@ void Label::_notification(int p_what) {
 				for (int i = 0; i < from->word_len; i++) {
 
 					if (visible_chars < 0 || chars_total < visible_chars) {
-						CharType c = xl_text[i + pos];
-						CharType n = xl_text[i + pos + 1];
+						CharType c = text[i + pos];
+						CharType n = text[i + pos + 1];
 						if (uppercase) {
 							c = String::char_uppercase(c);
 							n = String::char_uppercase(c);
@@ -313,9 +301,9 @@ int Label::get_longest_line_width() const {
 	int max_line_width = 0;
 	int line_width = 0;
 
-	for (int i = 0; i < xl_text.size(); i++) {
+	for (int i = 0; i < text.size(); i++) {
 
-		CharType current = xl_text[i];
+		CharType current = text[i];
 		if (uppercase)
 			current = String::char_uppercase(current);
 
@@ -329,7 +317,7 @@ int Label::get_longest_line_width() const {
 			}
 		} else {
 
-			int char_width = font->get_char_size(current, xl_text[i + 1]).width;
+			int char_width = font->get_char_size(current, text[i + 1]).width;
 			line_width += char_width;
 		}
 	}
@@ -389,9 +377,9 @@ void Label::regenerate_word_cache() {
 
 	WordCache *last = NULL;
 
-	for (int i = 0; i < xl_text.size() + 1; i++) {
+	for (int i = 0; i < text.size() + 1; i++) {
 
-		CharType current = i < xl_text.length() ? xl_text[i] : ' '; //always a space at the end, so the algo works
+		CharType current = i < text.length() ? text[i] : ' '; //always a space at the end, so the algo works
 
 		if (uppercase)
 			current = String::char_uppercase(current);
@@ -429,7 +417,7 @@ void Label::regenerate_word_cache() {
 				total_char_cache++;
 			}
 
-			if (i < xl_text.length() && xl_text[i] == ' ') {
+			if (i < text.length() && text[i] == ' ') {
 				total_char_cache--; // do not count spaces
 				if (line_width > 0 || last == NULL || last->char_pos != WordCache::CHAR_WRAPLINE) {
 					space_count++;
@@ -445,7 +433,7 @@ void Label::regenerate_word_cache() {
 				word_pos = i;
 			}
 
-			char_width = font->get_char_size(current, xl_text[i + 1]).width;
+			char_width = font->get_char_size(current, text[i + 1]).width;
 			current_word_size += char_width;
 			line_width += char_width;
 			total_char_cache++;
@@ -534,7 +522,6 @@ void Label::set_text(const String &p_string) {
 	if (text == p_string)
 		return;
 	text = p_string;
-	xl_text = tr(p_string);
 	word_cache_dirty = true;
 	if (percent_visible < 1)
 		visible_chars = get_total_character_count() * percent_visible;
@@ -677,7 +664,7 @@ Label::Label(const String &p_text) {
 
 	align = ALIGN_LEFT;
 	valign = VALIGN_TOP;
-	xl_text = "";
+	text = "";
 	word_cache = NULL;
 	word_cache_dirty = true;
 	autowrap = false;

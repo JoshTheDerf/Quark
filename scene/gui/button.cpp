@@ -31,7 +31,6 @@
 #include "button.h"
 #include "print_string.h"
 #include "servers/visual_server.h"
-#include "translation.h"
 
 Size2 Button::get_minimum_size() const {
 
@@ -61,13 +60,6 @@ void Button::_set_internal_margin(Margin p_margin, float p_value) {
 }
 
 void Button::_notification(int p_what) {
-
-	if (p_what == NOTIFICATION_TRANSLATION_CHANGED) {
-
-		xl_text = tr(text);
-		minimum_size_changed();
-		update();
-	}
 
 	if (p_what == NOTIFICATION_DRAW) {
 
@@ -185,7 +177,7 @@ void Button::set_text(const String &p_text) {
 	if (text == p_text)
 		return;
 	text = p_text;
-	xl_text = tr(p_text);
+	xl_text = p_text;
 	update();
 	_change_notify("text");
 	minimum_size_changed();

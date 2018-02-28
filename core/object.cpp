@@ -37,7 +37,6 @@
 #include "print_string.h"
 #include "resource.h"
 #include "script_language.h"
-#include "translation.h"
 
 #ifdef DEBUG_ENABLED
 
@@ -1481,14 +1480,6 @@ void Object::initialize_class() {
 	initialized = true;
 }
 
-StringName Object::tr(const StringName &p_message) const {
-
-	if (!_can_translate || !TranslationServer::get_singleton())
-		return p_message;
-
-	return TranslationServer::get_singleton()->translate(p_message);
-}
-
 void Object::_clear_internal_resource_paths(const Variant &p_var) {
 
 	switch (p_var.get_type()) {
@@ -1614,10 +1605,6 @@ void Object::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_block_signals", "enable"), &Object::set_block_signals);
 	ClassDB::bind_method(D_METHOD("is_blocking_signals"), &Object::is_blocking_signals);
 	ClassDB::bind_method(D_METHOD("property_list_changed_notify"), &Object::property_list_changed_notify);
-
-	ClassDB::bind_method(D_METHOD("set_message_translation", "enable"), &Object::set_message_translation);
-	ClassDB::bind_method(D_METHOD("can_translate_messages"), &Object::can_translate_messages);
-	ClassDB::bind_method(D_METHOD("tr", "message"), &Object::tr);
 
 	ClassDB::bind_method(D_METHOD("is_queued_for_deletion"), &Object::is_queued_for_deletion);
 
@@ -1762,7 +1749,6 @@ Object::Object() {
 	_predelete_ok = 0;
 	_instance_ID = 0;
 	_instance_ID = ObjectDB::add_instance(this);
-	_can_translate = true;
 	_is_queued_for_deletion = false;
 	memset(_script_instance_bindings, 0, sizeof(void *) * MAX_SCRIPT_INSTANCE_BINDINGS);
 	script_instance = NULL;

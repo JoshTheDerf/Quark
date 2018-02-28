@@ -58,7 +58,6 @@
 
 #include "main/input_default.h"
 #include "performance.h"
-#include "translation.h"
 #include "version.h"
 #include "version_hash.gen.h"
 
@@ -71,8 +70,6 @@ AudioServer *audio_server = NULL;
 
 static MessageQueue *message_queue = NULL;
 static Performance *performance = NULL;
-
-static TranslationServer *translation_server = NULL;
 
 static OS::VideoMode video_mode;
 static bool init_maximized = false;
@@ -218,7 +215,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 	register_core_settings(); //here globals is present
 
-	translation_server = memnew(TranslationServer);
 	performance = memnew(Performance);
 	ClassDB::register_class<Performance>();
 	engine->add_singleton(Engine::Singleton("Performance", performance));
@@ -698,8 +694,6 @@ error:
 		memdelete(performance);
 	if (input_map)
 		memdelete(input_map);
-	if (translation_server)
-		memdelete(translation_server);
 	if (globals)
 		memdelete(globals);
 	if (engine)
@@ -765,8 +759,6 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 
 	register_server_types();
 
-	MAIN_PRINT("Main: Load Remaps");
-
 	Color clear = GLOBAL_DEF("rendering/environment/default_clear_color", Color(0.3, 0.3, 0.3));
 	VisualServer::get_singleton()->set_default_clear_color(clear);
 
@@ -822,8 +814,6 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 		}
 	}
 
-	MAIN_PRINT("Main: Load Remaps");
-
 	MAIN_PRINT("Main: Load Scene Types");
 
 	register_scene_types();
@@ -857,18 +847,6 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 	register_driver_types();
 
 	ScriptServer::init_languages();
-
-	MAIN_PRINT("Main: Load Translations");
-
-	translation_server->setup(); //register translations, load them, etc.
-	if (locale != "") {
-
-		translation_server->set_locale(locale);
-	}
-	translation_server->load_translations();
-	ResourceLoader::load_translation_remaps(); //load remaps for resources
-
-	ResourceLoader::load_path_remaps();
 
 	audio_server->load_default_bus_layout();
 
@@ -1026,7 +1004,6 @@ bool Main::start() {
 		sml->set_auto_accept_quit(GLOBAL_DEF("application/config/auto_accept_quit", true));
 		sml->set_quit_on_go_back(GLOBAL_DEF("application/config/quit_on_go_back", true));
 		String appname = ProjectSettings::get_singleton()->get("application/config/name");
-		appname = TranslationServer::get_singleton()->translate(appname);
 		OS::get_singleton()->set_window_title(appname);
 
 		int shadow_atlas_size = GLOBAL_GET("rendering/quality/shadow_atlas/size");
@@ -1223,9 +1200,6 @@ void Main::cleanup() {
 	OS::get_singleton()->_execpath = "";
 	OS::get_singleton()->_local_clipboard = "";
 
-	ResourceLoader::clear_translation_remaps();
-	ResourceLoader::clear_path_remaps();
-
 	ScriptServer::finish_languages();
 
 	unregister_driver_types();
@@ -1245,8 +1219,6 @@ void Main::cleanup() {
 		memdelete(performance);
 	if (input_map)
 		memdelete(input_map);
-	if (translation_server)
-		memdelete(translation_server);
 	if (globals)
 		memdelete(globals);
 	if (engine)

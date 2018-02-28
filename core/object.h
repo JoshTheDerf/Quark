@@ -461,12 +461,6 @@ private:
 	ObjectID _instance_ID;
 	bool _predelete();
 	void _postinitialize();
-	bool _can_translate;
-#ifdef TOOLS_ENABLED
-	bool _edited;
-	uint32_t _edited_version;
-	Set<String> editor_section_folding;
-#endif
 	ScriptInstance *script_instance;
 	RefPtr script;
 	Dictionary metadata;
@@ -550,15 +544,7 @@ public: //should be protected, but bug in clang++
 	_FORCE_INLINE_ static void register_custom_data_to_otdb(){};
 
 public:
-#ifdef TOOLS_ENABLED
-	_FORCE_INLINE_ void _change_notify(const char *p_property = "") {
-		_edited = true;
-		for (Set<Object *>::Element *E = change_receptors.front(); E; E = E->next())
-			((Object *)(E->get()))->_changed_callback(this, p_property);
-	}
-#else
 	_FORCE_INLINE_ void _change_notify(const char *p_what = "") {}
-#endif
 	static void *get_class_ptr_static() {
 		static int ptr;
 		return &ptr;
@@ -665,12 +651,6 @@ public:
 	Variant get_meta(const String &p_name) const;
 	void get_meta_list(List<String> *p_list) const;
 
-#ifdef TOOLS_ENABLED
-	void set_edited(bool p_edited);
-	bool is_edited() const;
-	uint32_t get_edited_version() const; //this function is used to check when something changed beyond a point, it's used mainly for generating previews
-#endif
-
 	void set_script_instance(ScriptInstance *p_instance);
 	_FORCE_INLINE_ ScriptInstance *get_script_instance() const { return script_instance; }
 
@@ -701,18 +681,8 @@ public:
 
 	virtual void get_argument_options(const StringName &p_function, int p_idx, List<String> *r_options) const;
 
-	StringName tr(const StringName &p_message) const; // translate message (internationalization)
-
 	bool _is_queued_for_deletion; // set to true by SceneTree::queue_delete()
 	bool is_queued_for_deletion() const;
-
-	_FORCE_INLINE_ void set_message_translation(bool p_enable) { _can_translate = p_enable; }
-	_FORCE_INLINE_ bool can_translate_messages() const { return _can_translate; }
-
-#ifdef TOOLS_ENABLED
-	void editor_set_section_unfold(const String &p_section, bool p_unfolded);
-	bool editor_is_section_unfolded(const String &p_section);
-#endif
 
 	//used by script languages to store binding data
 	void *get_script_instance_binding(int p_script_language_index);

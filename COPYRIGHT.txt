@@ -217,12 +217,6 @@ Comment: NanoSVG
 Copyright: 2013-2014, Mikko Mononen
 License: Zlib
 
-Files: ./thirdparty/pcre2/
-Comment: PCRE2
-Copyright: 1997-2017, University of Cambridge,
- 2009-2017, Zoltan Herczeg
-License: BSD-3-clause
-
 Files: ./thirdparty/rtaudio/
 Comment: RtAudio
 Copyright: 2001-2016, Gary P. Scavone

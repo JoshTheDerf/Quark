@@ -168,20 +168,6 @@ Files extracted from the upstream source:
 - LICENSE.txt
 
 
-## pcre2
-
-- Upstream: http://www.pcre.org/
-- Version: 10.23
-- License: BSD-3-Clause
-
-Files extracted from upstream source:
-
-- Files listed in NON-AUTOTOOLS-BUILD steps 1-4
-- All .h files in src/
-- src/pcre2_jit_*.c and src/sljit/*
-- AUTHORS and COPYING
-
-
 ## rtaudio
 
 - Upstream: http://www.music.mcgill.ca/~gary/rtaudio/

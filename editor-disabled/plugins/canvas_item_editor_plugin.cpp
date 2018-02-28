@@ -2586,7 +2586,7 @@ void CanvasItemEditor::_draw_viewport() {
 
 void CanvasItemEditor::_notification(int p_what) {
 
-	if (p_what == NOTIFICATION_PHYSICS_PROCESS) {
+	if (p_what == NOTIFICATION_FIXED_PROCESS) {
 		EditorNode::get_singleton()->get_scene_root()->set_snap_controls_to_pixels(GLOBAL_GET("gui/common/snap_controls_to_pixels"));
 
 		int nb_control = 0;
@@ -4076,14 +4076,14 @@ void CanvasItemEditorPlugin::make_visible(bool p_visible) {
 
 	if (p_visible) {
 		canvas_item_editor->show();
-		canvas_item_editor->set_physics_process(true);
+		canvas_item_editor->set_fixed_process(true);
 		VisualServer::get_singleton()->viewport_set_hide_canvas(editor->get_scene_root()->get_viewport_rid(), false);
 		canvas_item_editor->viewport->grab_focus();
 
 	} else {
 
 		canvas_item_editor->hide();
-		canvas_item_editor->set_physics_process(false);
+		canvas_item_editor->set_fixed_process(false);
 		VisualServer::get_singleton()->viewport_set_hide_canvas(editor->get_scene_root()->get_viewport_rid(), true);
 	}
 }

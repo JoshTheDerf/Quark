@@ -354,7 +354,6 @@ MAKE_DVECARR(Plane);
 	}
 
 MAKE_STRINGCONV(StringName);
-MAKE_STRINGCONV_BY_REFERENCE(IP_Address);
 
 template <>
 struct PtrToArg<PoolVector<Face3> > {

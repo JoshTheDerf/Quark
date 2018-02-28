@@ -16,7 +16,7 @@ files = [
 if "build_angle" in env and env["build_angle"]:
     cmd = env.AlwaysBuild(env.ANGLE('libANGLE.lib', None))
 
-prog = env.add_program('#bin/godot', files)
+prog = env.add_program('#bin/quark', files)
 
 if "build_angle" in env and env["build_angle"]:
     env.Depends(prog, [cmd])

@@ -39,7 +39,7 @@ void ResourcePreloaderEditor::_gui_input(Ref<InputEvent> p_event) {
 
 void ResourcePreloaderEditor::_notification(int p_what) {
 
-	if (p_what == NOTIFICATION_PHYSICS_PROCESS) {
+	if (p_what == NOTIFICATION_FIXED_PROCESS) {
 	}
 
 	if (p_what == NOTIFICATION_ENTER_TREE) {
@@ -266,7 +266,7 @@ void ResourcePreloaderEditor::edit(ResourcePreloader *p_preloader) {
 	} else {
 
 		hide();
-		set_physics_process(false);
+		set_fixed_process(false);
 	}
 }
 

@@ -51,7 +51,6 @@
 #include "io/resource_loader.h"
 #include "script_language.h"
 
-#include "core/io/ip.h"
 #include "main/tests/test_main.h"
 #include "os/dir_access.h"
 #include "scene/main/viewport.h"
@@ -1045,7 +1044,7 @@ uint32_t Main::frame = 0;
 bool Main::force_redraw_requested = false;
 
 //for performance metrics
-static uint64_t physics_process_max = 0;
+static uint64_t fixed_process_max = 0;
 static uint64_t idle_process_max = 0;
 
 bool Main::iteration() {
@@ -1068,7 +1067,7 @@ bool Main::iteration() {
 		return false;
 	*/
 
-	uint64_t physics_process_ticks = 0;
+	uint64_t fixed_process_ticks = 0;
 	uint64_t idle_process_ticks = 0;
 
 	frame += ticks_elapsed;
@@ -1126,7 +1125,7 @@ bool Main::iteration() {
 
 	if (script_debugger) {
 		if (script_debugger->is_profiling()) {
-			script_debugger->profiling_set_frame_times(USEC_TO_SEC(frame_time), USEC_TO_SEC(idle_process_ticks), USEC_TO_SEC(physics_process_ticks), frame_slice);
+			script_debugger->profiling_set_frame_times(USEC_TO_SEC(frame_time), USEC_TO_SEC(idle_process_ticks), USEC_TO_SEC(fixed_process_ticks), frame_slice);
 		}
 		script_debugger->idle_poll();
 	}
@@ -1142,9 +1141,9 @@ bool Main::iteration() {
 
 		Engine::get_singleton()->_fps = frames;
 		performance->set_process_time(USEC_TO_SEC(idle_process_max));
-		performance->set_physics_process_time(USEC_TO_SEC(physics_process_max));
+		performance->set_fixed_process_time(USEC_TO_SEC(fixed_process_max));
 		idle_process_max = 0;
-		physics_process_max = 0;
+		fixed_process_max = 0;
 
 		frame %= 1000000;
 		frames = 0;

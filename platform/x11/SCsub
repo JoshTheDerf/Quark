@@ -17,7 +17,7 @@ common_x11 = [
     "power_x11.cpp",
 ]
 
-prog = env.add_program('#bin/godot', ['godot_x11.cpp'] + common_x11)
+prog = env.add_program('#bin/quark', ['quark_x11.cpp'] + common_x11)
 
 if (env["debug_symbols"] == "full" or env["debug_symbols"] == "yes") and env["separate_debug_symbols"]:
     env.AddPostAction(prog, make_debug)

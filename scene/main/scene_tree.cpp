@@ -446,12 +446,12 @@ bool SceneTree::iteration(float p_time) {
 	flush_transform_notifications();
 
 	MainLoop::iteration(p_time);
-	physics_process_time = p_time;
+	fixed_process_time = p_time;
 
 	emit_signal("physics_frame");
 
-	_notify_group_pause("physics_process_internal", Node::NOTIFICATION_INTERNAL_PHYSICS_PROCESS);
-	_notify_group_pause("physics_process", Node::NOTIFICATION_PHYSICS_PROCESS);
+	_notify_group_pause("fixed_process_internal", Node::NOTIFICATION_INTERNAL_FIXED_PROCESS);
+	_notify_group_pause("fixed_process", Node::NOTIFICATION_FIXED_PROCESS);
 	_flush_ugc();
 	MessageQueue::get_singleton()->flush(); //small little hack
 	flush_transform_notifications();
@@ -1658,7 +1658,7 @@ SceneTree::SceneTree() {
 	collision_debug_contacts = GLOBAL_DEF("debug/shapes/collision/max_contacts_displayed", 10000);
 
 	tree_version = 1;
-	physics_process_time = 1;
+	fixed_process_time = 1;
 	idle_process_time = 1;
 
 	root = NULL;

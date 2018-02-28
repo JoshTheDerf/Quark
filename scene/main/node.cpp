@@ -31,7 +31,6 @@
 #include "node.h"
 
 #include "core/core_string_names.h"
-#include "instance_placeholder.h"
 #include "io/resource_loader.h"
 #include "message_queue.h"
 #include "print_string.h"
@@ -53,13 +52,13 @@ void Node::_notification(int p_notification) {
 				get_script_instance()->call_multilevel(SceneStringNames::get_singleton()->_process, ptr, 1);
 			}
 		} break;
-		case NOTIFICATION_PHYSICS_PROCESS: {
+		case NOTIFICATION_FIXED_PROCESS: {
 
 			if (get_script_instance()) {
 
-				Variant time = get_physics_process_delta_time();
+				Variant time = get_fixed_process_delta_time();
 				const Variant *ptr[1] = { &time };
-				get_script_instance()->call_multilevel(SceneStringNames::get_singleton()->_physics_process, ptr, 1);
+				get_script_instance()->call_multilevel(SceneStringNames::get_singleton()->_fixed_process, ptr, 1);
 			}
 
 		} break;
@@ -128,8 +127,8 @@ void Node::_notification(int p_notification) {
 					set_process(true);
 				}
 
-				if (get_script_instance()->has_method(SceneStringNames::get_singleton()->_physics_process)) {
-					set_physics_process(true);
+				if (get_script_instance()->has_method(SceneStringNames::get_singleton()->_fixed_process)) {
+					set_fixed_process(true);
 				}
 
 				get_script_instance()->call_multilevel_reversed(SceneStringNames::get_singleton()->_ready, NULL, 0);
@@ -371,46 +370,46 @@ void Node::move_child_notify(Node *p_child) {
 	// to be used when not wanted
 }
 
-void Node::set_physics_process(bool p_process) {
+void Node::set_fixed_process(bool p_process) {
 
-	if (data.physics_process == p_process)
+	if (data.fixed_process == p_process)
 		return;
 
-	data.physics_process = p_process;
+	data.fixed_process = p_process;
 
-	if (data.physics_process)
-		add_to_group("physics_process", false);
+	if (data.fixed_process)
+		add_to_group("fixed_process", false);
 	else
-		remove_from_group("physics_process");
+		remove_from_group("fixed_process");
 
-	data.physics_process = p_process;
-	_change_notify("physics_process");
+	data.fixed_process = p_process;
+	_change_notify("fixed_process");
 }
 
-bool Node::is_physics_processing() const {
+bool Node::is_fixed_processing() const {
 
-	return data.physics_process;
+	return data.fixed_process;
 }
 
-void Node::set_physics_process_internal(bool p_process_internal) {
+void Node::set_fixed_process_internal(bool p_process_internal) {
 
-	if (data.physics_process_internal == p_process_internal)
+	if (data.fixed_process_internal == p_process_internal)
 		return;
 
-	data.physics_process_internal = p_process_internal;
+	data.fixed_process_internal = p_process_internal;
 
-	if (data.physics_process_internal)
-		add_to_group("physics_process_internal", false);
+	if (data.fixed_process_internal)
+		add_to_group("fixed_process_internal", false);
 	else
-		remove_from_group("physics_process_internal");
+		remove_from_group("fixed_process_internal");
 
-	data.physics_process_internal = p_process_internal;
-	_change_notify("physics_process_internal");
+	data.fixed_process_internal = p_process_internal;
+	_change_notify("fixed_process_internal");
 }
 
-bool Node::is_physics_processing_internal() const {
+bool Node::is_fixed_processing_internal() const {
 
-	return data.physics_process_internal;
+	return data.fixed_process_internal;
 }
 
 void Node::set_pause_mode(PauseMode p_mode) {
@@ -480,10 +479,10 @@ bool Node::can_process() const {
 	return true;
 }
 
-float Node::get_physics_process_delta_time() const {
+float Node::get_fixed_process_delta_time() const {
 
 	if (data.tree)
-		return data.tree->get_physics_process_time();
+		return data.tree->get_fixed_process_time();
 	else
 		return 0;
 }
@@ -1493,16 +1492,6 @@ HashMap<NodePath, int> Node::get_editable_instances() const {
 	return data.editable_instances;
 }
 
-void Node::set_scene_instance_load_placeholder(bool p_enable) {
-
-	data.use_placeholder = p_enable;
-}
-
-bool Node::get_scene_instance_load_placeholder() const {
-
-	return data.use_placeholder;
-}
-
 int Node::get_position_in_parent() const {
 
 	return data.pos;
@@ -1512,24 +1501,12 @@ Node *Node::_duplicate(int p_flags, Map<const Node *, Node *> *r_duplimap) const
 
 	Node *node = NULL;
 
-	bool instanced = false;
-
-	if (Object::cast_to<InstancePlaceholder>(this)) {
-
-		const InstancePlaceholder *ip = Object::cast_to<const InstancePlaceholder>(this);
-		InstancePlaceholder *nip = memnew(InstancePlaceholder);
-		nip->set_instance_path(ip->get_instance_path());
-		node = nip;
-
-	} else {
-
-		Object *obj = ClassDB::instance(get_class());
-		ERR_FAIL_COND_V(!obj, NULL);
-		node = Object::cast_to<Node>(obj);
-		if (!node)
-			memdelete(obj);
-		ERR_FAIL_COND_V(!node, NULL);
-	}
+	Object *obj = ClassDB::instance(get_class());
+	ERR_FAIL_COND_V(!obj, NULL);
+	node = Object::cast_to<Node>(obj);
+	if (!node)
+		memdelete(obj);
+	ERR_FAIL_COND_V(!node, NULL);
 
 	if (get_filename() != "") { //an instance
 		node->set_filename(get_filename());
@@ -1540,27 +1517,6 @@ Node *Node::_duplicate(int p_flags, Map<const Node *, Node *> *r_duplimap) const
 	List<const Node *> hidden_roots;
 	List<const Node *> node_tree;
 	node_tree.push_front(this);
-
-	if (instanced) {
-		// Since nodes in the instanced hierarchy won't be duplicated explicitly, we need to make an inventory
-		// of all the nodes in the tree of the instanced scene in order to transfer the values of the properties
-
-		for (List<const Node *>::Element *N = node_tree.front(); N; N = N->next()) {
-			for (int i = 0; i < N->get()->get_child_count(); ++i) {
-
-				Node *descendant = N->get()->get_child(i);
-				// Skip nodes not really belonging to the instanced hierarchy; they'll be processed normally later
-				// but remember non-instanced nodes that are hidden below instanced ones
-				if (descendant->data.owner != this) {
-					if (descendant->get_parent() && descendant->get_parent() != this && descendant->get_parent()->data.owner == this)
-						hidden_roots.push_back(descendant);
-					continue;
-				}
-
-				node_tree.push_back(descendant);
-			}
-		}
-	}
 
 	for (List<const Node *>::Element *N = node_tree.front(); N; N = N->next()) {
 
@@ -1622,8 +1578,6 @@ Node *Node::_duplicate(int p_flags, Map<const Node *, Node *> *r_duplimap) const
 
 		if (get_child(i)->data.parent_owned)
 			continue;
-		if (instanced && get_child(i)->data.owner == this)
-			continue; //part of instance
 
 		Node *dup = get_child(i)->_duplicate(p_flags, r_duplimap);
 		if (!dup) {
@@ -2210,9 +2164,9 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_filename"), &Node::get_filename);
 	ClassDB::bind_method(D_METHOD("propagate_notification", "what"), &Node::propagate_notification);
 	ClassDB::bind_method(D_METHOD("propagate_call", "method", "args", "parent_first"), &Node::propagate_call, DEFVAL(Array()), DEFVAL(false));
-	ClassDB::bind_method(D_METHOD("set_physics_process", "enable"), &Node::set_physics_process);
-	ClassDB::bind_method(D_METHOD("get_physics_process_delta_time"), &Node::get_physics_process_delta_time);
-	ClassDB::bind_method(D_METHOD("is_physics_processing"), &Node::is_physics_processing);
+	ClassDB::bind_method(D_METHOD("set_fixed_process", "enable"), &Node::set_fixed_process);
+	ClassDB::bind_method(D_METHOD("get_fixed_process_delta_time"), &Node::get_fixed_process_delta_time);
+	ClassDB::bind_method(D_METHOD("is_fixed_processing"), &Node::is_fixed_processing);
 	ClassDB::bind_method(D_METHOD("get_process_delta_time"), &Node::get_process_delta_time);
 	ClassDB::bind_method(D_METHOD("set_process", "enable"), &Node::set_process);
 	ClassDB::bind_method(D_METHOD("is_processing"), &Node::is_processing);
@@ -2233,16 +2187,13 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_process_internal", "enable"), &Node::set_process_internal);
 	ClassDB::bind_method(D_METHOD("is_processing_internal"), &Node::is_processing_internal);
 
-	ClassDB::bind_method(D_METHOD("set_physics_process_internal", "enable"), &Node::set_physics_process_internal);
-	ClassDB::bind_method(D_METHOD("is_physics_processing_internal"), &Node::is_physics_processing_internal);
+	ClassDB::bind_method(D_METHOD("set_fixed_process_internal", "enable"), &Node::set_fixed_process_internal);
+	ClassDB::bind_method(D_METHOD("is_fixed_processing_internal"), &Node::is_fixed_processing_internal);
 
 	ClassDB::bind_method(D_METHOD("get_tree"), &Node::get_tree);
 
 	ClassDB::bind_method(D_METHOD("duplicate", "flags"), &Node::duplicate, DEFVAL(DUPLICATE_USE_INSTANCING | DUPLICATE_SIGNALS | DUPLICATE_GROUPS | DUPLICATE_SCRIPTS));
 	ClassDB::bind_method(D_METHOD("replace_by", "node", "keep_data"), &Node::replace_by, DEFVAL(false));
-
-	ClassDB::bind_method(D_METHOD("set_scene_instance_load_placeholder", "load_placeholder"), &Node::set_scene_instance_load_placeholder);
-	ClassDB::bind_method(D_METHOD("get_scene_instance_load_placeholder"), &Node::get_scene_instance_load_placeholder);
 
 	ClassDB::bind_method(D_METHOD("get_viewport"), &Node::get_viewport);
 
@@ -2256,17 +2207,16 @@ void Node::_bind_methods() {
 	BIND_CONSTANT(NOTIFICATION_READY);
 	BIND_CONSTANT(NOTIFICATION_PAUSED);
 	BIND_CONSTANT(NOTIFICATION_UNPAUSED);
-	BIND_CONSTANT(NOTIFICATION_PHYSICS_PROCESS);
+	BIND_CONSTANT(NOTIFICATION_FIXED_PROCESS);
 	BIND_CONSTANT(NOTIFICATION_PROCESS);
 	BIND_CONSTANT(NOTIFICATION_PARENTED);
 	BIND_CONSTANT(NOTIFICATION_UNPARENTED);
-	BIND_CONSTANT(NOTIFICATION_INSTANCED);
 	BIND_CONSTANT(NOTIFICATION_DRAG_BEGIN);
 	BIND_CONSTANT(NOTIFICATION_DRAG_END);
 	BIND_CONSTANT(NOTIFICATION_PATH_CHANGED);
 	BIND_CONSTANT(NOTIFICATION_TRANSLATION_CHANGED);
 	BIND_CONSTANT(NOTIFICATION_INTERNAL_PROCESS);
-	BIND_CONSTANT(NOTIFICATION_INTERNAL_PHYSICS_PROCESS);
+	BIND_CONSTANT(NOTIFICATION_INTERNAL_FIXED_PROCESS);
 
 	BIND_ENUM_CONSTANT(PAUSE_MODE_INHERIT);
 	BIND_ENUM_CONSTANT(PAUSE_MODE_STOP);
@@ -2283,7 +2233,7 @@ void Node::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("tree_exited"));
 
 	//ADD_PROPERTYNZ( PropertyInfo( Variant::BOOL, "process/process" ),"set_process","is_processing") ;
-	//ADD_PROPERTYNZ( PropertyInfo( Variant::BOOL, "process/physics_process" ), "set_physics_process","is_physics_processing") ;
+	//ADD_PROPERTYNZ( PropertyInfo( Variant::BOOL, "process/fixed_process" ), "set_fixed_process","is_fixed_processing") ;
 	//ADD_PROPERTYNZ( PropertyInfo( Variant::BOOL, "process/input" ), "set_process_input","is_processing_input" ) ;
 	//ADD_PROPERTYNZ( PropertyInfo( Variant::BOOL, "process/unhandled_input" ), "set_process_unhandled_input","is_processing_unhandled_input" ) ;
 	ADD_GROUP("Pause", "pause_");
@@ -2294,7 +2244,7 @@ void Node::_bind_methods() {
 	ADD_PROPERTYNZ(PropertyInfo(Variant::OBJECT, "owner", PROPERTY_HINT_RESOURCE_TYPE, "Node", 0), "set_owner", "get_owner");
 
 	BIND_VMETHOD(MethodInfo("_process", PropertyInfo(Variant::REAL, "delta")));
-	BIND_VMETHOD(MethodInfo("_physics_process", PropertyInfo(Variant::REAL, "delta")));
+	BIND_VMETHOD(MethodInfo("_fixed_process", PropertyInfo(Variant::REAL, "delta")));
 	BIND_VMETHOD(MethodInfo("_enter_tree"));
 	BIND_VMETHOD(MethodInfo("_exit_tree"));
 	BIND_VMETHOD(MethodInfo("_ready"));
@@ -2323,9 +2273,9 @@ Node::Node() {
 	data.blocked = 0;
 	data.parent = NULL;
 	data.tree = NULL;
-	data.physics_process = false;
+	data.fixed_process = false;
 	data.idle_process = false;
-	data.physics_process_internal = false;
+	data.fixed_process_internal = false;
 	data.idle_process_internal = false;
 	data.inside_tree = false;
 	data.ready_notified = false;
@@ -2341,7 +2291,6 @@ Node::Node() {
 	data.parent_owned = false;
 	data.in_constructor = true;
 	data.viewport = NULL;
-	data.use_placeholder = false;
 	data.display_folded = false;
 	data.ready_first = true;
 }

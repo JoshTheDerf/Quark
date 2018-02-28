@@ -139,7 +139,6 @@ class OS_X11 : public OS_Unix {
 	void handle_key_event(XKeyEvent *p_event, bool p_echo = false);
 	void process_xevents();
 	virtual void delete_main_loop();
-	IP_Unix *ip_unix;
 
 	bool force_quit;
 	bool minimized;

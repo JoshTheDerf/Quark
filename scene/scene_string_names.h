@@ -108,7 +108,7 @@ public:
 	StringName _get_gizmo_geometry;
 	StringName _can_gizmo_scale;
 
-	StringName _physics_process;
+	StringName _fixed_process;
 	StringName _process;
 	StringName _enter_world;
 	StringName _exit_world;

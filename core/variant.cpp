@@ -2054,19 +2054,6 @@ Variant::operator Orientation() const {
 	return (Orientation) operator int();
 }
 
-Variant::operator IP_Address() const {
-
-	if (type == POOL_REAL_ARRAY || type == POOL_INT_ARRAY || type == POOL_BYTE_ARRAY) {
-
-		PoolVector<int> addr = operator PoolVector<int>();
-		if (addr.size() == 4) {
-			return IP_Address(addr.get(0), addr.get(1), addr.get(2), addr.get(3));
-		}
-	}
-
-	return IP_Address(operator String());
-}
-
 Variant::Variant(bool p_bool) {
 
 	type = BOOL;
@@ -2601,12 +2588,6 @@ void Variant::operator=(const Variant &p_variant) {
 		} break;
 		default: {}
 	}
-}
-
-Variant::Variant(const IP_Address &p_address) {
-
-	type = STRING;
-	memnew_placement(_data._mem, String(p_address));
 }
 
 Variant::Variant(const Variant &p_variant) {

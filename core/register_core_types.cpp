@@ -40,7 +40,6 @@
 #include "io/config_file.h"
 #include "io/marshalls.h"
 #include "io/resource_import.h"
-#include "io/tcp_server.h"
 #include "math/a_star.h"
 #include "math/triangle_mesh.h"
 #include "os/input.h"
@@ -57,8 +56,6 @@ static _OS *_os = NULL;
 static _Engine *_engine = NULL;
 static _ClassDB *_classdb = NULL;
 static _Marshalls *_marshalls = NULL;
-
-static IP *ip = NULL;
 
 static _Geometry *_geometry = NULL;
 
@@ -112,11 +109,6 @@ void register_core_types() {
 	ClassDB::register_class<InputEventPanGesture>();
 
 	ClassDB::register_class<FuncRef>();
-	ClassDB::register_virtual_class<StreamPeer>();
-	ClassDB::register_class<StreamPeerBuffer>();
-	ClassDB::register_custom_instance_class<StreamPeerTCP>();
-	ClassDB::register_custom_instance_class<TCP_Server>();
-	ClassDB::register_virtual_class<IP>();
 	ClassDB::register_class<MainLoop>();
 	//ClassDB::register_type<OptimizedSaver>();
 	ClassDB::register_class<UndoRedo>();
@@ -137,8 +129,6 @@ void register_core_types() {
 	ClassDB::register_class<AStar>();
 	ClassDB::register_class<EncodedObjectAsID>();
 
-	ip = IP::create();
-
 	_geometry = memnew(_Geometry);
 
 	_resource_loader = memnew(_ResourceLoader);
@@ -155,7 +145,6 @@ void register_core_settings() {
 void register_core_singletons() {
 
 	ClassDB::register_class<ProjectSettings>();
-	ClassDB::register_virtual_class<IP>();
 	ClassDB::register_class<_Geometry>();
 	ClassDB::register_class<_ResourceLoader>();
 	ClassDB::register_class<_ResourceSaver>();
@@ -167,7 +156,6 @@ void register_core_singletons() {
 	ClassDB::register_class<InputMap>();
 
 	Engine::get_singleton()->add_singleton(Engine::Singleton("ProjectSettings", ProjectSettings::get_singleton()));
-	Engine::get_singleton()->add_singleton(Engine::Singleton("IP", IP::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("Geometry", _Geometry::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("ResourceLoader", _ResourceLoader::get_singleton()));
 	Engine::get_singleton()->add_singleton(Engine::Singleton("ResourceSaver", _ResourceSaver::get_singleton()));
@@ -192,9 +180,6 @@ void unregister_core_types() {
 
 	if (resource_format_importer)
 		memdelete(resource_format_importer);
-
-	if (ip)
-		memdelete(ip);
 
 	ObjectDB::cleanup();
 

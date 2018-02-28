@@ -15,14 +15,14 @@ def make_debug(target, source, env):
 files = [
     'crash_handler_osx.mm',
     'os_osx.mm',
-    'godot_main_osx.mm',
+    'quark_main_osx.mm',
     'sem_osx.cpp',
     'dir_access_osx.mm',
     'joypad_osx.cpp',
     'power_osx.cpp',
 ]
 
-prog = env.add_program('#bin/godot', files)
+prog = env.add_program('#bin/quark', files)
 
 if (env["debug_symbols"] == "full" or env["debug_symbols"] == "yes") and env["separate_debug_symbols"]:
     env.AddPostAction(prog, make_debug)

@@ -2621,10 +2621,10 @@ void PropertyEditor::_notification(int p_what) {
 		}
 	}
 
-	if (p_what == NOTIFICATION_PHYSICS_PROCESS) {
+	if (p_what == NOTIFICATION_FIXED_PROCESS) {
 
 		if (refresh_countdown > 0) {
-			refresh_countdown -= get_physics_process_delta_time();
+			refresh_countdown -= get_fixed_process_delta_time();
 			if (refresh_countdown <= 0) {
 				TreeItem *root = tree->get_root();
 				_refresh_item(root);
@@ -4270,7 +4270,7 @@ PropertyEditor::PropertyEditor() {
 
 	tree->set_drag_forwarding(this);
 
-	set_physics_process(true);
+	set_fixed_process(true);
 
 	custom_editor = memnew(CustomPropertyEditor);
 	custom_editor->set_pass_on_modal_close_click(false);

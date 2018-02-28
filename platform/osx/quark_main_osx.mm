@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  instance_placeholder.cpp                                             */
+/*  quark_main_osx.mm                                                    */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,71 +28,78 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "instance_placeholder.h"
+#include "main/main.h"
 
-bool InstancePlaceholder::_set(const StringName &p_name, const Variant &p_value) {
+#include "os_osx.h"
 
-	PropSet ps;
-	ps.name = p_name;
-	ps.value = p_value;
-	stored_values.push_back(ps);
-	return true;
-}
+#include <string.h>
+#include <unistd.h>
 
-bool InstancePlaceholder::_get(const StringName &p_name, Variant &r_ret) const {
-
-	for (const List<PropSet>::Element *E = stored_values.front(); E; E = E->next()) {
-		if (E->get().name == p_name) {
-			r_ret = E->get().value;
-			return true;
-		}
-	}
-	return false;
-}
-void InstancePlaceholder::_get_property_list(List<PropertyInfo> *p_list) const {
-
-	for (const List<PropSet>::Element *E = stored_values.front(); E; E = E->next()) {
-		PropertyInfo pi;
-		pi.name = E->get().name;
-		pi.type = E->get().value.get_type();
-		pi.usage = PROPERTY_USAGE_STORAGE;
-
-		p_list->push_back(pi);
-	}
-}
-
-void InstancePlaceholder::set_instance_path(const String &p_name) {
-
-	path = p_name;
-}
-
-String InstancePlaceholder::get_instance_path() const {
-
-	return path;
-}
-
-Dictionary InstancePlaceholder::get_stored_values(bool p_with_order) {
-
-	Dictionary ret;
-	PoolStringArray order;
-
-	for (List<PropSet>::Element *E = stored_values.front(); E; E = E->next()) {
-		ret[E->get().name] = E->get().value;
-		if (p_with_order)
-			order.push_back(E->get().name);
+int main(int argc, char **argv) {
+	int first_arg = 1;
+	const char *dbg_arg = "-NSDocumentRevisionsDebugMode";
+	printf("arguments\n");
+	for (int i = 0; i < argc; i++) {
+		if (strcmp(dbg_arg, argv[i]) == 0)
+			first_arg = i + 2;
+		printf("%i: %s\n", i, argv[i]);
 	};
 
-	if (p_with_order)
-		ret[".order"] = order;
+	if (argc >= 1 && argv[0][0] == '/') {
+		//potentially launched from finder
+		int len = strlen(argv[0]);
+		while (len--) {
+			if (argv[0][len] == '/') break;
+		}
+		if (len >= 0) {
+			char *path = (char *)malloc(len + 1);
+			memcpy(path, argv[0], len);
+			path[len] = 0;
 
-	return ret;
+			char *pathinfo = (char *)malloc(strlen(path) + strlen("/../Info.plist") + 1);
+			//in real code you would check for errors in malloc here
+			strcpy(pathinfo, path);
+			strcat(pathinfo, "/../Info.plist");
+
+			FILE *f = fopen(pathinfo, "rb");
+			if (f) {
+				//running from app bundle, as Info.plist was found
+				fclose(f);
+				chdir(path);
+				chdir("../Resources"); //data.pck, or just the files are here
+			}
+
+			free(path);
+			free(pathinfo);
+		}
+	}
+
+#ifdef DEBUG_ENABLED
+	// lets report the path we made current after all that
+	char cwd[4096];
+	getcwd(cwd, 4096);
+	printf("Current path: %s\n", cwd);
+#endif
+
+	OS_OSX os;
+	Error err;
+
+	if (os.open_with_filename != "") {
+		char *argv_c = (char *)malloc(os.open_with_filename.utf8().size());
+		memcpy(argv_c, os.open_with_filename.utf8().get_data(), os.open_with_filename.utf8().size());
+		err = Main::setup(argv[0], 1, &argv_c);
+		free(argv_c);
+	} else {
+		err = Main::setup(argv[0], argc - first_arg, &argv[first_arg]);
+	}
+
+	if (err != OK)
+		return 255;
+
+	if (Main::start())
+		os.run(); // it is actually the OS that decides how to run
+
+	Main::cleanup();
+
+	return 0;
 };
-
-void InstancePlaceholder::_bind_methods() {
-
-	ClassDB::bind_method(D_METHOD("get_stored_values", "with_order"), &InstancePlaceholder::get_stored_values, DEFVAL(false));
-	ClassDB::bind_method(D_METHOD("get_instance_path"), &InstancePlaceholder::get_instance_path);
-}
-
-InstancePlaceholder::InstancePlaceholder() {
-}

@@ -58,10 +58,10 @@ void Timer::_notification(int p_what) {
 			}
 
 		} break;
-		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
-			if (timer_process_mode == TIMER_PROCESS_IDLE || !is_physics_processing_internal())
+		case NOTIFICATION_INTERNAL_FIXED_PROCESS: {
+			if (timer_process_mode == TIMER_PROCESS_IDLE || !is_fixed_processing_internal())
 				return;
-			time_left -= get_physics_process_delta_time();
+			time_left -= get_fixed_process_delta_time();
 
 			if (time_left < 0) {
 				if (!one_shot)
@@ -142,15 +142,15 @@ void Timer::set_timer_process_mode(TimerProcessMode p_mode) {
 
 	switch (timer_process_mode) {
 		case TIMER_PROCESS_PHYSICS:
-			if (is_physics_processing_internal()) {
-				set_physics_process_internal(false);
+			if (is_fixed_processing_internal()) {
+				set_fixed_process_internal(false);
 				set_process_internal(true);
 			}
 			break;
 		case TIMER_PROCESS_IDLE:
 			if (is_processing_internal()) {
 				set_process_internal(false);
-				set_physics_process_internal(true);
+				set_fixed_process_internal(true);
 			}
 			break;
 	}
@@ -164,7 +164,7 @@ Timer::TimerProcessMode Timer::get_timer_process_mode() const {
 
 void Timer::_set_process(bool p_process, bool p_force) {
 	switch (timer_process_mode) {
-		case TIMER_PROCESS_PHYSICS: set_physics_process_internal(p_process && !paused); break;
+		case TIMER_PROCESS_PHYSICS: set_fixed_process_internal(p_process && !paused); break;
 		case TIMER_PROCESS_IDLE: set_process_internal(p_process && !paused); break;
 	}
 	processing = p_process;

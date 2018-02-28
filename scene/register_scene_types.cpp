@@ -98,8 +98,6 @@
 #include "scene/gui/tree.h"
 #include "scene/gui/viewport_container.h"
 #include "scene/main/canvas_layer.h"
-#include "scene/main/instance_placeholder.h"
-#include "scene/main/resource_preloader.h"
 #include "scene/main/scene_tree.h"
 #include "scene/main/timer.h"
 #include "scene/main/viewport.h"
@@ -163,14 +161,12 @@ void register_scene_types() {
 	ClassDB::register_class<Object>();
 
 	ClassDB::register_class<Node>();
-	ClassDB::register_virtual_class<InstancePlaceholder>();
 
 	ClassDB::register_class<Viewport>();
 	ClassDB::register_class<ViewportTexture>();
 	ClassDB::register_class<Timer>();
 	ClassDB::register_class<CanvasLayer>();
 	ClassDB::register_class<CanvasModulate>();
-	ClassDB::register_class<ResourcePreloader>();
 
 	/* REGISTER GUI */
 	ClassDB::register_class<ButtonGroup>();

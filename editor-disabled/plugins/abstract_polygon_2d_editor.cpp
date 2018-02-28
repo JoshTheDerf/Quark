@@ -206,7 +206,7 @@ void AbstractPolygon2DEditor::_notification(int p_what) {
 			create_resource->connect("confirmed", this, "_create_resource");
 
 		} break;
-		case NOTIFICATION_PHYSICS_PROCESS: {
+		case NOTIFICATION_FIXED_PROCESS: {
 
 		} break;
 	}

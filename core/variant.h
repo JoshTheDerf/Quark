@@ -41,7 +41,6 @@
 #include "dictionary.h"
 #include "dvector.h"
 #include "face3.h"
-#include "io/ip_address.h"
 #include "math_2d.h"
 #include "matrix3.h"
 #include "node_path.h"
@@ -228,8 +227,6 @@ public:
 	operator Margin() const;
 	operator Orientation() const;
 
-	operator IP_Address() const;
-
 	Variant(bool p_bool);
 	Variant(signed int p_int); // real one
 	Variant(unsigned int p_int);
@@ -287,8 +284,6 @@ public:
 	Variant(const Vector<RID> &p_array); // helper
 	Variant(const Vector<Vector2> &p_array); // helper
 	Variant(const PoolVector<Vector2> &p_array); // helper
-
-	Variant(const IP_Address &p_address);
 
 	// If this changes the table in variant_op must be updated
 	enum Operator {

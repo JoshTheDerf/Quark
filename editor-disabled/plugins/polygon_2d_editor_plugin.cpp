@@ -72,7 +72,7 @@ void Polygon2DEditor::_notification(int p_what) {
 			uv_icon_zoom->set_texture(get_icon("Zoom", "EditorIcons"));
 
 		} break;
-		case NOTIFICATION_PHYSICS_PROCESS: {
+		case NOTIFICATION_FIXED_PROCESS: {
 
 		} break;
 	}

@@ -103,7 +103,7 @@ private:
 	Viewport *root;
 
 	uint64_t tree_version;
-	float physics_process_time;
+	float fixed_process_time;
 	float idle_process_time;
 	bool accept_quit;
 	bool quit_on_go_back;
@@ -321,7 +321,7 @@ public:
 
 	void set_input_as_handled();
 	bool is_input_handled();
-	_FORCE_INLINE_ float get_physics_process_time() const { return physics_process_time; }
+	_FORCE_INLINE_ float get_fixed_process_time() const { return fixed_process_time; }
 	_FORCE_INLINE_ float get_idle_process_time() const { return idle_process_time; }
 
 #ifdef TOOLS_ENABLED

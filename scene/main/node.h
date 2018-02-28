@@ -110,10 +110,10 @@ private:
 
 		// variables used to properly sort the node when processing, ignored otherwise
 		//should move all the stuff below to bits
-		bool physics_process;
+		bool fixed_process;
 		bool idle_process;
 
-		bool physics_process_internal;
+		bool fixed_process_internal;
 		bool idle_process_internal;
 
 		bool input;
@@ -122,7 +122,6 @@ private:
 
 		bool parent_owned;
 		bool in_constructor;
-		bool use_placeholder;
 
 		bool display_folded;
 
@@ -195,7 +194,7 @@ public:
 		NOTIFICATION_READY = 13,
 		NOTIFICATION_PAUSED = 14,
 		NOTIFICATION_UNPAUSED = 15,
-		NOTIFICATION_PHYSICS_PROCESS = 16,
+		NOTIFICATION_FIXED_PROCESS = 16,
 		NOTIFICATION_PROCESS = 17,
 		NOTIFICATION_PARENTED = 18,
 		NOTIFICATION_UNPARENTED = 19,
@@ -205,7 +204,7 @@ public:
 		NOTIFICATION_PATH_CHANGED = 23,
 		NOTIFICATION_TRANSLATION_CHANGED = 24,
 		NOTIFICATION_INTERNAL_PROCESS = 25,
-		NOTIFICATION_INTERNAL_PHYSICS_PROCESS = 26,
+		NOTIFICATION_INTERNAL_FIXED_PROCESS = 26,
 
 	};
 
@@ -281,16 +280,16 @@ public:
 	void propagate_call(const StringName &p_method, const Array &p_args = Array(), const bool p_parent_first = false);
 
 	/* PROCESSING */
-	void set_physics_process(bool p_process);
-	float get_physics_process_delta_time() const;
-	bool is_physics_processing() const;
+	void set_fixed_process(bool p_process);
+	float get_fixed_process_delta_time() const;
+	bool is_fixed_processing() const;
 
 	void set_process(bool p_idle_process);
 	float get_process_delta_time() const;
 	bool is_processing() const;
 
-	void set_physics_process_internal(bool p_process_internal);
-	bool is_physics_processing_internal() const;
+	void set_fixed_process_internal(bool p_process_internal);
+	bool is_fixed_processing_internal() const;
 
 	void set_process_internal(bool p_idle_process_internal);
 	bool is_processing_internal() const;
@@ -313,9 +312,6 @@ public:
 #endif
 
 	//Node *clone_tree() const;
-
-	void set_scene_instance_load_placeholder(bool p_enable);
-	bool get_scene_instance_load_placeholder() const;
 
 	static Vector<Variant> make_binds(VARIANT_ARG_LIST);
 

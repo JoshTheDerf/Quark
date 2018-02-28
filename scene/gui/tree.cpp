@@ -2542,7 +2542,7 @@ void Tree::_gui_input(Ref<InputEvent> p_event) {
 					if (drag_speed == 0) {
 						drag_touching_deaccel = false;
 						drag_touching = false;
-						set_physics_process(false);
+						set_fixed_process(false);
 					} else {
 
 						drag_touching_deaccel = true;
@@ -2608,7 +2608,7 @@ void Tree::_gui_input(Ref<InputEvent> p_event) {
 					break;
 
 				if (drag_touching) {
-					set_physics_process(false);
+					set_fixed_process(false);
 					drag_touching_deaccel = false;
 					drag_touching = false;
 					drag_speed = 0;
@@ -2623,7 +2623,7 @@ void Tree::_gui_input(Ref<InputEvent> p_event) {
 					drag_touching = OS::get_singleton()->has_touchscreen_ui_hint();
 					drag_touching_deaccel = false;
 					if (drag_touching) {
-						set_physics_process(true);
+						set_fixed_process(true);
 					}
 
 					if (b->get_button_index() == BUTTON_LEFT) {
@@ -2826,7 +2826,7 @@ void Tree::_notification(int p_what) {
 
 		drop_mode_flags = 0;
 		scrolling = false;
-		set_physics_process(false);
+		set_fixed_process(false);
 		update();
 	}
 	if (p_what == NOTIFICATION_DRAG_BEGIN) {
@@ -2834,23 +2834,23 @@ void Tree::_notification(int p_what) {
 		single_select_defer = NULL;
 		if (cache.scroll_speed > 0 && get_rect().has_point(get_viewport()->get_mouse_position() - get_global_position())) {
 			scrolling = true;
-			set_physics_process(true);
+			set_fixed_process(true);
 		}
 	}
-	if (p_what == NOTIFICATION_PHYSICS_PROCESS) {
+	if (p_what == NOTIFICATION_FIXED_PROCESS) {
 
 		if (drag_touching) {
 
 			if (drag_touching_deaccel) {
 
 				float pos = v_scroll->get_value();
-				pos += drag_speed * get_physics_process_delta_time();
+				pos += drag_speed * get_fixed_process_delta_time();
 
 				bool turnoff = false;
 				if (pos < 0) {
 					pos = 0;
 					turnoff = true;
-					set_physics_process(false);
+					set_fixed_process(false);
 					drag_touching = false;
 					drag_touching_deaccel = false;
 				}
@@ -2862,7 +2862,7 @@ void Tree::_notification(int p_what) {
 				v_scroll->set_value(pos);
 				float sgn = drag_speed < 0 ? -1 : 1;
 				float val = Math::abs(drag_speed);
-				val -= 1000 * get_physics_process_delta_time();
+				val -= 1000 * get_fixed_process_delta_time();
 
 				if (val < 0) {
 					turnoff = true;
@@ -2870,7 +2870,7 @@ void Tree::_notification(int p_what) {
 				drag_speed = sgn * val;
 
 				if (turnoff) {
-					set_physics_process(false);
+					set_fixed_process(false);
 					drag_touching = false;
 					drag_touching_deaccel = false;
 				}
@@ -2895,7 +2895,7 @@ void Tree::_notification(int p_what) {
 			} else {
 				point.y = 0;
 			}
-			point *= cache.scroll_speed * get_physics_process_delta_time();
+			point *= cache.scroll_speed * get_fixed_process_delta_time();
 			point += get_scroll();
 			h_scroll->set_value(point.x);
 			v_scroll->set_value(point.y);

@@ -37,7 +37,6 @@
 
 #ifdef UNIX_ENABLED
 
-#include "drivers/unix/ip_unix.h"
 #include "os/os.h"
 
 class OS_Unix : public OS {

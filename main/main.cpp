@@ -55,11 +55,7 @@
 #include "main/tests/test_main.h"
 #include "os/dir_access.h"
 #include "scene/main/viewport.h"
-#include "scene/resources/packed_scene.h"
 
-#include "core/io/file_access_pack.h"
-#include "core/io/file_access_zip.h"
-#include "core/io/stream_peer_tcp.h"
 #include "main/input_default.h"
 #include "performance.h"
 #include "translation.h"
@@ -76,10 +72,6 @@ AudioServer *audio_server = NULL;
 static MessageQueue *message_queue = NULL;
 static Performance *performance = NULL;
 
-static PackedData *packed_data = NULL;
-#ifdef MINIZIP_ENABLED
-static ZipArchive *zip_packed_data = NULL;
-#endif
 static TranslationServer *translation_server = NULL;
 
 static OS::VideoMode video_mode;
@@ -145,7 +137,6 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("  -l, --language <locale>          Use a specific locale (<locale> being a two-letter code).\n");
 	OS::get_singleton()->print("  --path <directory>               Path to a project (<directory> must contain a 'project.godot' file).\n");
 	OS::get_singleton()->print("  -u, --upwards                    Scan folders upwards for project.godot file.\n");
-	OS::get_singleton()->print("  --main-pack <file>               Path to a pack (.pck) file to load.\n");
 	OS::get_singleton()->print("  --render-thread <mode>           Render thread mode ('unsafe', 'safe', 'separate').\n");
 	OS::get_singleton()->print("  --audio-driver <driver>          Audio driver (");
 	for (int i = 0; i < OS::get_singleton()->get_audio_driver_count(); i++) {
@@ -259,11 +250,9 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 	String video_driver = "";
 	String audio_driver = "";
-	String game_path = ".";
 	bool upwards = false;
 	String debug_mode;
 	String debug_host;
-	String main_pack;
 	bool quiet_stdout = false;
 	int rtm = -1;
 
@@ -271,22 +260,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	bool use_custom_res = true;
 	bool force_res = false;
 	bool found_project = false;
-
-	packed_data = PackedData::get_singleton();
-	if (!packed_data)
-		packed_data = memnew(PackedData);
-
-#ifdef MINIZIP_ENABLED
-
-	//XXX: always get_singleton() == 0x0
-	zip_packed_data = ZipArchive::get_singleton();
-	//TODO: remove this temporary fix
-	if (!zip_packed_data) {
-		zip_packed_data = memnew(ZipArchive);
-	}
-
-	packed_data->add_pack_source(zip_packed_data);
-#endif
 
 	I = args.front();
 	while (I) {
@@ -440,8 +413,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 				String p = I->next()->get();
 				if (OS::get_singleton()->set_cwd(p) == OK) {
 					//nothing
-				} else {
-					game_path = I->next()->get(); //use game_path instead
 				}
 				N = I->next()->next();
 			} else {
@@ -463,8 +434,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 			}
 			if (OS::get_singleton()->set_cwd(path) == OK) {
 				// path already specified, don't override
-			} else {
-				game_path = path;
 			}
 		} else if (I->get() == "-b" || I->get() == "--breakpoints") { // add breakpoints
 
@@ -500,17 +469,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 				goto error;
 			}
 
-		} else if (I->get() == "--main-pack") {
-
-			if (I->next()) {
-
-				main_pack = I->next()->get();
-				N = I->next()->next();
-			} else {
-				OS::get_singleton()->print("Missing path to main pack file, aborting.\n");
-				goto error;
-			};
-
 		} else if (I->get() == "-d" || I->get() == "--debug") {
 			debug_mode = "local";
 		} else if (I->get() == "--disable-render-loop") {
@@ -526,22 +484,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		} else if (I->get() == "--disable-crash-handler") {
 			OS::get_singleton()->disable_crash_handler();
 		} else {
-
-			//test for game path
-			bool gpfound = false;
-
-			if (!I->get().begins_with("-") && game_path == "") {
-				DirAccess *da = DirAccess::open(I->get());
-				if (da != NULL) {
-					game_path = I->get();
-					gpfound = true;
-					memdelete(da);
-				}
-			}
-
-			if (!gpfound) {
-				main_args.push_back(I->get());
-			}
+			main_args.push_back(I->get());
 		}
 
 		I = N;
@@ -744,7 +687,6 @@ error:
 
 	video_driver = "";
 	audio_driver = "";
-	game_path = "";
 
 	args.clear();
 	main_args.clear();
@@ -764,17 +706,6 @@ error:
 		memdelete(engine);
 	if (script_debugger)
 		memdelete(script_debugger);
-	if (packed_data)
-		memdelete(packed_data);
-
-	// Note 1: *zip_packed_data live into *packed_data
-	// Note 2: PackedData::~PackedData destroy this.
-	/*
-#ifdef MINIZIP_ENABLED
-	if (zip_packed_data)
-		memdelete( zip_packed_data );
-#endif
-*/
 
 	unregister_core_driver_types();
 	unregister_core_types();
@@ -964,19 +895,14 @@ bool Main::start() {
 	String doc_tool;
 	List<String> removal_docs;
 	bool doc_base = true;
-	String game_path;
 	String script;
 	String test;
-	String _export_preset;
-	bool export_debug = false;
 
 	List<String> args = OS::get_singleton()->get_cmdline_args();
 	for (int i = 0; i < args.size(); i++) {
 		//parameters that do not have an argument to the right
 		if (args[i] == "--no-docbase") {
 			doc_base = false;
-		} else if (args[i].length() && args[i][0] != '-' && game_path == "") {
-			game_path = args[i];
 		}
 		//parameters that have an argument to the right
 		else if (i < (args.size() - 1)) {
@@ -1002,21 +928,6 @@ bool Main::start() {
 	}
 
 	String main_loop_type;
-
-	if (_export_preset != "") {
-		if (game_path == "") {
-			String err = "Command line param ";
-			err += export_debug ? "--export-debug" : "--export";
-			err += " passed but no destination path given.\n";
-			err += "Please specify the binary's file path to export to. Aborting export.";
-			ERR_PRINT(err.utf8().get_data());
-			return false;
-		}
-	}
-
-	if (script == "" && game_path == "" && String(GLOBAL_DEF("application/run/main_scene", "")) != "") {
-		game_path = GLOBAL_DEF("application/run/main_scene", "");
-	}
 
 	MainLoop *main_loop = NULL;
 
@@ -1137,146 +1048,6 @@ bool Main::start() {
 
 		bool font_oversampling = GLOBAL_DEF("rendering/quality/dynamic_fonts/use_oversampling", false);
 		sml->set_use_font_oversampling(font_oversampling);
-
-		String local_game_path;
-		if (game_path != "") {
-
-			local_game_path = game_path.replace("\\", "/");
-
-			if (!local_game_path.begins_with("res://")) {
-				bool absolute = (local_game_path.size() > 1) && (local_game_path[0] == '/' || local_game_path[1] == ':');
-
-				if (!absolute) {
-
-					if (ProjectSettings::get_singleton()->is_using_datapack()) {
-
-						local_game_path = "res://" + local_game_path;
-
-					} else {
-						int sep = local_game_path.find_last("/");
-
-						if (sep == -1) {
-							DirAccess *da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
-							local_game_path = da->get_current_dir() + "/" + local_game_path;
-							memdelete(da);
-						} else {
-
-							DirAccess *da = DirAccess::open(local_game_path.substr(0, sep));
-							if (da) {
-								local_game_path = da->get_current_dir() + "/" + local_game_path.substr(sep + 1, local_game_path.length());
-								memdelete(da);
-							}
-						}
-					}
-				}
-			}
-
-			local_game_path = ProjectSettings::get_singleton()->localize_path(local_game_path);
-		}
-
-		if (game_path != "" || script != "") {
-			//autoload
-			List<PropertyInfo> props;
-			ProjectSettings::get_singleton()->get_property_list(&props);
-
-			//first pass, add the constants so they exist before any script is loaded
-			for (List<PropertyInfo>::Element *E = props.front(); E; E = E->next()) {
-
-				String s = E->get().name;
-				if (!s.begins_with("autoload/"))
-					continue;
-				String name = s.get_slicec('/', 1);
-				String path = ProjectSettings::get_singleton()->get(s);
-				bool global_var = false;
-				if (path.begins_with("*")) {
-					global_var = true;
-				}
-
-				if (global_var) {
-					for (int i = 0; i < ScriptServer::get_language_count(); i++) {
-						ScriptServer::get_language(i)->add_global_constant(name, Variant());
-					}
-				}
-			}
-
-			//second pass, load into global constants
-			List<Node *> to_add;
-			for (List<PropertyInfo>::Element *E = props.front(); E; E = E->next()) {
-
-				String s = E->get().name;
-				if (!s.begins_with("autoload/"))
-					continue;
-				String name = s.get_slicec('/', 1);
-				String path = ProjectSettings::get_singleton()->get(s);
-				bool global_var = false;
-				if (path.begins_with("*")) {
-					global_var = true;
-					path = path.substr(1, path.length() - 1);
-				}
-
-				RES res = ResourceLoader::load(path);
-				ERR_EXPLAIN("Can't autoload: " + path);
-				ERR_CONTINUE(res.is_null());
-				Node *n = NULL;
-				if (res->is_class("PackedScene")) {
-					Ref<PackedScene> ps = res;
-					n = ps->instance();
-				} else if (res->is_class("Script")) {
-					Ref<Script> s = res;
-					StringName ibt = s->get_instance_base_type();
-					bool valid_type = ClassDB::is_parent_class(ibt, "Node");
-					ERR_EXPLAIN("Script does not inherit a Node: " + path);
-					ERR_CONTINUE(!valid_type);
-
-					Object *obj = ClassDB::instance(ibt);
-
-					ERR_EXPLAIN("Cannot instance script for autoload, expected 'Node' inheritance, got: " + String(ibt));
-					ERR_CONTINUE(obj == NULL);
-
-					n = Object::cast_to<Node>(obj);
-					n->set_script(s.get_ref_ptr());
-				}
-
-				ERR_EXPLAIN("Path in autoload not a node or script: " + path);
-				ERR_CONTINUE(!n);
-				n->set_name(name);
-
-				//defer so references are all valid on _ready()
-				to_add.push_back(n);
-
-				if (global_var) {
-					for (int i = 0; i < ScriptServer::get_language_count(); i++) {
-						ScriptServer::get_language(i)->add_global_constant(name, n);
-					}
-				}
-			}
-
-			for (List<Node *>::Element *E = to_add.front(); E; E = E->next()) {
-
-				sml->get_root()->add_child(E->get());
-			}
-		}
-
-		if (game_path != "") {
-			Node *scene = NULL;
-			Ref<PackedScene> scenedata = ResourceLoader::load(local_game_path);
-			if (scenedata.is_valid())
-				scene = scenedata->instance();
-
-			ERR_EXPLAIN("Failed loading scene: " + local_game_path);
-			ERR_FAIL_COND_V(!scene, false)
-			sml->add_current_scene(scene);
-
-			String iconpath = GLOBAL_DEF("application/config/icon", "Variant()");
-			if (iconpath != "") {
-				Ref<Image> icon;
-				icon.instance();
-				if (icon->load(iconpath) == OK) {
-					OS::get_singleton()->set_icon(icon);
-					hasicon = true;
-				}
-			}
-		}
 	}
 
 	if (!hasicon) {
@@ -1470,8 +1241,6 @@ void Main::cleanup() {
 
 	OS::get_singleton()->finalize();
 
-	if (packed_data)
-		memdelete(packed_data);
 	if (performance)
 		memdelete(performance);
 	if (input_map)

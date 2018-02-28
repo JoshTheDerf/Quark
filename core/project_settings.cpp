@@ -528,12 +528,6 @@ ProjectSettings::ProjectSettings() {
 
 	GLOBAL_DEF("debug/settings/profiler/max_functions", 16384);
 
-	Compression::zlib_level = GLOBAL_DEF("compression/formats/zlib/compression_level", Z_DEFAULT_COMPRESSION);
-	custom_prop_info["compression/formats/zlib/compression_level"] = PropertyInfo(Variant::INT, "compression/formats/zlib/compression_level", PROPERTY_HINT_RANGE, "-1,9,1");
-
-	Compression::gzip_level = GLOBAL_DEF("compression/formats/gzip/compression_level", Z_DEFAULT_COMPRESSION);
-	custom_prop_info["compression/formats/gzip/compression_level"] = PropertyInfo(Variant::INT, "compression/formats/gzip/compression_level", PROPERTY_HINT_RANGE, "-1,9,1");
-
 	using_datapack = false;
 }
 

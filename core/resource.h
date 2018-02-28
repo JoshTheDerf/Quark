@@ -73,7 +73,6 @@ class Resource : public Reference {
 #endif
 
 	bool local_to_scene;
-	friend class SceneState;
 	Node *local_scene;
 
 	SelfList<Resource> remapped_list;

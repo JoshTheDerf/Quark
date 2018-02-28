@@ -30,9 +30,6 @@
 
 #include "instance_placeholder.h"
 
-#include "io/resource_loader.h"
-#include "scene/resources/packed_scene.h"
-
 bool InstancePlaceholder::_set(const StringName &p_name, const Variant &p_value) {
 
 	PropSet ps;
@@ -73,36 +70,6 @@ String InstancePlaceholder::get_instance_path() const {
 
 	return path;
 }
-void InstancePlaceholder::replace_by_instance(const Ref<PackedScene> &p_custom_scene) {
-
-	ERR_FAIL_COND(!is_inside_tree());
-
-	Node *base = get_parent();
-	if (!base)
-		return;
-
-	Ref<PackedScene> ps;
-	if (p_custom_scene.is_valid())
-		ps = p_custom_scene;
-	else
-		ps = ResourceLoader::load(path, "PackedScene");
-
-	if (!ps.is_valid())
-		return;
-	Node *scene = ps->instance();
-	scene->set_name(get_name());
-	int pos = get_position_in_parent();
-
-	for (List<PropSet>::Element *E = stored_values.front(); E; E = E->next()) {
-		scene->set(E->get().name, E->get().value);
-	}
-
-	queue_delete();
-
-	base->remove_child(this);
-	base->add_child(scene);
-	base->move_child(scene, pos);
-}
 
 Dictionary InstancePlaceholder::get_stored_values(bool p_with_order) {
 
@@ -124,7 +91,6 @@ Dictionary InstancePlaceholder::get_stored_values(bool p_with_order) {
 void InstancePlaceholder::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_stored_values", "with_order"), &InstancePlaceholder::get_stored_values, DEFVAL(false));
-	ClassDB::bind_method(D_METHOD("replace_by_instance", "custom_scene"), &InstancePlaceholder::replace_by_instance, DEFVAL(Variant()));
 	ClassDB::bind_method(D_METHOD("get_instance_path"), &InstancePlaceholder::get_instance_path);
 }
 

@@ -32,7 +32,6 @@
 
 #include "core/project_settings.h"
 #include "geometry.h"
-#include "io/file_access_compressed.h"
 #include "io/marshalls.h"
 #include "os/keyboard.h"
 #include "os/os.h"
@@ -162,7 +161,6 @@ void _ResourceSaver::_bind_methods() {
 	BIND_ENUM_CONSTANT(FLAG_CHANGE_PATH);
 	BIND_ENUM_CONSTANT(FLAG_OMIT_EDITOR_PROPERTIES);
 	BIND_ENUM_CONSTANT(FLAG_SAVE_BIG_ENDIAN);
-	BIND_ENUM_CONSTANT(FLAG_COMPRESS);
 }
 
 _ResourceSaver::_ResourceSaver() {
@@ -1440,23 +1438,6 @@ _Geometry::_Geometry() {
 
 ///////////////////////// FILE
 
-Error _File::open_compressed(const String &p_path, int p_mode_flags, int p_compress_mode) {
-
-	FileAccessCompressed *fac = memnew(FileAccessCompressed);
-
-	fac->configure("GCPF", (Compression::Mode)p_compress_mode);
-
-	Error err = fac->_open(p_path, p_mode_flags);
-
-	if (err) {
-		memdelete(fac);
-		return err;
-	}
-
-	f = fac;
-	return OK;
-}
-
 Error _File::open(const String &p_path, int p_mode_flags) {
 
 	close();
@@ -1760,8 +1741,6 @@ uint64_t _File::get_modified_time(const String &p_file) const {
 
 void _File::_bind_methods() {
 
-	ClassDB::bind_method(D_METHOD("open_compressed", "path", "mode_flags", "compression_mode"), &_File::open_compressed, DEFVAL(0));
-
 	ClassDB::bind_method(D_METHOD("open", "path", "flags"), &_File::open);
 	ClassDB::bind_method(D_METHOD("close"), &_File::close);
 	ClassDB::bind_method(D_METHOD("is_open"), &_File::is_open);
@@ -1812,10 +1791,6 @@ void _File::_bind_methods() {
 	BIND_ENUM_CONSTANT(WRITE);
 	BIND_ENUM_CONSTANT(READ_WRITE);
 	BIND_ENUM_CONSTANT(WRITE_READ);
-
-	BIND_ENUM_CONSTANT(COMPRESSION_FASTLZ);
-	BIND_ENUM_CONSTANT(COMPRESSION_DEFLATE);
-	BIND_ENUM_CONSTANT(COMPRESSION_GZIP);
 }
 
 _File::_File() {

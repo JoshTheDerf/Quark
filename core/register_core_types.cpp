@@ -39,8 +39,6 @@
 #include "input_map.h"
 #include "io/config_file.h"
 #include "io/marshalls.h"
-#include "io/pck_packer.h"
-#include "io/resource_format_binary.h"
 #include "io/resource_import.h"
 #include "io/tcp_server.h"
 #include "math/a_star.h"
@@ -51,8 +49,6 @@
 #include "path_remap.h"
 #include "project_settings.h"
 #include "undo_redo.h"
-static ResourceFormatSaverBinary *resource_saver_binary = NULL;
-static ResourceFormatLoaderBinary *resource_loader_binary = NULL;
 static ResourceFormatImporter *resource_format_importer = NULL;
 
 static _ResourceLoader *_resource_loader = NULL;
@@ -87,11 +83,6 @@ void register_core_types() {
 	register_variant_methods();
 
 	CoreStringNames::create();
-
-	resource_saver_binary = memnew(ResourceFormatSaverBinary);
-	ResourceSaver::add_resource_format_saver(resource_saver_binary);
-	resource_loader_binary = memnew(ResourceFormatLoaderBinary);
-	ResourceLoader::add_resource_format_loader(resource_loader_binary);
 
 	resource_format_importer = memnew(ResourceFormatImporter);
 	ResourceLoader::add_resource_format_loader(resource_format_importer);
@@ -140,8 +131,6 @@ void register_core_types() {
 	ClassDB::register_class<_Semaphore>();
 
 	ClassDB::register_class<ConfigFile>();
-
-	ClassDB::register_class<PCKPacker>();
 
 	ClassDB::register_class<PackedDataContainer>();
 	ClassDB::register_virtual_class<PackedDataContainerRef>();
@@ -201,10 +190,6 @@ void unregister_core_types() {
 
 	memdelete(_geometry);
 
-	if (resource_saver_binary)
-		memdelete(resource_saver_binary);
-	if (resource_loader_binary)
-		memdelete(resource_loader_binary);
 	if (resource_format_importer)
 		memdelete(resource_format_importer);
 

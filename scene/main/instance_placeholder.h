@@ -60,8 +60,6 @@ public:
 
 	Dictionary get_stored_values(bool p_with_order = false);
 
-	void replace_by_instance(const Ref<PackedScene> &p_custom_scene = Ref<PackedScene>());
-
 	InstancePlaceholder();
 };
 

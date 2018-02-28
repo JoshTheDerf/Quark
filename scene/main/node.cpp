@@ -35,7 +35,6 @@
 #include "io/resource_loader.h"
 #include "message_queue.h"
 #include "print_string.h"
-#include "scene/resources/packed_scene.h"
 #include "scene/scene_string_names.h"
 #include "viewport.h"
 
@@ -1494,26 +1493,6 @@ HashMap<NodePath, int> Node::get_editable_instances() const {
 	return data.editable_instances;
 }
 
-void Node::set_scene_instance_state(const Ref<SceneState> &p_state) {
-
-	data.instance_state = p_state;
-}
-
-Ref<SceneState> Node::get_scene_instance_state() const {
-
-	return data.instance_state;
-}
-
-void Node::set_scene_inherited_state(const Ref<SceneState> &p_state) {
-
-	data.inherited_state = p_state;
-}
-
-Ref<SceneState> Node::get_scene_inherited_state() const {
-
-	return data.inherited_state;
-}
-
 void Node::set_scene_instance_load_placeholder(bool p_enable) {
 
 	data.use_placeholder = p_enable;
@@ -1541,16 +1520,6 @@ Node *Node::_duplicate(int p_flags, Map<const Node *, Node *> *r_duplimap) const
 		InstancePlaceholder *nip = memnew(InstancePlaceholder);
 		nip->set_instance_path(ip->get_instance_path());
 		node = nip;
-
-	} else if ((p_flags & DUPLICATE_USE_INSTANCING) && get_filename() != String()) {
-
-		Ref<PackedScene> res = ResourceLoader::load(get_filename());
-		ERR_FAIL_COND_V(res.is_null(), NULL);
-		PackedScene::GenEditState ges = PackedScene::GEN_EDIT_STATE_DISABLED;
-		node = res->instance(ges);
-		ERR_FAIL_COND_V(!node, NULL);
-
-		instanced = true;
 
 	} else {
 
@@ -1715,23 +1684,14 @@ void Node::_duplicate_and_reown(Node *p_new_parent, const Map<Node *, Node *> &p
 
 	Node *node = NULL;
 
-	if (get_filename() != "") {
-
-		Ref<PackedScene> res = ResourceLoader::load(get_filename());
-		ERR_FAIL_COND(res.is_null());
-		node = res->instance();
-		ERR_FAIL_COND(!node);
-	} else {
-
-		Object *obj = ClassDB::instance(get_class());
-		if (!obj) {
-			print_line("could not duplicate: " + String(get_class()));
-		}
-		ERR_FAIL_COND(!obj);
-		node = Object::cast_to<Node>(obj);
-		if (!node)
-			memdelete(obj);
+	Object *obj = ClassDB::instance(get_class());
+	if (!obj) {
+		print_line("could not duplicate: " + String(get_class()));
 	}
+	ERR_FAIL_COND(!obj);
+	node = Object::cast_to<Node>(obj);
+	if (!node)
+		memdelete(obj);
 
 	List<PropertyInfo> plist;
 

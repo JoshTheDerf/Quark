@@ -96,7 +96,6 @@
 #include "scene/gui/texture_rect.h"
 #include "scene/gui/tool_button.h"
 #include "scene/gui/tree.h"
-#include "scene/gui/video_player.h"
 #include "scene/gui/viewport_container.h"
 #include "scene/main/canvas_layer.h"
 #include "scene/main/instance_placeholder.h"
@@ -113,22 +112,16 @@
 #include "scene/resources/material.h"
 #include "scene/resources/mesh.h"
 #include "scene/resources/mesh_data_tool.h"
-#include "scene/resources/packed_scene.h"
 #include "scene/resources/polygon_path_finder.h"
 #include "scene/resources/primitive_meshes.h"
-#include "scene/resources/scene_format_text.h"
 #include "scene/resources/shader_graph.h"
 #include "scene/resources/sky_box.h"
 #include "scene/resources/surface_tool.h"
 #include "scene/resources/texture.h"
-#include "scene/resources/video_stream.h"
 #include "scene/resources/world_2d.h"
 #include "scene/scene_string_names.h"
 
 static ResourceFormatLoaderTheme *resource_loader_theme = NULL;
-
-static ResourceFormatSaverText *resource_saver_text = NULL;
-static ResourceFormatLoaderText *resource_loader_text = NULL;
 
 static ResourceFormatLoaderDynamicFont *resource_loader_dynamic_font = NULL;
 
@@ -155,12 +148,6 @@ void register_scene_types() {
 
 	resource_loader_theme = memnew(ResourceFormatLoaderTheme);
 	ResourceLoader::add_resource_format_loader(resource_loader_theme);
-
-	resource_saver_text = memnew(ResourceFormatSaverText);
-	ResourceSaver::add_resource_format_saver(resource_saver_text, true);
-
-	resource_loader_text = memnew(ResourceFormatLoaderText);
-	ResourceLoader::add_resource_format_loader(resource_loader_text, true);
 
 	resource_saver_shader = memnew(ResourceFormatSaverShader);
 	ResourceSaver::add_resource_format_saver(resource_saver_shader, true);
@@ -262,7 +249,6 @@ void register_scene_types() {
 	ClassDB::register_class<WindowDialog>();
 	ClassDB::register_class<AcceptDialog>();
 	ClassDB::register_class<ConfirmationDialog>();
-	ClassDB::register_class<VideoPlayer>();
 	ClassDB::register_class<MarginContainer>();
 	ClassDB::register_class<ViewportContainer>();
 
@@ -351,7 +337,6 @@ void register_scene_types() {
 	OS::get_singleton()->yield(); //may take time to init
 
 	ClassDB::register_class<AudioStreamPlayer>();
-	ClassDB::register_virtual_class<VideoStream>();
 	ClassDB::register_class<AudioStreamSample>();
 
 	OS::get_singleton()->yield(); //may take time to init
@@ -361,9 +346,6 @@ void register_scene_types() {
 	ClassDB::register_class<PathFollow2D>();
 
 	OS::get_singleton()->yield(); //may take time to init
-
-	ClassDB::register_virtual_class<SceneState>();
-	ClassDB::register_class<PackedScene>();
 
 	ClassDB::register_class<SceneTree>();
 	ClassDB::register_virtual_class<SceneTreeTimer>(); //sorry, you can't create it
@@ -415,13 +397,6 @@ void unregister_scene_types() {
 	memdelete(resource_loader_theme);
 
 	DynamicFont::finish_dynamic_fonts();
-
-	if (resource_saver_text) {
-		memdelete(resource_saver_text);
-	}
-	if (resource_loader_text) {
-		memdelete(resource_loader_text);
-	}
 
 	if (resource_saver_shader) {
 		memdelete(resource_saver_shader);

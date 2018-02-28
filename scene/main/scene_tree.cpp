@@ -41,7 +41,6 @@
 #include "scene/resources/dynamic_font.h"
 #include "scene/resources/material.h"
 #include "scene/resources/mesh.h"
-#include "scene/resources/packed_scene.h"
 #include "scene/scene_string_names.h"
 #include "viewport.h"
 
@@ -1148,7 +1147,7 @@ Node *SceneTree::get_current_scene() const {
 	return current_scene;
 }
 
-void SceneTree::_change_scene(Node *p_to) {
+void SceneTree::change_scene(Node *p_to) {
 
 	if (current_scene) {
 		memdelete(current_scene);
@@ -1161,30 +1160,11 @@ void SceneTree::_change_scene(Node *p_to) {
 	}
 }
 
-Error SceneTree::change_scene(const String &p_path) {
-
-	Ref<PackedScene> new_scene = ResourceLoader::load(p_path);
-	if (new_scene.is_null())
-		return ERR_CANT_OPEN;
-
-	return change_scene_to(new_scene);
-}
-Error SceneTree::change_scene_to(const Ref<PackedScene> &p_scene) {
-
-	Node *new_scene = NULL;
-	if (p_scene.is_valid()) {
-		new_scene = p_scene->instance();
-		ERR_FAIL_COND_V(!new_scene, ERR_CANT_CREATE);
-	}
-
-	call_deferred("_change_scene", new_scene);
-	return OK;
-}
 Error SceneTree::reload_current_scene() {
 
 	ERR_FAIL_COND_V(!current_scene, ERR_UNCONFIGURED);
-	String fname = current_scene->get_filename();
-	return change_scene(fname);
+	change_scene(current_scene);
+	return OK;
 }
 
 void SceneTree::add_current_scene(Node *p_current) {
@@ -1344,38 +1324,7 @@ void SceneTree::_live_edit_create_node_func(const NodePath &p_parent, const Stri
 		n2->add_child(no);
 	}
 }
-void SceneTree::_live_edit_instance_node_func(const NodePath &p_parent, const String &p_path, const String &p_name) {
 
-	Ref<PackedScene> ps = ResourceLoader::load(p_path);
-
-	if (!ps.is_valid())
-		return;
-
-	Node *base = NULL;
-	if (root->has_node(live_edit_root))
-		base = root->get_node(live_edit_root);
-
-	Map<String, Set<Node *> >::Element *E = live_scene_edit_cache.find(live_edit_scene);
-	if (!E)
-		return; //scene not editable
-
-	for (Set<Node *>::Element *F = E->get().front(); F; F = F->next()) {
-
-		Node *n = F->get();
-
-		if (base && !base->is_a_parent_of(n))
-			continue;
-
-		if (!n->has_node(p_parent))
-			continue;
-		Node *n2 = n->get_node(p_parent);
-
-		Node *no = ps->instance();
-		no->set_name(p_name);
-
-		n2->add_child(no);
-	}
-}
 void SceneTree::_live_edit_remove_node_func(const NodePath &p_at) {
 
 	Node *base = NULL;
@@ -1616,12 +1565,9 @@ void SceneTree::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_current_scene", "child_node"), &SceneTree::set_current_scene);
 	ClassDB::bind_method(D_METHOD("get_current_scene"), &SceneTree::get_current_scene);
 
-	ClassDB::bind_method(D_METHOD("change_scene", "path"), &SceneTree::change_scene);
-	ClassDB::bind_method(D_METHOD("change_scene_to", "packed_scene"), &SceneTree::change_scene_to);
+	ClassDB::bind_method(D_METHOD("change_scene", "node"), &SceneTree::change_scene);
 
 	ClassDB::bind_method(D_METHOD("reload_current_scene"), &SceneTree::reload_current_scene);
-
-	ClassDB::bind_method(D_METHOD("_change_scene"), &SceneTree::_change_scene);
 
 	ClassDB::bind_method(D_METHOD("set_use_font_oversampling", "enable"), &SceneTree::set_use_font_oversampling);
 	ClassDB::bind_method(D_METHOD("is_using_font_oversampling"), &SceneTree::is_using_font_oversampling);
@@ -1773,7 +1719,6 @@ SceneTree::SceneTree() {
 	live_edit_funcs.root_func = _live_edit_root_funcs;
 
 	live_edit_funcs.tree_create_node_func = _live_edit_create_node_funcs;
-	live_edit_funcs.tree_instance_node_func = _live_edit_instance_node_funcs;
 	live_edit_funcs.tree_remove_node_func = _live_edit_remove_node_funcs;
 	live_edit_funcs.tree_remove_and_keep_node_func = _live_edit_remove_and_keep_node_funcs;
 	live_edit_funcs.tree_restore_node_func = _live_edit_restore_node_funcs;

@@ -38,7 +38,6 @@
 #include "os/os.h"
 
 #include "scene/main/scene_tree.h"
-#include "scene/resources/scene_format_text.h"
 
 #include <stdlib.h>
 
@@ -1302,39 +1301,4 @@ void NativeScriptLanguage::thread_exit() {
 
 void NativeReloadNode::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_notification"), &NativeReloadNode::_notification);
-}
-
-RES ResourceFormatLoaderNativeScript::load(const String &p_path, const String &p_original_path, Error *r_error) {
-	ResourceFormatLoaderText rsflt;
-	return rsflt.load(p_path, p_original_path, r_error);
-}
-
-void ResourceFormatLoaderNativeScript::get_recognized_extensions(List<String> *p_extensions) const {
-	p_extensions->push_back("qns");
-}
-
-bool ResourceFormatLoaderNativeScript::handles_type(const String &p_type) const {
-	return (p_type == "Script" || p_type == "NativeScript");
-}
-
-String ResourceFormatLoaderNativeScript::get_resource_type(const String &p_path) const {
-	String el = p_path.get_extension().to_lower();
-	if (el == "qns")
-		return "NativeScript";
-	return "";
-}
-
-Error ResourceFormatSaverNativeScript::save(const String &p_path, const RES &p_resource, uint32_t p_flags) {
-	ResourceFormatSaverText rfst;
-	return rfst.save(p_path, p_resource, p_flags);
-}
-
-bool ResourceFormatSaverNativeScript::recognize(const RES &p_resource) const {
-	return Object::cast_to<NativeScript>(*p_resource) != NULL;
-}
-
-void ResourceFormatSaverNativeScript::get_recognized_extensions(const RES &p_resource, List<String> *p_extensions) const {
-	if (Object::cast_to<NativeScript>(*p_resource)) {
-		p_extensions->push_back("qns");
-	}
 }

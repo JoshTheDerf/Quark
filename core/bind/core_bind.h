@@ -32,7 +32,6 @@
 #define CORE_BIND_H
 
 #include "image.h"
-#include "io/compression.h"
 #include "io/resource_loader.h"
 #include "io/resource_saver.h"
 #include "os/dir_access.h"
@@ -75,7 +74,6 @@ public:
 		FLAG_CHANGE_PATH = 4,
 		FLAG_OMIT_EDITOR_PROPERTIES = 8,
 		FLAG_SAVE_BIG_ENDIAN = 16,
-		FLAG_COMPRESS = 32,
 	};
 
 	static _ResourceSaver *get_singleton() { return singleton; }
@@ -394,14 +392,6 @@ public:
 		WRITE_READ = 7,
 	};
 
-	enum CompressionMode {
-		COMPRESSION_FASTLZ = Compression::MODE_FASTLZ,
-		COMPRESSION_DEFLATE = Compression::MODE_DEFLATE,
-		COMPRESSION_GZIP = Compression::MODE_GZIP
-	};
-
-	Error open_compressed(const String &p_path, int p_mode_flags, int p_compress_mode = 0);
-
 	Error open(const String &p_path, int p_mode_flags); ///< open a file
 	void close(); ///< close a file
 	bool is_open() const; ///< true when file is open
@@ -470,7 +460,6 @@ public:
 };
 
 VARIANT_ENUM_CAST(_File::ModeFlags);
-VARIANT_ENUM_CAST(_File::CompressionMode);
 
 class _Directory : public Reference {
 

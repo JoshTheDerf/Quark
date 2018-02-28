@@ -30,17 +30,11 @@
 
 #include "register_types.h"
 
-#include "io/resource_loader.h"
-#include "io/resource_saver.h"
-
 #include "nativescript.h"
 
 #include "core/os/os.h"
 
 NativeScriptLanguage *native_script_language;
-
-ResourceFormatLoaderNativeScript *resource_loader_qns = NULL;
-ResourceFormatSaverNativeScript *resource_saver_qns = NULL;
 
 void register_nativescript_types() {
 	native_script_language = memnew(NativeScriptLanguage);
@@ -49,19 +43,9 @@ void register_nativescript_types() {
 
 	native_script_language->set_language_index(ScriptServer::get_language_count());
 	ScriptServer::register_language(native_script_language);
-
-	resource_saver_qns = memnew(ResourceFormatSaverNativeScript);
-	ResourceSaver::add_resource_format_saver(resource_saver_qns);
-
-	resource_loader_qns = memnew(ResourceFormatLoaderNativeScript);
-	ResourceLoader::add_resource_format_loader(resource_loader_qns);
 }
 
 void unregister_nativescript_types() {
-
-	memdelete(resource_loader_qns);
-
-	memdelete(resource_saver_qns);
 
 	if (native_script_language) {
 		ScriptServer::unregister_language(native_script_language);

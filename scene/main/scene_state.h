@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  packed_scene.h                                                       */
+/*  scene_state.h                                                        */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,8 +28,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef PACKED_SCENE_H
-#define PACKED_SCENE_H
+#ifndef SCENE_STATE_H
+#define SCENE_STATE_H
 
 #include "resource.h"
 #include "scene/main/node.h"
@@ -151,7 +151,6 @@ public:
 	StringName get_node_name(int p_idx) const;
 	NodePath get_node_path(int p_idx, bool p_for_parent = false) const;
 	NodePath get_node_owner_path(int p_idx) const;
-	Ref<PackedScene> get_node_instance(int p_idx) const;
 	String get_node_instance_placeholder(int p_idx) const;
 	bool is_node_instance_placeholder(int p_idx) const;
 	Vector<StringName> get_node_groups(int p_idx) const;
@@ -193,48 +192,5 @@ public:
 };
 
 VARIANT_ENUM_CAST(SceneState::GenEditState)
-
-class PackedScene : public Resource {
-
-	GDCLASS(PackedScene, Resource);
-	RES_BASE_EXTENSION("scn");
-
-	Ref<SceneState> state;
-
-	void _set_bundled_scene(const Dictionary &p_scene);
-	Dictionary _get_bundled_scene() const;
-
-protected:
-	virtual bool editor_can_reload_from_file() { return false; } // this is handled by editor better
-	static void _bind_methods();
-
-public:
-	enum GenEditState {
-		GEN_EDIT_STATE_DISABLED,
-		GEN_EDIT_STATE_INSTANCE,
-		GEN_EDIT_STATE_MAIN,
-	};
-
-	Error pack(Node *p_scene);
-
-	void clear();
-
-	bool can_instance() const;
-	Node *instance(GenEditState p_edit_state = GEN_EDIT_STATE_DISABLED) const;
-
-	void recreate_state();
-	void replace_state(Ref<SceneState> p_by);
-
-	virtual void set_path(const String &p_path, bool p_take_over = false);
-#ifdef TOOLS_ENABLED
-	virtual void set_last_modified_time(uint64_t p_time) { state->set_last_modified_time(p_time); }
-
-#endif
-	Ref<SceneState> get_state();
-
-	PackedScene();
-};
-
-VARIANT_ENUM_CAST(PackedScene::GenEditState)
 
 #endif // SCENE_PRELOADER_H

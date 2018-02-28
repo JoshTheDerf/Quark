@@ -37,10 +37,10 @@
 #include "object.h"
 #include "project_settings.h"
 #include "scene/main/scene_tree.h"
+#include "scene/main/scene_state.h"
 #include "script_language.h"
 
 class Viewport;
-class SceneState;
 class Node : public Object {
 
 	GDCLASS(Node, Object);
@@ -81,8 +81,6 @@ private:
 	struct Data {
 
 		String filename;
-		Ref<SceneState> instance_state;
-		Ref<SceneState> inherited_state;
 
 		HashMap<NodePath, int> editable_instances;
 
@@ -183,8 +181,6 @@ protected:
 
 	static void _bind_methods();
 	static String _get_name_num_separator();
-
-	friend class SceneState;
 
 	void _add_child_nocheck(Node *p_child, const StringName &p_name);
 	void _set_owner_nocheck(Node *p_owner);
@@ -317,13 +313,6 @@ public:
 #endif
 
 	//Node *clone_tree() const;
-
-	// used by editors, to save what has changed only
-	void set_scene_instance_state(const Ref<SceneState> &p_state);
-	Ref<SceneState> get_scene_instance_state() const;
-
-	void set_scene_inherited_state(const Ref<SceneState> &p_state);
-	Ref<SceneState> get_scene_inherited_state() const;
 
 	void set_scene_instance_load_placeholder(bool p_enable);
 	bool get_scene_instance_load_placeholder() const;

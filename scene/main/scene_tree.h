@@ -42,7 +42,6 @@
 */
 
 class SceneTree;
-class PackedScene;
 class Node;
 class Viewport;
 class Material;
@@ -176,7 +175,6 @@ private:
 	Ref<Material> collision_material;
 	int collision_debug_contacts;
 
-	void _change_scene(Node *p_to);
 	//void _call_group(uint32_t p_call_flags,const StringName& p_group,const StringName& p_function,const Variant& p_arg1,const Variant& p_arg2);
 
 	List<Ref<SceneTreeTimer> > timers;
@@ -244,7 +242,6 @@ private:
 	void _live_edit_root_func(const NodePath &p_scene_path, const String &p_scene_from);
 
 	void _live_edit_create_node_func(const NodePath &p_parent, const String &p_type, const String &p_name);
-	void _live_edit_instance_node_func(const NodePath &p_parent, const String &p_path, const String &p_name);
 	void _live_edit_remove_node_func(const NodePath &p_at);
 	void _live_edit_remove_and_keep_node_func(const NodePath &p_at, ObjectID p_keep_id);
 	void _live_edit_restore_node_func(ObjectID p_id, const NodePath &p_at, int p_at_pos);
@@ -263,7 +260,6 @@ private:
 	static void _live_edit_root_funcs(void *self, const NodePath &p_scene_path, const String &p_scene_from) { reinterpret_cast<SceneTree *>(self)->_live_edit_root_func(p_scene_path, p_scene_from); }
 
 	static void _live_edit_create_node_funcs(void *self, const NodePath &p_parent, const String &p_type, const String &p_name) { reinterpret_cast<SceneTree *>(self)->_live_edit_create_node_func(p_parent, p_type, p_name); }
-	static void _live_edit_instance_node_funcs(void *self, const NodePath &p_parent, const String &p_path, const String &p_name) { reinterpret_cast<SceneTree *>(self)->_live_edit_instance_node_func(p_parent, p_path, p_name); }
 	static void _live_edit_remove_node_funcs(void *self, const NodePath &p_at) { reinterpret_cast<SceneTree *>(self)->_live_edit_remove_node_func(p_at); }
 	static void _live_edit_remove_and_keep_node_funcs(void *self, const NodePath &p_at, ObjectID p_keep_id) { reinterpret_cast<SceneTree *>(self)->_live_edit_remove_and_keep_node_func(p_at, p_keep_id); }
 	static void _live_edit_restore_node_funcs(void *self, ObjectID p_id, const NodePath &p_at, int p_at_pos) { reinterpret_cast<SceneTree *>(self)->_live_edit_restore_node_func(p_id, p_at, p_at_pos); }
@@ -388,9 +384,6 @@ public:
 	void set_use_font_oversampling(bool p_oversampling);
 	bool is_using_font_oversampling() const;
 
-	//void change_scene(const String& p_path);
-	//Node *get_loaded_scene();
-
 #ifdef TOOLS_ENABLED
 	void set_edited_scene_root(Node *p_node);
 	Node *get_edited_scene_root() const;
@@ -398,9 +391,8 @@ public:
 
 	void set_current_scene(Node *p_scene);
 	Node *get_current_scene() const;
-	Error change_scene(const String &p_path);
-	Error change_scene_to(const Ref<PackedScene> &p_scene);
 	Error reload_current_scene();
+	void change_scene(Node *p_to);
 
 	Ref<SceneTreeTimer> create_timer(float p_delay_sec, bool p_process_pause = true);
 

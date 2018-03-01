@@ -37,7 +37,6 @@
 #include "scene/gui/label.h"
 #include "scene/gui/panel.h"
 #include "scene/main/timer.h"
-#include "scene/resources/mesh.h"
 #include "scene/scene_string_names.h"
 
 void ViewportTexture::setup_local_to_scene() {

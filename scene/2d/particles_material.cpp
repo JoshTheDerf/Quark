@@ -29,7 +29,6 @@
 /*************************************************************************/
 
 #include "particles_material.h"
-#include "scene/resources/surface_tool.h"
 #include "servers/visual_server.h"
 
 

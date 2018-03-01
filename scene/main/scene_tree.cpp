@@ -40,7 +40,6 @@
 #include "project_settings.h"
 #include "scene/resources/dynamic_font.h"
 #include "scene/resources/material.h"
-#include "scene/resources/mesh.h"
 #include "scene/scene_string_names.h"
 #include "viewport.h"
 
@@ -720,61 +719,6 @@ Ref<Material> SceneTree::get_debug_collision_material() {
 	collision_material = line_material;
 
 	return collision_material;
-}
-
-Ref<ArrayMesh> SceneTree::get_debug_contact_mesh() {
-
-	if (debug_contact_mesh.is_valid())
-		return debug_contact_mesh;
-
-	debug_contact_mesh = Ref<ArrayMesh>(memnew(ArrayMesh));
-
-	Ref<SpatialMaterial> mat = Ref<SpatialMaterial>(memnew(SpatialMaterial));
-	mat->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
-	mat->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
-	mat->set_flag(SpatialMaterial::FLAG_SRGB_VERTEX_COLOR, true);
-	mat->set_flag(SpatialMaterial::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
-	mat->set_albedo(get_debug_collision_contact_color());
-
-	Vector3 diamond[6] = {
-		Vector3(-1, 0, 0),
-		Vector3(1, 0, 0),
-		Vector3(0, -1, 0),
-		Vector3(0, 1, 0),
-		Vector3(0, 0, -1),
-		Vector3(0, 0, 1)
-	};
-
-	/* clang-format off */
-	int diamond_faces[8 * 3] = {
-		0, 2, 4,
-		0, 3, 4,
-		1, 2, 4,
-		1, 3, 4,
-		0, 2, 5,
-		0, 3, 5,
-		1, 2, 5,
-		1, 3, 5,
-	};
-	/* clang-format on */
-
-	PoolVector<int> indices;
-	for (int i = 0; i < 8 * 3; i++)
-		indices.push_back(diamond_faces[i]);
-
-	PoolVector<Vector3> vertices;
-	for (int i = 0; i < 6; i++)
-		vertices.push_back(diamond[i] * 0.1);
-
-	Array arr;
-	arr.resize(Mesh::ARRAY_MAX);
-	arr[Mesh::ARRAY_VERTEX] = vertices;
-	arr[Mesh::ARRAY_INDEX] = indices;
-
-	debug_contact_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arr);
-	debug_contact_mesh->surface_set_material(0, mat);
-
-	return debug_contact_mesh;
 }
 
 void SceneTree::set_pause(bool p_enabled) {

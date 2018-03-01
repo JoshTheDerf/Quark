@@ -41,7 +41,6 @@
 #include "scene/register_scene_types.h"
 #include "script_debugger_local.h"
 #include "servers/register_server_types.h"
-#include "splash.gen.h"
 
 #include "input_map.h"
 #include "io/resource_loader.h"
@@ -760,42 +759,6 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 
 	Color clear = GLOBAL_DEF("rendering/environment/default_clear_color", Color(0.3, 0.3, 0.3));
 	VisualServer::get_singleton()->set_default_clear_color(clear);
-
-	if (show_logo) { //boot logo!
-		String boot_logo_path = GLOBAL_DEF("application/boot_splash/image", String());
-		bool boot_logo_scale = GLOBAL_DEF("application/boot_splash/fullsize", true);
-		ProjectSettings::get_singleton()->set_custom_property_info("application/boot_splash/image", PropertyInfo(Variant::STRING, "application/boot_splash/image", PROPERTY_HINT_FILE, "*.png"));
-
-		Ref<Image> boot_logo;
-
-		boot_logo_path = boot_logo_path.strip_edges();
-
-		if (boot_logo_path != String() /*&& FileAccess::exists(boot_logo_path)*/) {
-			print_line("Boot splash path: " + boot_logo_path);
-			boot_logo.instance();
-			Error err = boot_logo->load(boot_logo_path);
-			if (err)
-				ERR_PRINTS("Non-existing or invalid boot splash at: " + boot_logo_path + ". Loading default splash.");
-		}
-
-		if (boot_logo.is_valid()) {
-			OS::get_singleton()->_msec_splash = OS::get_singleton()->get_ticks_msec();
-			Color boot_bg = GLOBAL_DEF("application/boot_splash/bg_color", clear);
-			VisualServer::get_singleton()->set_boot_image(boot_logo, boot_bg, boot_logo_scale);
-
-		} else {
-#ifndef NO_DEFAULT_BOOT_LOGO
-
-			MAIN_PRINT("Main: Create bootsplash");
-			Ref<Image> splash = memnew(Image(boot_splash_png));
-
-			MAIN_PRINT("Main: ClearColor");
-			VisualServer::get_singleton()->set_default_clear_color(boot_splash_bg_color);
-			MAIN_PRINT("Main: Image");
-			VisualServer::get_singleton()->set_boot_image(splash, boot_splash_bg_color, false);
-#endif
-		}
-	}
 
 	MAIN_PRINT("Main: DCC");
 	VisualServer::get_singleton()->set_default_clear_color(GLOBAL_DEF("rendering/environment/default_clear_color", Color(0.3, 0.3, 0.3)));

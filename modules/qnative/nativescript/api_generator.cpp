@@ -380,7 +380,7 @@ static List<String> generate_c_api_json(const List<ClassAPI> &p_api) {
 
 		source.push_back("\t\t\"name\": \"" + api.class_name + "\",\n");
 		source.push_back("\t\t\"base_class\": \"" + api.super_class_name + "\",\n");
-		source.push_back(String("\t\t\"api_type\": \"") + (api.api_type == ClassDB::API_CORE ? "core" : (api.api_type == ClassDB::API_EDITOR ? "tools" : "none")) + "\",\n");
+		source.push_back(String("\t\t\"api_type\": \"") + (api.api_type == ClassDB::API_CORE ? "core" : "none") + "\",\n");
 		source.push_back(String("\t\t\"singleton\": ") + (api.is_singleton ? "true" : "false") + ",\n");
 		source.push_back(String("\t\t\"instanciable\": ") + (api.is_instanciable ? "true" : "false") + ",\n");
 		source.push_back(String("\t\t\"is_reference\": ") + (api.is_reference ? "true" : "false") + ",\n");

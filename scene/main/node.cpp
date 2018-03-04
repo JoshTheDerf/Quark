@@ -222,43 +222,11 @@ void Node::_propagate_enter_tree() {
 	}
 
 	data.blocked--;
-
-#ifdef DEBUG_ENABLED
-
-	if (ScriptDebugger::get_singleton() && data.filename != String()) {
-		//used for live edit
-		data.tree->live_scene_edit_cache[data.filename].insert(this);
-	}
-#endif
 	// enter groups
 }
 
 void Node::_propagate_exit_tree() {
 
-//block while removing children
-
-#ifdef DEBUG_ENABLED
-
-	if (ScriptDebugger::get_singleton() && data.filename != String()) {
-		//used for live edit
-		Map<String, Set<Node *> >::Element *E = data.tree->live_scene_edit_cache.find(data.filename);
-		if (E) {
-			E->get().erase(this);
-			if (E->get().size() == 0) {
-				data.tree->live_scene_edit_cache.erase(E);
-			}
-		}
-
-		Map<Node *, Map<ObjectID, Node *> >::Element *F = data.tree->live_edit_remove_list.find(this);
-		if (F) {
-			for (Map<ObjectID, Node *>::Element *G = F->get().front(); G; G = G->next()) {
-
-				memdelete(G->get());
-			}
-			data.tree->live_edit_remove_list.erase(F);
-		}
-	}
-#endif
 	data.blocked++;
 
 	for (int i = data.children.size() - 1; i >= 0; i--) {

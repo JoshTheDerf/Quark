@@ -181,12 +181,10 @@ bool QNative::initialize() {
 	library_init_fpointer = (quark__init_fn)library_init;
 
 	static uint64_t core_api_hash = 0;
-	static uint64_t editor_api_hash = 0;
 	static uint64_t no_api_hash = 0;
 
-	if (!(core_api_hash || editor_api_hash || no_api_hash)) {
+	if (!(core_api_hash || no_api_hash)) {
 		core_api_hash = ClassDB::get_api_hash(ClassDB::API_CORE);
-		editor_api_hash = ClassDB::get_api_hash(ClassDB::API_EDITOR);
 		no_api_hash = ClassDB::get_api_hash(ClassDB::API_NONE);
 	}
 
@@ -195,7 +193,6 @@ bool QNative::initialize() {
 	options.api_struct = &api_struct;
 	options.in_editor = Engine::get_singleton()->is_editor_hint();
 	options.core_api_hash = core_api_hash;
-	options.editor_api_hash = editor_api_hash;
 	options.no_api_hash = no_api_hash;
 	options.report_version_mismatch = &_qnative_report_version_mismatch;
 	options.report_loading_error = &_qnative_report_loading_error;

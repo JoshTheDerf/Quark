@@ -52,7 +52,6 @@
 #include "scene/gui/texture_rect.h"
 #include "scene/gui/tree.h"
 #include "scene/main/scene_tree.h"
-
 #include "scene/main/viewport.h"
 
 namespace TestGUI {
@@ -85,7 +84,7 @@ public:
 		label->set_position(Point2(80, 90));
 		label->set_size(Point2(170, 80));
 		label->set_align(Label::ALIGN_FILL);
-		label->set_text("There was once upon a time a beautiful unicorn that loved to play with little girls...");
+		label->set_text("This is a label");
 
 		frame->add_child(label);
 
@@ -93,7 +92,7 @@ public:
 
 		button->set_position(Point2(20, 20));
 		button->set_size(Point2(1, 1));
-		button->set_text("This is a biggie button");
+		button->set_text("This appears to be a button of sorts.");
 
 		frame->add_child(button);
 
@@ -127,12 +126,12 @@ public:
 		item = tree->create_item(tree->get_root());
 		item->set_cell_mode(0, TreeItem::CELL_MODE_RANGE);
 		item->set_editable(0, true);
-		item->set_text(0, "Have,Many,Several,Options!");
+		item->set_text(0, "Have, Many, Several, Options!");
 		item->set_range(0, 2);
 
 		item = tree->create_item(item);
 		item->set_editable(0, true);
-		item->set_text(0, "Gershwin!");
+		item->set_text(0, "Ohi there!");
 
 		frame->add_child(tree);
 
@@ -179,7 +178,7 @@ public:
 		PopupMenu *popup = menu_button->get_popup();
 
 		popup->add_item("Hello, testing");
-		popup->add_item("My Dearest");
+		popup->add_item("Who's there?");
 		popup->add_separator();
 		popup->add_item("Popup");
 		popup->add_check_item("Check Popup");
@@ -188,7 +187,7 @@ public:
 		OptionButton *options = memnew(OptionButton);
 
 		options->add_item("Hello, testing");
-		options->add_item("My Dearest");
+		options->add_item("It is I.");
 
 		options->set_position(Point2(230, 180));
 		options->set_size(Point2(1, 1));

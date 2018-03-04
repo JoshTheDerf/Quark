@@ -39,7 +39,6 @@
 #include "platform/register_platform_apis.h"
 #include "project_settings.h"
 #include "scene/register_scene_types.h"
-#include "script_debugger_local.h"
 #include "servers/register_server_types.h"
 
 #include "input_map.h"
@@ -48,7 +47,6 @@
 #include "servers/audio_server.h"
 
 #include "io/resource_loader.h"
-#include "script_language.h"
 
 #include "main/tests/test_main.h"
 #include "os/dir_access.h"
@@ -63,7 +61,6 @@ static ProjectSettings *globals = NULL;
 static Engine *engine = NULL;
 static InputMap *input_map = NULL;
 static bool _start_success = false;
-static ScriptDebugger *script_debugger = NULL;
 AudioServer *audio_server = NULL;
 
 static MessageQueue *message_queue = NULL;
@@ -80,7 +77,6 @@ static Vector2 init_custom_pos;
 static int video_driver_idx = -1;
 static int audio_driver_idx = -1;
 static String locale;
-static bool use_debug_profiler = false;
 static bool force_lowdpi = false;
 static int init_screen = -1;
 static bool use_vsync = true;
@@ -157,16 +153,13 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("  --resolution <W>x<H>             Request window resolution.\n");
 	OS::get_singleton()->print("  --position <X>,<Y>               Request window position.\n");
 	OS::get_singleton()->print("  --low-dpi                        Force low-DPI mode (macOS and Windows only).\n");
-	OS::get_singleton()->print("  --no-window                      Disable window creation (Windows only). Useful together with --script.\n");
+	OS::get_singleton()->print("  --no-window                      Disable window creation (Windows only).\n");
 	OS::get_singleton()->print("\n");
 
 	OS::get_singleton()->print("Debug options:\n");
-	OS::get_singleton()->print("  -d, --debug                      Debug (local stdout debugger).\n");
-	OS::get_singleton()->print("  -b, --breakpoints                Breakpoint list as source::line comma-separated pairs, no spaces (use %%20 instead).\n");
-	OS::get_singleton()->print("  --profiling                      Enable profiling in the script debugger.\n");
 	OS::get_singleton()->print("  --frame-delay <ms>               Simulate high CPU load (delay each frame by <ms> milliseconds).\n");
 	OS::get_singleton()->print("  --time-scale <scale>             Force time scale (higher values are faster, 1.0 is normal speed).\n");
-	OS::get_singleton()->print("  --disable-render-loop            Disable render loop so rendering only occurs when called explicitly from script.\n");
+	OS::get_singleton()->print("  --disable-render-loop            Disable render loop so rendering only occurs when called explicitly.\n");
 	OS::get_singleton()->print("  --disable-crash-handler          Disable crash handler when supported by the platform code.\n");
 	OS::get_singleton()->print("  --fixed-fps <fps>                Force a fixed number of frames per second. This setting disables real-time synchronization.\n");
 	OS::get_singleton()->print("\n");
@@ -176,7 +169,7 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("  --doctool <path>                 Dump the engine API reference to the given <path> in XML format, merging if existing files are found.\n");
 	OS::get_singleton()->print("  --no-docbase                     Disallow dumping the base types (used with --doctool).\n");
 #ifdef DEBUG_METHODS_ENABLED
-	OS::get_singleton()->print("  --gdnative-generate-json-api     Generate JSON dump of the Godot API for GDNative bindings.\n");
+	OS::get_singleton()->print("  --qnative-generate-json-api     Generate JSON dump of the Quark API for QNative bindings.\n");
 #endif
 	OS::get_singleton()->print("  --test <test>                    Run a unit test (");
 	const char **test_names = tests_get_names();
@@ -245,8 +238,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	String video_driver = "";
 	String audio_driver = "";
 	bool upwards = false;
-	String debug_mode;
-	String debug_host;
 	bool quiet_stdout = false;
 	int rtm = -1;
 
@@ -334,9 +325,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		} else if (I->get() == "-t" || I->get() == "--always-on-top") { // force always-on-top window
 
 			init_always_on_top = true;
-		} else if (I->get() == "--profiling") { // enable profiling
-
-			use_debug_profiler = true;
 		} else if (I->get() == "--video-driver") { // force video driver
 
 			if (I->next()) {
@@ -463,8 +451,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 				goto error;
 			}
 
-		} else if (I->get() == "-d" || I->get() == "--debug") {
-			debug_mode = "local";
 		} else if (I->get() == "--disable-render-loop") {
 			disable_render_loop = true;
 		} else if (I->get() == "--fixed-fps") {
@@ -485,30 +471,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 
 	GLOBAL_DEF("memory/limits/multithreaded_server/rid_pool_prealloc", 60);
-	GLOBAL_DEF("network/limits/debugger_stdout/max_chars_per_second", 2048);
-	GLOBAL_DEF("network/limits/debugger_stdout/max_messages_per_frame", 10);
-	GLOBAL_DEF("network/limits/debugger_stdout/max_errors_per_frame", 10);
-
-	if (debug_mode == "local") {
-
-		script_debugger = memnew(ScriptDebuggerLocal);
-	}
-
-	if (script_debugger) {
-		//there is a debugger, parse breakpoints
-
-		for (int i = 0; i < breakpoints.size(); i++) {
-
-			String bp = breakpoints[i];
-			int sp = bp.find_last(":");
-			if (sp == -1) {
-				ERR_EXPLAIN("Invalid breakpoint: '" + bp + "', expected file:line format.");
-				ERR_CONTINUE(sp == -1);
-			}
-
-			script_debugger->insert_breakpoint(bp.substr(sp + 1, bp.length()).to_int(), bp.substr(0, sp));
-		}
-	}
 
 	if (globals->setup() == OK) {
 		found_project = true;
@@ -696,8 +658,6 @@ error:
 		memdelete(globals);
 	if (engine)
 		memdelete(engine);
-	if (script_debugger)
-		memdelete(script_debugger);
 
 	unregister_core_driver_types();
 	unregister_core_types();
@@ -735,12 +695,6 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 
 	MAIN_PRINT("Main: Setup Logo");
 
-#ifdef JAVASCRIPT_ENABLED
-	bool show_logo = false;
-#else
-	bool show_logo = true;
-#endif
-
 	if (init_screen != -1) {
 		OS::get_singleton()->set_current_screen(init_screen);
 	}
@@ -757,11 +711,11 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 
 	register_server_types();
 
-	Color clear = GLOBAL_DEF("rendering/environment/default_clear_color", Color(0.3, 0.3, 0.3));
+	Color clear = GLOBAL_DEF("rendering/environment/default_clear_color", Color(1, 1, 1));
 	VisualServer::get_singleton()->set_default_clear_color(clear);
 
 	MAIN_PRINT("Main: DCC");
-	VisualServer::get_singleton()->set_default_clear_color(GLOBAL_DEF("rendering/environment/default_clear_color", Color(0.3, 0.3, 0.3)));
+	VisualServer::get_singleton()->set_default_clear_color(GLOBAL_DEF("rendering/environment/default_clear_color", Color(1, 1, 1)));
 	MAIN_PRINT("Main: END");
 
 	GLOBAL_DEF("application/config/icon", String());
@@ -799,7 +753,7 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 		OS::get_singleton()->enable_for_stealing_focus(allow_focus_steal_pid);
 	}
 
-	MAIN_PRINT("Main: Load Modules, Drivers, Scripts");
+	MAIN_PRINT("Main: Load Modules, Drivers, and Script Server");
 
 	register_platform_apis();
 	register_module_types();
@@ -812,9 +766,6 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 
 	audio_server->load_default_bus_layout();
 
-	if (use_debug_profiler && script_debugger) {
-		script_debugger->profiling_start();
-	}
 	_start_success = true;
 	locale = String();
 
@@ -835,7 +786,6 @@ bool Main::start() {
 	String doc_tool;
 	List<String> removal_docs;
 	bool doc_base = true;
-	String script;
 	String test;
 
 	List<String> args = OS::get_singleton()->get_cmdline_args();
@@ -847,9 +797,7 @@ bool Main::start() {
 		//parameters that have an argument to the right
 		else if (i < (args.size() - 1)) {
 			bool parsed_pair = true;
-			if (args[i] == "-s" || args[i] == "--script") {
-				script = args[i + 1];
-			} else if (args[i] == "--test") {
+			if (args[i] == "--test") {
 				test = args[i + 1];
 #ifdef TOOLS_ENABLED
 			} else if (args[i] == "--doctool") {
@@ -879,31 +827,6 @@ bool Main::start() {
 			return false;
 
 #endif
-
-	} else if (script != "") {
-
-		Ref<Script> script_res = ResourceLoader::load(script);
-		ERR_EXPLAIN("Can't load script: " + script);
-		ERR_FAIL_COND_V(script_res.is_null(), false);
-
-		if (script_res->can_instance() /*&& script_res->inherits_from("SceneTreeScripted")*/) {
-
-			StringName instance_type = script_res->get_instance_base_type();
-			Object *obj = ClassDB::instance(instance_type);
-			MainLoop *script_loop = Object::cast_to<MainLoop>(obj);
-			if (!script_loop) {
-				if (obj)
-					memdelete(obj);
-				ERR_EXPLAIN("Can't load script '" + script + "', it does not inherit from a MainLoop type");
-				ERR_FAIL_COND_V(!script_loop, false);
-			}
-
-			script_loop->set_init_script(script_res);
-			main_loop = script_loop;
-		} else {
-
-			return false;
-		}
 
 	} else {
 		main_loop_type = GLOBAL_DEF("application/run/main_loop_type", "");
@@ -1086,13 +1009,6 @@ bool Main::iteration() {
 		ScriptServer::get_language(i)->frame();
 	}
 
-	if (script_debugger) {
-		if (script_debugger->is_profiling()) {
-			script_debugger->profiling_set_frame_times(USEC_TO_SEC(frame_time), USEC_TO_SEC(idle_process_ticks), USEC_TO_SEC(fixed_process_ticks), frame_slice);
-		}
-		script_debugger->idle_poll();
-	}
-
 	frames++;
 	Engine::get_singleton()->_idle_frames++;
 
@@ -1147,14 +1063,6 @@ void Main::cleanup() {
 
 	message_queue->flush();
 	memdelete(message_queue);
-
-	if (script_debugger) {
-		if (use_debug_profiler) {
-			script_debugger->profiling_end();
-		}
-
-		memdelete(script_debugger);
-	}
 
 	OS::get_singleton()->delete_main_loop();
 

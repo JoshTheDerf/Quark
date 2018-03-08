@@ -53,6 +53,11 @@
 #include "scene/gui/tree.h"
 #include "scene/main/scene_tree.h"
 #include "scene/main/viewport.h"
+#include "modules/quark_api/include/quark_api.h"
+
+void handle_init(char* response) {
+	printf("Init Response: %s\n", response);
+}
 
 namespace TestGUI {
 
@@ -66,6 +71,14 @@ public:
 		quit();
 	}
 	virtual void init() {
+		// Initial testing of the quark API will happen in here because I was too lazy
+		// to create another test case.
+		printf("Int: %i\n", quark_api_init(&handle_init));
+		printf("Str: %s\n", quark_api_call(1, "(call 689 \"set_transform\" (v3 .23 2. 9.2))\
+(inst \"Node\") -> 99 \
+(evt 87 \"gui_input\")\
+(call 87 \"set_text\" \"(Something (text (related)))\")\
+"));
 
 		SceneTree::init();
 

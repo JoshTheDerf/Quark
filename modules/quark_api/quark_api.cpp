@@ -33,9 +33,9 @@ typedef struct {
 	char* head;
 } CallType;
 
-std::vector<Atom> atomVec;
+std::vector<Atom> atom_vec;
 
-int parse_string(std::vector<Atom>& atomVector, int& vector_tail, char*& loc) {
+int parse_string(std::vector<Atom>& atom_vector, int& vector_tail, char*& loc) {
 	loc++;
 
 	vector_tail++;
@@ -43,13 +43,13 @@ int parse_string(std::vector<Atom>& atomVector, int& vector_tail, char*& loc) {
 
 	// The atom index should always be less than or equal to the size of the vector.
 	// Otherwise we have a bug.
-	assert(0 <= atomVector.size() - curr_atom_index);
+	assert(0 <= atom_vector.size() - curr_atom_index);
 	// If the index is equal to the size, we need to allocate a new atom.
-	if (atomVector.size() == curr_atom_index) atomVector.emplace_back();
+	if (atom_vector.size() == curr_atom_index) atom_vector.emplace_back();
 
 	// We have to make sure everything gets initialized to the correct values in here.
 	// because we are potentially reusing atoms from previous calls.
-	Atom& a = atomVector.at(curr_atom_index);
+	Atom& a = atom_vector.at(curr_atom_index);
 	a.start = loc;
 	a.type = Atom::TYPE_STRING;
 	a.first_child_index = -1;
@@ -74,19 +74,19 @@ int parse_string(std::vector<Atom>& atomVector, int& vector_tail, char*& loc) {
 	return curr_atom_index;
 }
 
-int parse_symbol(std::vector<Atom>& atomVector, int& vector_tail, char*& loc) {
+int parse_symbol(std::vector<Atom>& atom_vector, int& vector_tail, char*& loc) {
 	vector_tail++;
 	unsigned int curr_atom_index = vector_tail;
 
 	// The atom index should always be less than or equal to the size of the vector.
 	// Otherwise we have a bug.
-	assert(0 <= atomVector.size() - curr_atom_index);
+	assert(0 <= atom_vector.size() - curr_atom_index);
 	// If the index is equal to the size, we need to allocate a new atom.
-	if (atomVector.size() == curr_atom_index) atomVector.emplace_back();
+	if (atom_vector.size() == curr_atom_index) atom_vector.emplace_back();
 
 	// We have to make sure everything gets initialized to the correct values in here.
 	// because we are potentially reusing atoms from previous calls.
-	Atom& a = atomVector.at(curr_atom_index);
+	Atom& a = atom_vector.at(curr_atom_index);
 	a.start = loc;
 	a.type = Atom::TYPE_SYMBOL;
 	a.first_child_index = -1;
@@ -121,7 +121,7 @@ int parse_symbol(std::vector<Atom>& atomVector, int& vector_tail, char*& loc) {
 	return curr_atom_index;
 }
 
-int parse_list(std::vector<Atom>& atomVector, int& vector_tail, char*& loc) {
+int parse_list(std::vector<Atom>& atom_vector, int& vector_tail, char*& loc) {
 	loc++;
 
 	vector_tail++;
@@ -129,13 +129,13 @@ int parse_list(std::vector<Atom>& atomVector, int& vector_tail, char*& loc) {
 
 	// The atom index should always be less than or equal to the size of the vector.
 	// Otherwise we have a bug.
-	assert(0 <= atomVector.size() - curr_atom_index);
+	assert(0 <= atom_vector.size() - curr_atom_index);
 	// If the index is equal to the size, we need to allocate a new atom.
-	if (atomVector.size() == curr_atom_index) atomVector.emplace_back();
+	if (atom_vector.size() == curr_atom_index) atom_vector.emplace_back();
 
 	// We have to make sure everything gets initialized to the correct values in here.
 	// because we are potentially reusing atoms from previous calls.
-	Atom& a = atomVector.at(curr_atom_index);
+	Atom& a = atom_vector.at(curr_atom_index);
 	a.start = loc;
 	a.type = Atom::TYPE_LIST;
 	a.first_child_index = -1;
@@ -149,7 +149,7 @@ int parse_list(std::vector<Atom>& atomVector, int& vector_tail, char*& loc) {
 	while(*loc != '\0' && !stop_iter) {
 		switch(*loc) {
 			case '(':
-				active_atom_index = parse_list(atomVector, vector_tail, loc);
+				active_atom_index = parse_list(atom_vector, vector_tail, loc);
 				break;
 			case ')':
 				loc++;
@@ -158,13 +158,13 @@ int parse_list(std::vector<Atom>& atomVector, int& vector_tail, char*& loc) {
 				stop_iter = true;
 				break;
 			case '"':
-				active_atom_index = parse_string(atomVector, vector_tail, loc);
+				active_atom_index = parse_string(atom_vector, vector_tail, loc);
 				break;
 			case ' ':
 				loc++;
 				break;
 			default:
-				active_atom_index = parse_symbol(atomVector, vector_tail, loc);
+				active_atom_index = parse_symbol(atom_vector, vector_tail, loc);
 		}
 
 		if(active_atom_index == -1) continue;
@@ -172,7 +172,7 @@ int parse_list(std::vector<Atom>& atomVector, int& vector_tail, char*& loc) {
 		// This should always be called for the first child atom.
 		if(a.first_child_index == -1) a.first_child_index = active_atom_index;
 		// The prev sibling index should always be set by the second atom.
-		else atomVector.at(prev_sibling_index).next_sibling_index = active_atom_index;
+		else atom_vector.at(prev_sibling_index).next_sibling_index = active_atom_index;
 
 		prev_sibling_index = active_atom_index;
 	}
@@ -180,7 +180,7 @@ int parse_list(std::vector<Atom>& atomVector, int& vector_tail, char*& loc) {
 	return curr_atom_index;
 }
 
-Atom& parse_sexpr(std::vector<Atom>& atomVector, char*& loc) {
+Atom& parse_sexpr(std::vector<Atom>& atom_vector, char*& loc) {
 	// We have to check just in-case some of the root elements are not a list.
 	// (Assuming the root element isn't denoted with parenthesis.)
 
@@ -191,39 +191,39 @@ Atom& parse_sexpr(std::vector<Atom>& atomVector, char*& loc) {
 	while(*loc != '\0') {
 		switch(*loc) {
 			case '(':
-				active_atom_index = parse_list(atomVector, vector_tail, loc);
+				active_atom_index = parse_list(atom_vector, vector_tail, loc);
 				break;
 			case '"':
-				active_atom_index = parse_string(atomVector, vector_tail, loc);
+				active_atom_index = parse_string(atom_vector, vector_tail, loc);
 				break;
 			case ' ':
 				loc++;
 				break;
 			default:
-				active_atom_index = parse_symbol(atomVector, vector_tail, loc);
+				active_atom_index = parse_symbol(atom_vector, vector_tail, loc);
 		}
 
 		if(active_atom_index == -1) continue;
 
 		if(prev_sibling_index != -1)
-			atomVector.at(prev_sibling_index).next_sibling_index = active_atom_index;
+			atom_vector.at(prev_sibling_index).next_sibling_index = active_atom_index;
 
 		prev_sibling_index = active_atom_index;
 	}
 
 	// Currently we don't handle the case where an empty string is passed.
-	assert(atomVector.size() > 0);
-	return atomVector.at(0);
+	assert(atom_vector.size() > 0);
+	return atom_vector.at(0);
 }
 
-void print_sexpr(std::vector<Atom>& atomVector, Atom& atom, int level = 0) {
+void print_sexpr(std::vector<Atom>& atom_vector, Atom& atom, int level = 0) {
 	switch(atom.type) {
 		case Atom::TYPE_LIST:
 			printf("\n");
 			for(int i = 0; i < level; ++i) printf("  "); 
 			printf("<");
 			if (atom.first_child_index != -1) {
-				print_sexpr(atomVector, atomVector.at(atom.first_child_index), level + 1);
+				print_sexpr(atom_vector, atom_vector.at(atom.first_child_index), level + 1);
 			}
 			printf(">");
 			// Sorry, it's just so convenient here.
@@ -249,7 +249,7 @@ void print_sexpr(std::vector<Atom>& atomVector, Atom& atom, int level = 0) {
 print_siblings:
 	if (atom.next_sibling_index != -1) {
 		printf(" ");
-		print_sexpr(atomVector, atomVector.at(atom.next_sibling_index), level);
+		print_sexpr(atom_vector, atom_vector.at(atom.next_sibling_index), level);
 	}
 }
 
@@ -260,12 +260,12 @@ uint32_t QAPI quark_api_init(void(*notify_handler)(char*)) {
 
 char* QAPI quark_api_call(uint32_t user_id, char* message) {
 	printf("User ID: %i\n", user_id);
-	atomVec.reserve(500);
+	atom_vec.reserve(500);
 
 	if (message == NULL) return NULL;
 
-	Atom& rootAtom = parse_sexpr(atomVec, message);
-	print_sexpr(atomVec, rootAtom);
+	Atom& root_atom = parse_sexpr(atom_vec, message);
+	print_sexpr(atom_vec, root_atom);
 	printf("\n");
 
 	return "Output";

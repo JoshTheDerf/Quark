@@ -68,7 +68,7 @@ int parse_string(std::vector<Atom>& atom_vector, int& vector_tail, char*& loc) {
 
 	a.len = loc - a.start;
 
-	// Skip over the trailing doublquote ".
+	// Skip over the trailing doublequote ".
 	loc++;
 
 	return curr_atom_index;
@@ -181,9 +181,6 @@ int parse_list(std::vector<Atom>& atom_vector, int& vector_tail, char*& loc) {
 }
 
 Atom& parse_sexpr(std::vector<Atom>& atom_vector, char*& loc) {
-	// We have to check just in-case some of the root elements are not a list.
-	// (Assuming the root element isn't denoted with parenthesis.)
-
 	int prev_sibling_index = -1;
 	int active_atom_index = -1;
 	int vector_tail = -1;

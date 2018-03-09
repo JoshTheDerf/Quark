@@ -110,7 +110,7 @@ const char *CharString::get_data() const {
 		return "";
 }
 
-void String::copy_from(const char *p_cstr) {
+void String::copy_from(const char *p_cstr, int len) {
 
 	if (!p_cstr) {
 
@@ -118,10 +118,12 @@ void String::copy_from(const char *p_cstr) {
 		return;
 	}
 
-	int len = 0;
-	const char *ptr = p_cstr;
-	while (*(ptr++) != 0)
-		len++;
+	if (len == 0) {
+
+		const char *ptr = p_cstr;
+		while (*(ptr++) != 0)
+			len++;
+	}
 
 	if (len == 0) {
 
@@ -137,6 +139,8 @@ void String::copy_from(const char *p_cstr) {
 
 		dst[i] = p_cstr[i];
 	}
+
+	dst[len] = '\0'; // If the null char isn't present, insert it anyway.
 }
 
 void String::copy_from(const CharType *p_cstr, int p_clip_to) {
@@ -1535,6 +1539,12 @@ String::String(const char *p_str) {
 
 	copy_from(p_str);
 }
+
+String::String(const char *p_str, int len) {
+
+	copy_from(p_str, len);
+}
+
 String::String(const CharType *p_str, int p_clip_to_len) {
 
 	copy_from(p_str, p_clip_to_len);

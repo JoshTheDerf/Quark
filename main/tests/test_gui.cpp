@@ -73,26 +73,7 @@ public:
 	virtual void init() {
 		// Initial testing of the quark API will happen in here because I was too lazy
 		// to create another test case.
-		printf("Int: %i\n", quark_api_init(&handle_init));
-		printf("Str: %s\n", quark_api_call(1, "(call small)"));
-		printf("Str: %s\n", quark_api_call(1, "(call 689 \"set_transform\" (v3 .23 2. 9.2))\
-(inst \"Node\") -> 99 \
-(evt 87 \"gui_input\")\
-(call 87 \"set_text\" \"(Something (text (related)))\")\
-(call (test 1.2 \"test\" (lets go deeper)))\
-"));
-
-		printf("Str: %s\n", quark_api_call(1, "(call 689 \"set_transform\" (v3 .23 2. 9.2))\
-(inst \"Node\") -> 99 \
-(evt 87 \"gui_input\")\
-(call 87 \"set_text\" \"(Something (text (related)))\")\
-(call (test 1.2 \"test\" (lets go deeper)))\
-(call add 1.0 more list)\
-"));
-		printf("Str: %s\n", quark_api_call(1, "(call small again)"));
-
-
-
+		uint32_t user_id = quark_api_init(&handle_init);
 
 		SceneTree::init();
 
@@ -107,6 +88,7 @@ public:
 		get_root()->add_child(frame);
 
 		Label *label = memnew(Label);
+		Label *mainlabel = label;
 
 		label->set_position(Point2(80, 90));
 		label->set_size(Point2(170, 80));
@@ -285,6 +267,15 @@ public:
 
 		tabc->set_position(Point2(400, 210));
 		tabc->set_size(Point2(180, 250));
+
+		int labelId = mainlabel->get_instance_id();
+
+		//mainlabel->call("set_text", "Called From Somewhere Else");
+		char callbuffer[50];
+		sprintf(callbuffer, "(call %i \"set_text\" \"Called From Quark\"", labelId);
+
+		printf("Str: %s\n", quark_api_call(user_id, callbuffer));
+
 	}
 };
 

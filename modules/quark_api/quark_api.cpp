@@ -1,267 +1,133 @@
 #include <stdio.h>
 #include <string.h>
-#include <vector>
 #include <stdexcept>
 #include <cassert>
+#include <sstream>
+#include <string>
+#include <iostream>
 
 #include "include/quark_api.h"
-
-typedef struct Atom Atom;
-
-struct Atom {
-	enum AtomType {
-		TYPE_LIST,
-		TYPE_SYMBOL,
-		TYPE_STRING,
-		TYPE_INT,
-		TYPE_FLOAT
-	};
-	AtomType type;
-	char* start;
-	uint64_t len;
-	int first_child_index;
-	int next_sibling_index;
-};
+#include "parser/parser.h"
+#include "core/ustring.h"
+#include "core/variant.h"
+#include "core/object.h"
 
 typedef struct {
 	enum CallTypes {
 		CALL_TYPE_INSTANCE,
 		CALL_TYPE_CALL,
+		CALL_TYPE_GET_OBJECTID,
 		CALL_TYPE_EVENT,
 	};
 	CallTypes type;
 	char* head;
 } CallType;
 
-std::vector<Atom> atom_vec;
+typedef struct {
+	uint32_t id;
+} UserData;
 
-int parse_string(std::vector<Atom>& atom_vector, int& vector_tail, char*& loc) {
-	loc++;
-
-	vector_tail++;
-	unsigned int curr_atom_index = vector_tail;
-
-	// The atom index should always be less than or equal to the size of the vector.
-	// Otherwise we have a bug.
-	assert(0 <= atom_vector.size() - curr_atom_index);
-	// If the index is equal to the size, we need to allocate a new atom.
-	if (atom_vector.size() == curr_atom_index) atom_vector.emplace_back();
-
-	// We have to make sure everything gets initialized to the correct values in here.
-	// because we are potentially reusing atoms from previous calls.
-	Atom& a = atom_vector.at(curr_atom_index);
-	a.start = loc;
-	a.type = Atom::TYPE_STRING;
-	a.first_child_index = -1;
-	a.next_sibling_index = -1;
-
-	bool escape;
-
-	while(*loc != '\0' && (*loc != '"' || escape)) {
-		if(escape) escape = false;
-		// Allow backslash-escaping.
-		// Currently doesn't remove the backslash from the actual string yet...
-		if(*loc == '\\') escape = true;
-
-		loc++;
-	}
-
-	a.len = loc - a.start;
-
-	// Skip over the trailing doublequote ".
-	loc++;
-
-	return curr_atom_index;
-}
-
-int parse_symbol(std::vector<Atom>& atom_vector, int& vector_tail, char*& loc) {
-	vector_tail++;
-	unsigned int curr_atom_index = vector_tail;
-
-	// The atom index should always be less than or equal to the size of the vector.
-	// Otherwise we have a bug.
-	assert(0 <= atom_vector.size() - curr_atom_index);
-	// If the index is equal to the size, we need to allocate a new atom.
-	if (atom_vector.size() == curr_atom_index) atom_vector.emplace_back();
-
-	// We have to make sure everything gets initialized to the correct values in here.
-	// because we are potentially reusing atoms from previous calls.
-	Atom& a = atom_vector.at(curr_atom_index);
-	a.start = loc;
-	a.type = Atom::TYPE_SYMBOL;
-	a.first_child_index = -1;
-	a.next_sibling_index = -1;
-
-	// -1 not set, 0 not number, 1 int, 2 float.
-	char is_number_type = -1;
-
-	while(*loc != '\0' && *loc != ' ' && *loc != ')') {
-		// If we haven't set a type yet (first char, usually)
-		// assume this is a int if the char is a digit.
-		if (isdigit(*loc) && is_number_type == -1) {
-			is_number_type = 1;
-		// If the number type is unset or an int, and the character is a point (.)
-		// assume this is a float.
-		} else if (*loc == '.' && abs(is_number_type) == 1) {
-			is_number_type = 2;
-		// In any other case, if the char isn't a digit, this should be treated
-		// as a normal symbol.
-		} else if (!isdigit(*loc)) {
-			is_number_type = 0;
-		}
-
-		loc++;
-	}
-
-	if(is_number_type == 1) a.type = Atom::TYPE_INT;
-	else if (is_number_type == 2) a.type = Atom::TYPE_FLOAT;
-
-	a.len = loc - a.start;
-
-	return curr_atom_index;
-}
-
-int parse_list(std::vector<Atom>& atom_vector, int& vector_tail, char*& loc) {
-	loc++;
-
-	vector_tail++;
-	unsigned int curr_atom_index = vector_tail;
-
-	// The atom index should always be less than or equal to the size of the vector.
-	// Otherwise we have a bug.
-	assert(0 <= atom_vector.size() - curr_atom_index);
-	// If the index is equal to the size, we need to allocate a new atom.
-	if (atom_vector.size() == curr_atom_index) atom_vector.emplace_back();
-
-	// We have to make sure everything gets initialized to the correct values in here.
-	// because we are potentially reusing atoms from previous calls.
-	Atom& a = atom_vector.at(curr_atom_index);
-	a.start = loc;
-	a.type = Atom::TYPE_LIST;
-	a.first_child_index = -1;
-	a.next_sibling_index = -1;
-
-	bool stop_iter = false;
-
-	int prev_sibling_index = -1;
-	int active_atom_index = -1;
-
-	while(*loc != '\0' && !stop_iter) {
-		switch(*loc) {
-			case '(':
-				active_atom_index = parse_list(atom_vector, vector_tail, loc);
-				break;
-			case ')':
-				loc++;
-				active_atom_index = -1;
-				prev_sibling_index = -1;
-				stop_iter = true;
-				break;
-			case '"':
-				active_atom_index = parse_string(atom_vector, vector_tail, loc);
-				break;
-			case ' ':
-				loc++;
-				break;
-			default:
-				active_atom_index = parse_symbol(atom_vector, vector_tail, loc);
-		}
-
-		if(active_atom_index == -1) continue;
-
-		// This should always be called for the first child atom.
-		if(a.first_child_index == -1) a.first_child_index = active_atom_index;
-		// The prev sibling index should always be set by the second atom.
-		else atom_vector.at(prev_sibling_index).next_sibling_index = active_atom_index;
-
-		prev_sibling_index = active_atom_index;
-	}
-
-	return curr_atom_index;
-}
-
-Atom& parse_sexpr(std::vector<Atom>& atom_vector, char*& loc) {
-	int prev_sibling_index = -1;
-	int active_atom_index = -1;
-	int vector_tail = -1;
-
-	while(*loc != '\0') {
-		switch(*loc) {
-			case '(':
-				active_atom_index = parse_list(atom_vector, vector_tail, loc);
-				break;
-			case '"':
-				active_atom_index = parse_string(atom_vector, vector_tail, loc);
-				break;
-			case ' ':
-				loc++;
-				break;
-			default:
-				active_atom_index = parse_symbol(atom_vector, vector_tail, loc);
-		}
-
-		if(active_atom_index == -1) continue;
-
-		if(prev_sibling_index != -1)
-			atom_vector.at(prev_sibling_index).next_sibling_index = active_atom_index;
-
-		prev_sibling_index = active_atom_index;
-	}
-
-	// Currently we don't handle the case where an empty string is passed.
-	assert(atom_vector.size() > 0);
-	return atom_vector.at(0);
-}
-
-void print_sexpr(std::vector<Atom>& atom_vector, Atom& atom, int level = 0) {
-	switch(atom.type) {
-		case Atom::TYPE_LIST:
-			printf("\n");
-			for(int i = 0; i < level; ++i) printf("  "); 
-			printf("<");
-			if (atom.first_child_index != -1) {
-				print_sexpr(atom_vector, atom_vector.at(atom.first_child_index), level + 1);
-			}
-			printf(">");
-			// Sorry, it's just so convenient here.
-			goto print_siblings;
-		case Atom::TYPE_SYMBOL:
-			printf("m:");
-			break;
-		case Atom::TYPE_STRING:
-			printf("s:");
-			break;
-		case Atom::TYPE_INT:
-			printf("i:");
-			break;
-		case Atom::TYPE_FLOAT:
-			printf("f:");
-			break;
-	}
-
-	printf("%.*s", atom.len, atom.start);
-
-print_siblings:
-	if (atom.next_sibling_index != -1) {
-		printf(" ");
-		print_sexpr(atom_vector, atom_vector.at(atom.next_sibling_index), level);
-	}
-}
+SexpParser parser;
+std::vector<UserData> user_data_vec;
 
 uint32_t QAPI quark_api_init(void(*notify_handler)(char*)) {
 	notify_handler("Test Output");
-	return 1;
+
+	user_data_vec.emplace_back();
+	UserData& udata = user_data_vec.back();
+	udata.id = user_data_vec.size() - 1;
+
+	return udata.id;
+}
+
+Variant get_variant_from_atom(SexpParser::Atom& atom) {
+	switch (atom.type) {
+		case SexpParser::Atom::TYPE_STRING:
+			return String(atom.start, atom.len);
+		default:
+			printf("%s\n", "EMPTY VARIANT");
+			return Variant();
+	}
+}
+
+std::string handle_call(SexpParser::Atom& atom) {
+	if (atom.next_sibling_index == -1) return "(error \"The first argument to 'call' must be an object id\")";;
+
+	SexpParser::Atom& objectid_atom = parser.get_atom(atom.next_sibling_index);
+	if (objectid_atom.type != SexpParser::Atom::TYPE_INT)
+		return "(error \"The first argument to 'call' must be an object id\")";
+
+	ObjectID object_id = ObjectID(atoi(objectid_atom.start));
+
+	SexpParser::Atom& method_atom = parser.get_atom(objectid_atom.next_sibling_index);
+	if (method_atom.type != SexpParser::Atom::TYPE_STRING)
+		return "(error \"The second argument to 'call' must be a string\")";
+
+	String method = String(method_atom.start, method_atom.len);
+
+	Array args;
+
+	if (method_atom.next_sibling_index != -1) {
+		SexpParser::Atom* arg_atom = &parser.get_atom(method_atom.next_sibling_index);
+
+		while(arg_atom != NULL) {
+			args.push_back(get_variant_from_atom(*arg_atom));
+
+			if (arg_atom->next_sibling_index == -1) arg_atom = NULL;
+			else arg_atom = &parser.get_atom(arg_atom->next_sibling_index);
+		}
+	};
+
+	Object* obj = ObjectDB::get_instance(object_id);
+
+	if(obj == NULL) {
+		return "(error \"Unable to locate object with specified id\")";
+	}
+
+	obj->callv(method, args);
+
+	return "(call successful)";
+}
+
+std::string handle_message(SexpParser::Atom& atom) {
+
+	if(atom.type != SexpParser::Atom::TYPE_LIST || atom.first_child_index == -1)
+		return "(error \"No valid command passed. Valid commands are: [call]\")";
+
+	SexpParser::Atom& first_child = parser.get_atom(atom.first_child_index);
+	if (first_child.type != SexpParser::Atom::TYPE_SYMBOL)
+		return "(error \"Commands must be a symbols.\")";
+
+	if (strncmp("call", first_child.start, first_child.len) == 0)
+		return handle_call(first_child);
+
+	return "(error \"No valid command passed. Valid commands are: [call]\")";
 }
 
 char* QAPI quark_api_call(uint32_t user_id, char* message) {
-	printf("User ID: %i\n", user_id);
-	atom_vec.reserve(500);
 
 	if (message == NULL) return NULL;
 
-	Atom& root_atom = parse_sexpr(atom_vec, message);
-	print_sexpr(atom_vec, root_atom);
+	UserData& udata = user_data_vec.at(user_id);
+	printf("User ID: %u\n", udata.id);
+
+	SexpParser::Atom& root_atom = parser.parse_sexpr(message);
+	parser.print_sexpr(root_atom);
 	printf("\n");
 
-	return "Output";
+	std::ostringstream os;
+
+	SexpParser::Atom* current_atom = &root_atom;
+
+	while (current_atom != NULL) {
+
+		os << handle_message(*current_atom);
+
+		if(current_atom->next_sibling_index == -1) current_atom = NULL;
+		else current_atom = &parser.get_atom(current_atom->next_sibling_index);
+	}
+
+	std::string* str = new std::string(os.str());
+
+	return (char*) str->c_str();
 }

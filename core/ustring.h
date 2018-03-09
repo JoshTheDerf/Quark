@@ -62,7 +62,7 @@ struct StrRange {
 
 class String : public Vector<CharType> {
 
-	void copy_from(const char *p_cstr);
+	void copy_from(const char *p_cstr, int len = 0);
 	void copy_from(const CharType *p_cstr, int p_clip_to = -1);
 	void copy_from(const CharType &p_char);
 	bool _base_is_subsequence_of(const String &p_string, bool case_insensitive) const;
@@ -252,6 +252,7 @@ public:
 	inline String(const String &p_str) :
 			Vector(p_str) {}
 	String(const char *p_str);
+	String(const char *p_str, int len);
 	String(const CharType *p_str, int p_clip_to_len = -1);
 	String(const StrRange &p_range);
 };

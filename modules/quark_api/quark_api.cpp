@@ -237,8 +237,6 @@ void print_sexpr(std::vector<Atom>& atom_vector, Atom& atom, int level = 0) {
 		case Atom::TYPE_FLOAT:
 			printf("f:");
 			break;
-		default:
-			break;
 	}
 
 	printf("%.*s", atom.len, atom.start);

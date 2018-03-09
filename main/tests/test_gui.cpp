@@ -74,11 +74,25 @@ public:
 		// Initial testing of the quark API will happen in here because I was too lazy
 		// to create another test case.
 		printf("Int: %i\n", quark_api_init(&handle_init));
+		printf("Str: %s\n", quark_api_call(1, "(call small)"));
 		printf("Str: %s\n", quark_api_call(1, "(call 689 \"set_transform\" (v3 .23 2. 9.2))\
 (inst \"Node\") -> 99 \
 (evt 87 \"gui_input\")\
 (call 87 \"set_text\" \"(Something (text (related)))\")\
+(call (test 1.2 \"test\" (lets go deeper)))\
 "));
+
+		printf("Str: %s\n", quark_api_call(1, "(call 689 \"set_transform\" (v3 .23 2. 9.2))\
+(inst \"Node\") -> 99 \
+(evt 87 \"gui_input\")\
+(call 87 \"set_text\" \"(Something (text (related)))\")\
+(call (test 1.2 \"test\" (lets go deeper)))\
+(call add 1.0 more list)\
+"));
+		printf("Str: %s\n", quark_api_call(1, "(call small again)"));
+
+
+
 
 		SceneTree::init();
 

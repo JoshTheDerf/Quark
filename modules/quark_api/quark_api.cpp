@@ -2,23 +2,25 @@
 #include <string.h>
 #include <vector>
 #include <stdexcept>
+#include <cassert>
 
 #include "include/quark_api.h"
 
 typedef struct Atom Atom;
 
 struct Atom {
-	enum SexprType {
+	enum AtomType {
 		TYPE_LIST,
 		TYPE_SYMBOL,
 		TYPE_STRING,
 		TYPE_INT,
 		TYPE_FLOAT
 	};
-	SexprType type;
+	AtomType type;
 	char* start;
 	uint64_t len;
-	std::vector<Atom*> children;
+	int first_child_index;
+	int next_sibling_index;
 };
 
 typedef struct {
@@ -33,154 +35,221 @@ typedef struct {
 
 std::vector<Atom> atomVec;
 
-Atom* parse_string(std::vector<Atom>* atomVector, char** loc) {
-	(*loc)++;
+int parse_string(std::vector<Atom>& atomVector, int& vector_tail, char*& loc) {
+	loc++;
 
-	atomVector->emplace_back();
-	Atom* a = &atomVector->back();
-	a->start = *loc;
-	a->type = Atom::TYPE_STRING;
+	vector_tail++;
+	unsigned int curr_atom_index = vector_tail;
+
+	// The atom index should always be less than or equal to the size of the vector.
+	// Otherwise we have a bug.
+	assert(0 <= atomVector.size() - curr_atom_index);
+	// If the index is equal to the size, we need to allocate a new atom.
+	if (atomVector.size() == curr_atom_index) atomVector.emplace_back();
+
+	// We have to make sure everything gets initialized to the correct values in here.
+	// because we are potentially reusing atoms from previous calls.
+	Atom& a = atomVector.at(curr_atom_index);
+	a.start = loc;
+	a.type = Atom::TYPE_STRING;
+	a.first_child_index = -1;
+	a.next_sibling_index = -1;
 
 	bool escape;
 
-	while(**loc != '\0' && (**loc != '"' || escape)) {
+	while(*loc != '\0' && (*loc != '"' || escape)) {
 		if(escape) escape = false;
 		// Allow backslash-escaping.
 		// Currently doesn't remove the backslash from the actual string yet...
-		if(**loc == '\\') escape = true;
+		if(*loc == '\\') escape = true;
 
-		(*loc)++;
+		loc++;
 	}
 
-	a->len = *loc - a->start;
+	a.len = loc - a.start;
 
-	// Skip over the following " if needed.
-	(*loc)++;
+	// Skip over the trailing doublquote ".
+	loc++;
 
-	return a;
+	return curr_atom_index;
 }
 
-Atom* parse_symbol(std::vector<Atom>* atomVector, char** loc) {
-	atomVector->emplace_back();
-	Atom* a = &atomVector->back();
-	a->start = *loc;
-	a->type = Atom::TYPE_SYMBOL;
+int parse_symbol(std::vector<Atom>& atomVector, int& vector_tail, char*& loc) {
+	vector_tail++;
+	unsigned int curr_atom_index = vector_tail;
+
+	// The atom index should always be less than or equal to the size of the vector.
+	// Otherwise we have a bug.
+	assert(0 <= atomVector.size() - curr_atom_index);
+	// If the index is equal to the size, we need to allocate a new atom.
+	if (atomVector.size() == curr_atom_index) atomVector.emplace_back();
+
+	// We have to make sure everything gets initialized to the correct values in here.
+	// because we are potentially reusing atoms from previous calls.
+	Atom& a = atomVector.at(curr_atom_index);
+	a.start = loc;
+	a.type = Atom::TYPE_SYMBOL;
+	a.first_child_index = -1;
+	a.next_sibling_index = -1;
 
 	// -1 not set, 0 not number, 1 int, 2 float.
 	char is_number_type = -1;
 
-	while(**loc != '\0' && **loc != ' ' && **loc != ')') {
+	while(*loc != '\0' && *loc != ' ' && *loc != ')') {
 		// If we haven't set a type yet (first char, usually)
 		// assume this is a int if the char is a digit.
-		if (isdigit(**loc) && is_number_type == -1) {
+		if (isdigit(*loc) && is_number_type == -1) {
 			is_number_type = 1;
 		// If the number type is unset or an int, and the character is a point (.)
 		// assume this is a float.
-		} else if (**loc == '.' && abs(is_number_type) == 1) {
+		} else if (*loc == '.' && abs(is_number_type) == 1) {
 			is_number_type = 2;
 		// In any other case, if the char isn't a digit, this should be treated
 		// as a normal symbol.
-		} else if (!isdigit(**loc)) {
+		} else if (!isdigit(*loc)) {
 			is_number_type = 0;
 		}
 
-		(*loc)++;
+		loc++;
 	}
 
-	if(is_number_type == 1) a->type = Atom::TYPE_INT;
-	else if (is_number_type == 2) a->type = Atom::TYPE_FLOAT;
+	if(is_number_type == 1) a.type = Atom::TYPE_INT;
+	else if (is_number_type == 2) a.type = Atom::TYPE_FLOAT;
 
-	a->len = *loc - a->start;
+	a.len = loc - a.start;
 
-	return a;
+	return curr_atom_index;
 }
 
-Atom* parse_list(std::vector<Atom>* atomVector, char** loc) {
-	(*loc)++;
+int parse_list(std::vector<Atom>& atomVector, int& vector_tail, char*& loc) {
+	loc++;
 
-	atomVector->emplace_back();
-	Atom* a = &atomVector->back();
-	a->type = Atom::TYPE_LIST;
+	vector_tail++;
+	unsigned int curr_atom_index = vector_tail;
+
+	// The atom index should always be less than or equal to the size of the vector.
+	// Otherwise we have a bug.
+	assert(0 <= atomVector.size() - curr_atom_index);
+	// If the index is equal to the size, we need to allocate a new atom.
+	if (atomVector.size() == curr_atom_index) atomVector.emplace_back();
+
+	// We have to make sure everything gets initialized to the correct values in here.
+	// because we are potentially reusing atoms from previous calls.
+	Atom& a = atomVector.at(curr_atom_index);
+	a.start = loc;
+	a.type = Atom::TYPE_LIST;
+	a.first_child_index = -1;
+	a.next_sibling_index = -1;
 
 	bool stop_iter = false;
 
-	while(**loc != '\0' && !stop_iter) {
-		switch(**loc) {
+	int prev_sibling_index = -1;
+	int active_atom_index = -1;
+
+	while(*loc != '\0' && !stop_iter) {
+		switch(*loc) {
 			case '(':
-				a->children.push_back(parse_list(atomVector, loc));
-				continue;
+				active_atom_index = parse_list(atomVector, vector_tail, loc);
+				break;
 			case ')':
-				(*loc)++;
+				loc++;
+				active_atom_index = -1;
+				prev_sibling_index = -1;
 				stop_iter = true;
 				break;
 			case '"':
-				a->children.push_back(parse_string(atomVector, loc));
-				continue;
+				active_atom_index = parse_string(atomVector, vector_tail, loc);
+				break;
 			case ' ':
-				(*loc)++;
-				continue;
+				loc++;
+				break;
 			default:
-				a->children.push_back(parse_symbol(atomVector, loc));
-				continue;
+				active_atom_index = parse_symbol(atomVector, vector_tail, loc);
 		}
+
+		if(active_atom_index == -1) continue;
+
+		// This should always be called for the first child atom.
+		if(a.first_child_index == -1) a.first_child_index = active_atom_index;
+		// The prev sibling index should always be set by the second atom.
+		else atomVector.at(prev_sibling_index).next_sibling_index = active_atom_index;
+
+		prev_sibling_index = active_atom_index;
 	}
 
-	return a;
+	return curr_atom_index;
 }
 
-Atom* parse_sexpr(std::vector<Atom>* atomVector, char** loc) {
-	atomVector->emplace_back();
-	Atom* a = &atomVector->back();
-
+Atom& parse_sexpr(std::vector<Atom>& atomVector, char*& loc) {
 	// We have to check just in-case some of the root elements are not a list.
 	// (Assuming the root element isn't denoted with parenthesis.)
-	while(**loc != '\0') {
-		switch(**loc) {
+
+	int prev_sibling_index = -1;
+	int active_atom_index = -1;
+	int vector_tail = -1;
+
+	while(*loc != '\0') {
+		switch(*loc) {
 			case '(':
-				a->children.push_back(parse_list(atomVector, loc));
-				continue;
+				active_atom_index = parse_list(atomVector, vector_tail, loc);
+				break;
 			case '"':
-				a->children.push_back(parse_string(atomVector, loc));
-				continue;
+				active_atom_index = parse_string(atomVector, vector_tail, loc);
+				break;
 			case ' ':
-				(*loc)++;
-				continue;
+				loc++;
+				break;
 			default:
-				a->children.push_back(parse_symbol(atomVector, loc));
-				continue;
+				active_atom_index = parse_symbol(atomVector, vector_tail, loc);
 		}
+
+		if(active_atom_index == -1) continue;
+
+		if(prev_sibling_index != -1)
+			atomVector.at(prev_sibling_index).next_sibling_index = active_atom_index;
+
+		prev_sibling_index = active_atom_index;
 	}
 
-	return a;
+	// Currently we don't handle the case where an empty string is passed.
+	assert(atomVector.size() > 0);
+	return atomVector.at(0);
 }
 
-void print_sexpr(Atom* atom) {
-	if (atom->type == Atom::TYPE_LIST) {
-		printf("<");
-		for (Atom* const child : atom->children) {
-			print_sexpr(child);
-			if(child != atom->children.back()) printf(" ");
-		}
-		printf(">");
-	} else {
-		switch(atom->type) {
-			case Atom::TYPE_SYMBOL:
-				printf("m:");
-				break;
-			case Atom::TYPE_STRING:
-				printf("s:");
-				break;
-			case Atom::TYPE_INT:
-				printf("i:");
-				break;
-			case Atom::TYPE_FLOAT:
-				printf("f:");
-				break;
-			default:
-				break;
-		}
+void print_sexpr(std::vector<Atom>& atomVector, Atom& atom, int level = 0) {
+	switch(atom.type) {
+		case Atom::TYPE_LIST:
+			printf("\n");
+			for(int i = 0; i < level; ++i) printf("  "); 
+			printf("<");
+			if (atom.first_child_index != -1) {
+				print_sexpr(atomVector, atomVector.at(atom.first_child_index), level + 1);
+			}
+			printf(">");
+			// Sorry, it's just so convenient here.
+			goto print_siblings;
+		case Atom::TYPE_SYMBOL:
+			printf("m:");
+			break;
+		case Atom::TYPE_STRING:
+			printf("s:");
+			break;
+		case Atom::TYPE_INT:
+			printf("i:");
+			break;
+		case Atom::TYPE_FLOAT:
+			printf("f:");
+			break;
+		default:
+			break;
+	}
 
-		printf("%.*s", atom->len, atom->start);
+	printf("%.*s", atom.len, atom.start);
+
+print_siblings:
+	if (atom.next_sibling_index != -1) {
+		printf(" ");
+		print_sexpr(atomVector, atomVector.at(atom.next_sibling_index), level);
 	}
 }
 
@@ -195,9 +264,8 @@ char* QAPI quark_api_call(uint32_t user_id, char* message) {
 
 	if (message == NULL) return NULL;
 
-	Atom* rootAtom = parse_sexpr(&atomVec, &message);
-
-	print_sexpr(rootAtom);
+	Atom& rootAtom = parse_sexpr(atomVec, message);
+	print_sexpr(atomVec, rootAtom);
 	printf("\n");
 
 	return "Output";

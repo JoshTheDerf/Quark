@@ -30,6 +30,9 @@ typedef struct {
 SexpParser parser;
 std::vector<UserData> user_data_vec;
 
+// This is copied to a char buffer for sending the response, then cleared & re-used on subsequent calls.
+std::string response_string;
+
 uint32_t QAPI quark_api_init(void(*notify_handler)(char*)) {
 	notify_handler("Test Output");
 
@@ -89,6 +92,24 @@ std::string handle_call(SexpParser::Atom& atom) {
 	return "(call successful)";
 }
 
+std::string handle_instance(SexpParser::Atom& atom) {
+	if (atom.next_sibling_index == -1)
+		return "(error \"The first argument to 'instance' must be a string indicating the object to instance.\")";
+
+	SexpParser::Atom& classname_atom = parser.get_atom(atom.next_sibling_index);
+	if (classname_atom.type != SexpParser::Atom::TYPE_STRING)
+		return "(error \"The first argument to 'instance' must be a string indicating the object to instance.\")";
+
+	String classname = (String) get_variant_from_atom(classname_atom);
+
+	Object* instance = ClassDB::instance(classname);
+
+	if(instance == NULL)
+		return "(error \"The first argument to 'instance' must be a string indicating the object to instance.\")";
+
+	return std::string("(ref ") + std::to_string((int) instance->get_instance_id()) + ")";
+}
+
 std::string handle_message(SexpParser::Atom& atom) {
 
 	if(atom.type != SexpParser::Atom::TYPE_LIST || atom.first_child_index == -1)
@@ -100,11 +121,19 @@ std::string handle_message(SexpParser::Atom& atom) {
 
 	if (strncmp("call", first_child.start, first_child.len) == 0)
 		return handle_call(first_child);
+	else if (strncmp("inst", first_child.start, first_child.len) == 0)
+		return handle_instance(first_child);
 
 	return "(error \"No valid command passed. Valid commands are: [call]\")";
 }
 
-char* QAPI quark_api_call(uint32_t user_id, char* message) {
+void build_response(char* res_buf, uint64_t res_buf_size, std::string response) {
+	size_t copied = response.copy(res_buf, res_buf_size);
+	res_buf[copied] = '\0';
+}
+
+char* QAPI quark_api_call(uint32_t user_id, char* message, char* response_buf, uint64_t response_buf_size) {
+	response_string.clear();
 
 	if (message == NULL) return NULL;
 
@@ -120,14 +149,13 @@ char* QAPI quark_api_call(uint32_t user_id, char* message) {
 	SexpParser::Atom* current_atom = &root_atom;
 
 	while (current_atom != NULL) {
-
-		os << handle_message(*current_atom);
+		response_string += handle_message(*current_atom);
 
 		if(current_atom->next_sibling_index == -1) current_atom = NULL;
 		else current_atom = &parser.get_atom(current_atom->next_sibling_index);
 	}
 
-	std::string* str = new std::string(os.str());
+	build_response(response_buf, response_buf_size, response_string);
 
-	return (char*) str->c_str();
+	return response_buf;
 }

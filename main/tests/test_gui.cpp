@@ -54,6 +54,7 @@
 #include "scene/main/scene_tree.h"
 #include "scene/main/viewport.h"
 #include "modules/quark_api/include/quark_api.h"
+#include <string>
 
 void handle_init(char* response) {
 	printf("Init Response: %s\n", response);
@@ -270,11 +271,17 @@ public:
 
 		int labelId = mainlabel->get_instance_id();
 
-		//mainlabel->call("set_text", "Called From Somewhere Else");
-		char callbuffer[50];
-		sprintf(callbuffer, "(call %i \"set_text\" \"Called From Quark\"", labelId);
+		uint64_t resBufSize = 2094;
+		char resBuf[resBufSize];
 
-		printf("Str: %s\n", quark_api_call(user_id, callbuffer));
+		uint64_t cmdBufSize = 512;
+		char cmdBuf[cmdBufSize];
+		snprintf(cmdBuf, cmdBufSize, "(call %i \"set_text\" \"Called From Quark\")", (int) labelId);
+
+		// *Sigh* *Mumbles something about C++.*
+		printf("Resp: %s\n", quark_api_call(user_id, cmdBuf, resBuf, resBufSize));
+
+		printf("Resp: %s\n", quark_api_call(user_id, "(inst \"Button\")", resBuf, resBufSize));
 
 	}
 };

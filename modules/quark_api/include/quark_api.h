@@ -64,7 +64,7 @@ extern "C" {
 #define QUARK_API_VERSION 1
 
 uint32_t QAPI quark_api_init(void(*notify_handler)(char*));
-char* QAPI quark_api_call(uint32_t user_id, char* message);
+char* QAPI quark_api_call(uint32_t user_id, char* message, char* response_buf, uint64_t response_buf_size);
 
 #ifdef __cplusplus
 }

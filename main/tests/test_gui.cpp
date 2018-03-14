@@ -56,8 +56,8 @@
 #include "modules/quark_api/include/quark_api.h"
 #include <string>
 
-void handle_init(char* response) {
-	printf("Init Response: %s\n", response);
+void handle_event(char* evt) {
+	printf("Event: %s\n", evt);
 }
 
 namespace TestGUI {
@@ -74,7 +74,7 @@ public:
 	virtual void init() {
 		// Initial testing of the quark API will happen in here because I was too lazy
 		// to create another test case.
-		uint32_t user_id = quark_api_init(&handle_init);
+		uint32_t user_id = quark_api_init(&handle_event);
 
 		SceneTree::init();
 
@@ -89,7 +89,6 @@ public:
 		get_root()->add_child(frame);
 
 		Label *label = memnew(Label);
-		Label *mainlabel = label;
 
 		label->set_position(Point2(80, 90));
 		label->set_size(Point2(170, 80));
@@ -99,6 +98,7 @@ public:
 		frame->add_child(label);
 
 		Button *button = memnew(Button);
+		Button *mainbutton = button;
 
 		button->set_position(Point2(20, 20));
 		button->set_size(Point2(1, 1));
@@ -269,19 +269,20 @@ public:
 		tabc->set_position(Point2(400, 210));
 		tabc->set_size(Point2(180, 250));
 
-		int labelId = mainlabel->get_instance_id();
+		int buttonId = mainbutton->get_instance_id();
 
-		uint64_t resBufSize = 2094;
+		uint64_t resBufSize = 512;
 		char resBuf[resBufSize];
 
-		uint64_t cmdBufSize = 512;
+		uint64_t cmdBufSize = 256;
 		char cmdBuf[cmdBufSize];
-		snprintf(cmdBuf, cmdBufSize, "(call %i \"set_text\" \"Called From Quark\")", (int) labelId);
-
-		// *Sigh* *Mumbles something about C++.*
+		snprintf(cmdBuf, cmdBufSize, "(call %i \"set_text\" \"Called From Quark\")", (int) buttonId);
 		printf("Resp: %s\n", quark_api_call(user_id, cmdBuf, resBuf, resBufSize));
 
 		printf("Resp: %s\n", quark_api_call(user_id, "(inst \"Button\")", resBuf, resBufSize));
+
+		snprintf(cmdBuf, cmdBufSize, "(evt %i \"gui_input\")", (int) buttonId);
+		printf("Resp: %s\n", quark_api_call(user_id, cmdBuf, resBuf, resBufSize));
 
 	}
 };

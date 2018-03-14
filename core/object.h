@@ -389,7 +389,8 @@ public:
 
 		CONNECT_DEFERRED = 1,
 		CONNECT_PERSIST = 2, // hint for scene to save this connection
-		CONNECT_ONESHOT = 4
+		CONNECT_ONESHOT = 4,
+		CONNECT_COMBINED_ARGS = 8,
 	};
 
 	struct Connection {

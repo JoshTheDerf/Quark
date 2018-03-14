@@ -5,6 +5,7 @@ Import('env')
 qns_env = env.Clone()
 qns_env.add_source_files(env.modules_sources, "parser/parser.cpp")
 qns_env.add_source_files(env.modules_sources, "quark_api.cpp")
+qns_env.add_source_files(env.modules_sources, "quark_user_proxy.cpp")
 qns_env.add_source_files(env.modules_sources, "register_types.cpp")
 
 
